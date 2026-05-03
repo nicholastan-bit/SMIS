@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>Senarai Pelajar & Penjaga</h2>
+        <hr>
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr class="info">
+                    <th>ID</th>
+                    <th>Nama Pelajar</th>
+                    <th>No. KP</th>
+                    <th>Jantina</th>
+                    <th>Nama Penjaga</th>
+                    <th>Hubungan</th>
+                    <th>Tindakan</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td>{{ student.no_pendaftaran_pelajar }}</td>
+                    <td>{{ student.nama_pelajar }}</td>
+                    <td>{{ student.no_kp_pelajar }}</td>
+                    <td>{{ student.jantina }}</td>
+                    <td>{{ student.nama_penjaga or '---' }}</td>
+                    <td><span class="label label-default">{{ student.hubungan or 'N/A' }}</span></td>
+                    <td>
+                        <a href="{{ url_for('view_profile', student_id=student.no_pendaftaran_pelajar) }}" class="btn btn-xs btn-primary"> Lihat Profil </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

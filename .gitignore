@@ -1,0 +1,18 @@
+# Virtual Environment
+venv/
+env/
+.env
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Database files (if using SQLite)
+*.db
+
+# IDE settings
+.vscode/
+.idea/
+
+# Ignore the database configuration file
+db/db_config.py

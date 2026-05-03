@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 col-md-offset-1">
+        <h2 class="text-center">SMIS - Pendaftaran Pelajar</h2>
+        <hr>
+        
+        <form action="/submit" method="POST">
+            <!-- SECTION 1: MAKLUMAT PELAJAR -->
+            <div class="panel panel-primary">
+                <div class="panel-heading">Maklumat Pelajar</div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>Nama Penuh</label>
+                            <input type="text" name="nama_pelajar" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>Email</label>
+                            <input type="email" name="email" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 form-group">
+                            <label>No. KP (IC)</label>
+                            <input type="text" name="no_kp_pelajar" class="form-control" required>
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>Jantina</label>
+                            <select name="jantina" class="form-control">
+                                <option value="LELAKI">Lelaki</option>
+                                <option value="PEREMPUAN">Perempuan</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>Bangsa</label>
+                            <input type="text" name="bangsa" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 form-group">
+                            <label>Agama</label>
+                            <input type="text" name="agama" class="form-control">
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>Tarikh Lahir</label>
+                            <input type="date" name="tarikh_lahir" class="form-control">
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>No. Telefon</label>
+                            <input type="text" name="telefonNo" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Alamat Rumah</label>
+                        <textarea name="alamat_rumah" class="form-control" rows="2"></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 form-group">
+                            <label>Warganegara</label><br>
+                            <label class="radio-inline">
+                                <input type="radio" name="warganegara" value="1" checked> Ya
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" name="warganegara" value="0"> Bukan
+                            </label>
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>Tarikh Tamat Sekolah</label>
+                            <input type="date" name="sekolah_tamat" class="form-control">
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>Cara Datang Sekolah</label>
+                            <select name="cara_datang_sekolah" class="form-control">
+                                <option value="JALAN">Jalan Kaki</option>
+                                <option value="KERETA">Kereta</option>
+                                <option value="MOTOR">Motor</option>
+                                <option value="BASIKAL">Basikal</option>
+                                <option value="BAS">Bas</option>
+                                <option value="LAIN-LAIN">Lain-lain</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Masalah Kesihatan</label>
+                        <textarea name="masalah_kesihatan" class="form-control" rows="2" placeholder="Nyatakan jika ada..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: MAKLUMAT PENJAGA -->
+            <div class="panel panel-primary">
+                <div class="panel-heading">Maklumat Penjaga</div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>Nama Penjaga</label>
+                            <input type="text" name="g_nama_penjaga" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>No. KP Penjaga</label>
+                            <input type="text" name="g_no_kp_penjaga" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 form-group">
+                            <label>Hubungan</label>
+                            <select name="g_hubungan" class="form-control">
+                                <option value="BAPA">Bapa</option>
+                                <option value="IBU">Ibu</option>
+                                <option value="PENJAGA">Penjaga</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>Pekerjaan</label>
+                            <input type="text" name="g_pekerjaan" class="form-control">
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>Pendapatan (RM)</label>
+                            <input type="number" step="0.01" name="g_pendapatan" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Alamat Tempat Kerja</label>
+                        <textarea name="g_alamat_kerja" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-info btn-block btn-lg">Hantar Pendaftaran</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

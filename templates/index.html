@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="jumbotron text-center">
+    <h1>Selamat Datang</h1>
+    <p>Sistem Maklumat Pengurusan Pelajar (SMIS)</p>
+    <p>
+        <a class="btn btn-primary btn-lg" href="{{ url_for('register_page') }}" role="button">
+            Daftar Pelajar Baru
+        </a>
+    </p>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <h3>PLACEHOLDER 1</h3>
+        <p>...</p>
+    </div>
+    <div class="col-md-4">
+        <h3>PLACEHOLDER 2</h3>
+        <p>...</p>
+    </div>
+    <div class="col-md-4">
+        <h3>PLACEHOLDER 3</h3>
+        <p>...</p>
+    </div>
+</div>
+{% endblock %}

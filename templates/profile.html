@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 col-md-offset-2">
+        <h2>Profil Pelajar: {{ student.nama_pelajar }}</h2>
+        <hr>
+        
+        <div class="panel panel-default">
+            <div class="panel-heading"><b>Maklumat Peribadi</b></div>
+            <div class="panel-body">
+                <p><strong>No. KP:</strong> {{ student.no_kp_pelajar }}</p>
+                <p><strong>Jantina:</strong> {{ student.jantina }}</p>
+                <p><strong>Alamat:</strong> {{ student.alamat_rumah }}</p>
+                <p><strong>Kesihatan:</strong> {{ student.masalah_kesihatan or 'Tiada' }}</p>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading"><b>Maklumat Penjaga</b></div>
+            <div class="panel-body">
+                <p><strong>Nama Penjaga:</strong> {{ student.nama_penjaga }}</p>
+                <p><strong>No. KP:</strong> {{ student.no_kp_penjaga }}</p>
+                <p><strong>Pekerjaan:</strong> {{ student.pekerjaan }}</p>
+                <p><strong>Pendapatan:</strong> RM {{ "{:,.2f}".format(student.pendapatan) }}</p>
+                <p><strong>Alamat Kerja:</strong> {{ student.alamat_tempat_kerja }}</p>
+            </div>
+        </div>
+
+        <a href="{{ url_for('view_students') }}" class="btn btn-default">Kembali ke Senarai</a>
+    </div>
+</div>
+{% endblock %}

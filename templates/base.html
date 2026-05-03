@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Management Information System</title>
+    <!-- Bootstrap 3 CDN -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <style>
+        /* 1. Set the whole page to fill the screen */
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        /* 2. Turn the body into a Flexbox column */
+        body { 
+            display: flex;
+            flex-direction: column;
+            padding-top: 70px; /* Space for fixed navbar */
+        }
+
+        /* 3. This pushes the footer down by grabbing all available space */
+        .content-wrapper {
+            flex: 1 0 auto;
+        }
+
+        .footer { 
+            flex-shrink: 0; /* Ensures the footer doesn't get squashed */
+            padding: 20px; 
+            background: #f8f8f8; 
+            text-align: center;
+            border-top: 1px solid #e7e7e7;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="{{ url_for('index') }}">SMIS System</a>
+            </div>
+            <ul class="nav navbar-nav">
+                <li><a href="{{ url_for('register_page') }}">Pendaftaran</a></li>
+                <li><a href="{{ url_for('view_students') }}">Senarai Pelajar</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Wrap your content in this new div -->
+    <div class="content-wrapper">
+        <div class="container">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages() %}
+              {% if messages %}
+                {% for message in messages %}
+                  <div class="alert alert-info">{{ message }}</div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- The footer stays at the very bottom -->
+    <footer class="footer">
+        <p>&copy; 2026 Student Management Information System</p>
+    </footer>
+
+</body>
+</html>
