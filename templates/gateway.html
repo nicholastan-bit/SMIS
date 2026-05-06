@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container" style="margin-top: 50px;">
+    <!-- Casual User Section -->
+    <div class="panel panel-primary">
+        <div class="panel-heading">Sila Masukkan No. KP untuk Mendaftar</div>
+        <div class="panel-body">
+            <form action="/access" method="POST">
+                <div class="form-group">
+                    <input type="text" name="no_kp" class="form-control" placeholder="Contoh: 050101140555" required pattern="\d*"
+                        title="Sila masukkan nombor sahaja" inputmode="numeric">
+                </div>
+                <button type="submit" class="btn btn-success btn-block">Seterusnya</button>
+            </form>
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- Admin Section (The "Hidden" Button) -->
+    <div class="text-center">
+        <a href="{{ url_for('login') }}" class="btn btn-link">
+            Klik di sini untuk Akses Admin (Khas untuk Kakitangan Sahaja)
+        </a>
+        
+        <div id="adminLogin" class="collapse" style="margin-top: 20px;">
+            <div class="well">
+                <!-- Change action from /login to /adminlogin -->
+                <form action="/adminlogin" method="POST">
+                    <input type="text" name="username" placeholder="Username" class="form-control">
+                    <input type="password" name="password" placeholder="Password" class="form-control">
+                    <button type="submit" class="btn btn-primary btn-sm">Log Masuk Admin</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

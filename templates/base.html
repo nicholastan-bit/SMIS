@@ -37,17 +37,44 @@
 <body>
 
     <!-- Navigation -->
-    <nav class="navbar navbar-inverse navbar-fixed-top">
-        <div class="container">
-            <div class="navbar-header">
-                <a class="navbar-brand" href="{{ url_for('index') }}">SMIS System</a>
-            </div>
-            <ul class="nav navbar-nav">
-                <li><a href="{{ url_for('register_page') }}">Pendaftaran</a></li>
-                <li><a href="{{ url_for('view_students') }}">Senarai Pelajar</a></li>
-            </ul>
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="{{ url_for('index') }}">SMIS System</a>
         </div>
-    </nav>
+        
+        <ul class="nav navbar-nav">
+            <!-- Everyone can see the registration link -->
+            <li><a href="{{ url_for('register_page') }}">Pendaftaran</a></li>
+            
+            <!-- ONLY Admin can see "Senarai Pelajar" -->
+            {% if session.get('admin_logged') %}
+                <li><a href="{{ url_for('view_students') }}">Senarai Pelajar</a></li>
+            {% endif %}
+        </ul>
+
+        <ul class="nav navbar-nav navbar-right">
+            {% if session.get('logged_in') %}
+            <!-- 1. State: Admin is logged in -->
+            <li>
+                <p class="navbar-text">Admin Mode Enabled</p>
+            </li>
+            <li><a href="{{ url_for('logout') }}"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+        
+            {% elif session.get('verified_kp') %}
+            <!-- 2. State: Casual user has verified their KP -->
+            <li>
+                <p class="navbar-text">KP: {{ session.get('verified_kp') }}</p>
+            </li>
+            <li><a href="{{ url_for('logout') }}"><span class="glyphicon glyphicon-log-out"></span> Keluar</a></li>
+        
+            {% else %}
+            <!-- 3. State: Nobody is logged in -->
+            <li><a href="{{ url_for('gateway') }}"><span class="glyphicon glyphicon-log-in"></span> Log Masuk</a></li>
+            {% endif %}
+        </ul>
+    </div>
+</nav>
 
     <!-- Wrap your content in this new div -->
     <div class="content-wrapper">
