@@ -1,33 +1,139 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8 col-md-offset-2">
-        <h2>Profil Pelajar: {{ student.nama_pelajar }}</h2>
-        <hr>
-        
-        <div class="panel panel-default">
-            <div class="panel-heading"><b>Maklumat Peribadi</b></div>
-            <div class="panel-body">
-                <p><strong>No. KP:</strong> {{ student.no_kp_pelajar }}</p>
-                <p><strong>Jantina:</strong> {{ student.jantina }}</p>
-                <p><strong>Alamat:</strong> {{ student.alamat_rumah }}</p>
-                <p><strong>Kesihatan:</strong> {{ student.masalah_kesihatan or 'Tiada' }}</p>
+<div class="container">
+    <div class="row">
+        <div class="col-md-10 col-md-offset-1">
+            <div class="page-header">
+                <h2>Semakan Maklumat Pelajar</h2>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4><span class="glyphicon glyphicon-user"></span> Maklumat Peribadi</h4>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-condensed">
+                        <tr>
+                            <th style="width:200px;">Nama Penuh:</th>
+                            <td>{{ student.nama_pelajar }}</td>
+                        </tr>
+                        <tr>
+                            <th>No. KP:</th>
+                            <td>{{ student.no_kp_pelajar }}</td>
+                        </tr>
+                        <tr>
+                            <th>Email:</th>
+                            <td>{{ student.email }}</td>
+                        </tr>
+                        <tr>
+                            <th>Jantina:</th>
+                            <td>{{ student.jantina }}</td>
+                        </tr>
+                        <tr>
+                            <th>No. Telefon:</th>
+                            <td>{{ student.telefonNo }}</td>
+                        </tr>
+                        <tr>
+                            <th>Alamat:</th>
+                            <td>{{ student.alamat_rumah }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4><span class="glyphicon glyphicon-heart"></span> Maklumat Penjaga</h4>
+                </div>
+                <div class="panel-body">
+                    {% if guardians %}
+                    {% for g in guardians %}
+                    <div class="well well-sm" style="background-color: #fcfcfc; border-left: 5px solid #5bc0de;">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <strong style="font-size: 1.1em; color: #31708f;">
+                                    {{ loop.index }}. {{ g.nama_penjaga }}
+                                    <span class="label label-info">{{ g.penjaga }}</span>
+                                </strong>
+                                <hr style="margin: 8px 0;">
+                            </div>
+                        </div>
+            
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-condensed" style="margin-bottom: 0; background: transparent;">
+                                    <tr>
+                                        <th style="border:none; width: 120px;"><small>No. KP:</small></th>
+                                        <td style="border:none;"><small>{{ g.no_kp_penjaga }}</small></td>
+                                    </tr>
+                                    <tr>
+                                        <th style="border:none;"><small>Pekerjaan:</small></th>
+                                        <td style="border:none;"><small>{{ g.pekerjaan }}</small></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-condensed" style="margin-bottom: 0; background: transparent;">
+                                    <tr>
+                                        <th style="border:none; width: 120px;"><small>Pendapatan:</small></th>
+                                        <td style="border:none;"><small>RM {{ "{:,.2f}".format(g.pendapatan) }}</small></td>
+                                    </tr>
+                                    <tr>
+                                        <th style="border:none;"><small>Alamat Kerja:</small></th>
+                                        <td style="border:none;"><small>{{ g.alamat_tempat_kerja }}</small></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="alert alert-warning" style="margin-bottom: 0;">
+                        <span class="glyphicon glyphicon-exclamation-sign"></span> Maklumat penjaga belum diisi.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4><span class="glyphicon glyphicon-education"></span> Keputusan SPM</h4>
+                </div>
+                <div class="panel-body">
+                    {% if spm %}
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Subjek</th>
+                                <th>Gred</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in spm %}
+                            <tr>
+                                <td>{{ s.subjek }}</td>
+                                <td><strong>{{ s.gred }}</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p class="text-danger">Keputusan SPM belum diisi.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="text-center" style="margin-bottom: 50px;">
+                {% if is_admin %}
+                <a href="{{ url_for('view_students') }}" class="btn btn-primary">Kembali ke Senarai</a>
+                {% else %}
+                <a href="{{ url_for('index') }}" class="btn btn-primary">Kembali ke Dashboard</a>
+                {% endif %}
+                <button onclick="window.print()" class="btn btn-default"><span class="glyphicon glyphicon-print"></span>
+                    Cetak</button>
             </div>
         </div>
-
-        <div class="panel panel-default">
-            <div class="panel-heading"><b>Maklumat Penjaga</b></div>
-            <div class="panel-body">
-                <p><strong>Nama Penjaga:</strong> {{ student.nama_penjaga }}</p>
-                <p><strong>No. KP:</strong> {{ student.no_kp_penjaga }}</p>
-                <p><strong>Pekerjaan:</strong> {{ student.pekerjaan }}</p>
-                <p><strong>Pendapatan:</strong> RM {{ "{:,.2f}".format(student.pendapatan) }}</p>
-                <p><strong>Alamat Kerja:</strong> {{ student.alamat_tempat_kerja }}</p>
-            </div>
-        </div>
-
-        <a href="{{ url_for('view_students') }}" class="btn btn-default">Kembali ke Senarai</a>
     </div>
 </div>
 {% endblock %}

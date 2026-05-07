@@ -29,3 +29,11 @@ CREATE TABLE penjaga (
     alamat_tempat_kerja TEXT,
     FOREIGN KEY (no_pendaftaran_pelajar) REFERENCES pelajar(no_pendaftaran_pelajar)
 );
+
+CREATE TABLE spm_hasil (
+    id_spm INT AUTO_INCREMENT PRIMARY KEY,
+    no_pendaftaran_pelajar INT,
+    subjek VARCHAR(100) NOT NULL,
+    gred VARCHAR(5) NOT NULL,
+    FOREIGN KEY (no_pendaftaran_pelajar) REFERENCES pelajar(no_pendaftaran_pelajar) ON DELETE CASCADE
+);

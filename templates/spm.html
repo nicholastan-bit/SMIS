@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>Keputusan SPM</h2>
+    <p class="text-muted">Sila masukkan subjek dan gred SPM anda. Subjek yang sama akan dikemaskini jika dihantar
+        semula.</p>
+    <hr>
+
+    <form action="/submit_spm" method="POST">
+        <table class="table table-bordered" id="spm-table">
+            <thead>
+                <tr class="bg-primary">
+                    <th>Subjek</th>
+                    <th style="width: 150px;">Gred</th>
+                    <th style="width: 50px;"></th>
+                </tr>
+            </thead>
+            <tbody id="spm-body">
+                <tr class="spm-row">
+                    <td>
+                        <select name="subjek[]" class="form-control subject-select" onchange="toggleOther(this)"
+                            required>
+                            <option value="">-- Pilih Subjek --</option>
+                            <optgroup label="Teras">
+                                <option value="BAHASA MELAYU">Bahasa Melayu</option>
+                                <option value="BAHASA INGGERIS">Bahasa Inggeris</option>
+                                <option value="MATEMATIK">Matematik</option>
+                                <option value="SEJARAH">Sejarah</option>
+                                <option value="PENDIDIKAN ISLAM">Pendidikan Islam</option>
+                                <option value="PENDIDIKAN MORAL">Pendidikan Moral</option>
+                            </optgroup>
+                            <optgroup label="Elektif">
+                                <option value="MATEMATIK TAMBAHAN">Matematik Tambahan</option>
+                                <option value="FIZIK">Fizik</option>
+                                <option value="KIMIA">Kimia</option>
+                                <option value="BIOLOGI">Biologi</option>
+                                <option value="PRINSIP PERAKAUNAN">Prinsip Perakaunan</option>
+                                <option value="SAINS KOMPUTER">Sains Komputer</option>
+                            </optgroup>
+                            <option value="LAIN-LAIN">Lain-lain (Sila Nyatakan)</option>
+                        </select>
+                        <input type="text" name="subjek_lain[]" class="form-control other-input"
+                            placeholder="Taip nama subjek..." style="display:none; margin-top:5px;">
+                    </td>
+                    <td>
+                        <select name="gred[]" class="form-control" required>
+                            <option value="">Gred</option>
+                            <option value="A+">A+</option>
+                            <option value="A">A</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B">B</option>
+                            <option value="C+">C+</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                            <option value="E">E</option>
+                            <option value="G">G</option>
+                        </select>
+                    </td>
+                    <td class="action-cell"></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <button type="button" class="btn btn-default" onclick="addRow()">
+            <span class="glyphicon glyphicon-plus"></span> Tambah Subjek
+        </button>
+        <hr>
+        <button type="submit" class="btn btn-success">
+            <span class="glyphicon glyphicon-floppy-disk"></span> Simpan Keputusan
+        </button>
+    </form>
+</div>
+
+<script>
+    // Function to show/hide the "Other" input field
+    function toggleOther(selectElement) {
+        const row = selectElement.closest('tr');
+        const otherInput = row.querySelector('.other-input');
+
+        if (selectElement.value === "LAIN-LAIN") {
+            otherInput.style.display = "block";
+            otherInput.required = true;
+        } else {
+            otherInput.style.display = "none";
+            otherInput.required = false;
+            otherInput.value = ""; // Clear value if deselected
+        }
+    }
+
+    function addRow() {
+        const tbody = document.getElementById('spm-body');
+        const firstRow = tbody.querySelector('.spm-row');
+
+        // Clone the row
+        const newRow = firstRow.cloneNode(true);
+
+        // Reset all values in the cloned row
+        newRow.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
+        const otherInput = newRow.querySelector('.other-input');
+        otherInput.value = "";
+        otherInput.style.display = "none";
+        otherInput.required = false;
+
+        // Add the delete button to the action cell
+        const actionCell = newRow.querySelector('.action-cell');
+        actionCell.innerHTML = `
+        <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()">
+            <span class="glyphicon glyphicon-trash"></span>
+        </button>
+    `;
+
+        tbody.appendChild(newRow);
+    }
+</script>
+{% endblock %}

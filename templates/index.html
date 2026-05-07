@@ -4,25 +4,130 @@
 <div class="jumbotron text-center">
     <h1>Selamat Datang</h1>
     <p>Sistem Maklumat Pengurusan Pelajar (SMIS)</p>
-    <p>
-        <a class="btn btn-primary btn-lg" href="{{ url_for('register_page') }}" role="button">
-            Daftar Pelajar Baru
-        </a>
+    <p>Status:
+        {% if session.get('role') == 'admin' %}
+        <span class="label label-danger">Administrator</span>
+        {% elif session.get('verified_kp') %}
+        <span class="label label-success">Logged In</span>
+        {% else %}
+        <span class="label label-default">Logged Out</span>
+        {% endif %}
     </p>
+    
+    {% if session.get('verified_kp') %}
+    <div class="well well-sm" style="background-color: #fff; margin-top: 15px;">
+        <h5 style="margin-top: 0;"><strong>Status Kelengkapan:</strong></h5>
+        <ul class="list-inline">
+            <li>
+                {% if completion_status.profil %}
+                <span class="text-success"><span class="glyphicon glyphicon-ok-sign"></span> Profil</span>
+                {% else %}
+                <span class="text-danger"><span class="glyphicon glyphicon-remove-sign"></span> Profil</span>
+                {% endif %}
+            </li>
+            <li>
+                {% if completion_status.penjaga %}
+                <span class="text-success"><span class="glyphicon glyphicon-ok-sign"></span> Penjaga</span>
+                {% else %}
+                <span class="text-danger"><span class="glyphicon glyphicon-remove-sign"></span> Penjaga</span>
+                {% endif %}
+            </li>
+            <li>
+                {% if completion_status.spm %}
+                <span class="text-success"><span class="glyphicon glyphicon-ok-sign"></span> SPM</span>
+                {% else %}
+                <span class="text-danger"><span class="glyphicon glyphicon-remove-sign"></span> SPM</span>
+                {% endif %}
+            </li>
+        </ul>
+    </div>
+    {% endif %}
 </div>
 
 <div class="row">
+    {% if session.get('verified_kp') %}
     <div class="col-md-4">
-        <h3>PLACEHOLDER 1</h3>
-        <p>...</p>
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h3 class="panel-title">Modul Pendaftaran</h3>
+            </div>
+            <div class="panel-body">
+                <p>Lengkapkan atau kemaskini maklumat peribadi anda di sini.</p>
+                <a class="btn btn-primary btn-block" href="{{ url_for('register_page') }}">
+                    <span class="glyphicon glyphicon-user"></span> Pendaftaran Peribadi
+                </a>
+            </div>
+        </div>
     </div>
     <div class="col-md-4">
-        <h3>PLACEHOLDER 2</h3>
-        <p>...</p>
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title">Maklumat Penjaga & Akademik</h3>
+            </div>
+            <div class="panel-body">
+                <ul class="list-unstyled">
+                    <li><a href="{{ url_for('guardian_page') }}" class="btn btn-info btn-block" style="margin-bottom: 5px;">
+                            <span class="glyphicon glyphicon-heart"></span> Isi Maklumat Penjaga
+                        </a></li>
+                    <li><a href="{{ url_for('spm_page') }}" class="btn btn-info btn-block">
+                            <span class="glyphicon glyphicon-education"></span> Isi Maklumat SPM
+                        </a></li>
+                </ul>
+            </div>
+        </div>
     </div>
     <div class="col-md-4">
-        <h3>PLACEHOLDER 3</h3>
-        <p>...</p>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Semakan Maklumat</h3>
+            </div>
+            <div class="panel-body">
+                <p>Lihat maklumat yang telah anda hantar ke dalam sistem.</p>
+                <a class="btn btn-default btn-block" href="{{ url_for('view_own_profile') }}">
+                    <span class="glyphicon glyphicon-search"></span> Lihat Maklumat Saya
+                </a>
+            </div>
+        </div>
     </div>
+
+    {% elif session.get('role') == 'admin' %}
+    <div class="col-md-6">
+        <div class="panel panel-danger">
+            <div class="panel-heading">
+                <h3 class="panel-title">Pengurusan Pelajar</h3>
+            </div>
+            <div class="panel-body">
+                <p>Lihat, tapis, dan urus semua rekod pendaftaran pelajar.</p>
+                <a class="btn btn-danger btn-block" href="{{ url_for('view_students') }}">
+                    <span class="glyphicon glyphicon-list-alt"></span> Senarai Pelajar
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="panel panel-warning">
+            <div class="panel-heading">
+                <h3 class="panel-title">Analisis Data</h3>
+            </div>
+            <div class="panel-body">
+                <p>Lihat statistik pendaftaran dan pencapaian pelajar.</p>
+                <a class="btn btn-warning btn-block" href="#" disabled>
+                    <span class="glyphicon glyphicon-stats"></span> Statistik (Akan Datang)
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="col-md-12 text-center">
+        <div class="alert alert-warning">
+            <h4>Akses Terhad</h4>
+            <p>Sila masukkan No. KP di <strong>Login</strong> atau log masuk sebagai <strong>Admin</strong> untuk
+                melihat menu.</p>
+            <br>
+            <a href="{{ url_for('gateway') }}" class="btn btn-primary">Log Masuk</a>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

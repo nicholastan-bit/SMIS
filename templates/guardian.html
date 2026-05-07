@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>Maklumat Penjaga</h2>
+    <p class="text-muted">Sila isi maklumat penjaga. Anda boleh menambah lebih daripada satu penjaga.</p>
+    <hr>
+
+    <form action="/submit_guardians" method="POST">
+        <div id="guardian-container">
+            <div class="panel panel-info guardian-entry">
+                <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 class="panel-title">Penjaga <span class="guardian-count">1</span></h3>
+                    <button type="button" class="btn btn-danger btn-xs btn-remove" onclick="removeGuardian(this)"
+                        style="display:none;">
+                        <span class="glyphicon glyphicon-trash"></span> Buang Penjaga
+                    </button>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>Nama Penuh</label>
+                            <input type="text" name="g_nama_penjaga[]" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>No. KP Penjaga</label>
+                            <input type="text" name="g_no_kp_penjaga[]" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 form-group">
+                            <label>Hubungan</label>
+                            <select name="g_hubungan[]" class="form-control" required>
+                                <option value="BAPA">Bapa</option>
+                                <option value="IBU">Ibu</option>
+                                <option value="PENJAGA">Penjaga</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>Pekerjaan</label>
+                            <input type="text" name="g_pekerjaan[]" class="form-control" required>
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>Pendapatan (RM)</label>
+                            <input type="number" step="0.01" name="g_pendapatan[]" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Alamat Tempat Kerja</label>
+                        <textarea name="g_alamat_kerja[]" class="form-control" rows="2" required></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button type="button" class="btn btn-default" onclick="addGuardian()">
+            <span class="glyphicon glyphicon-plus"></span> Tambah Penjaga
+        </button>
+        <hr>
+        <button type="submit" class="btn btn-success btn-lg">Simpan Semua Penjaga</button>
+    </form>
+</div>
+
+<script>
+    function addGuardian() {
+        const container = document.getElementById('guardian-container');
+        const entries = document.getElementsByClassName('guardian-entry');
+
+        // Clone the first guardian box
+        const newEntry = entries[0].cloneNode(true);
+
+        // Clear all inputs in the cloned box
+        const inputs = newEntry.querySelectorAll('input, textarea');
+        inputs.forEach(input => input.value = '');
+
+        // Show the delete button for the new entry
+        const removeBtn = newEntry.querySelector('.btn-remove');
+        removeBtn.style.display = 'block';
+
+        container.appendChild(newEntry);
+        updateNumbers();
+    }
+
+    function removeGuardian(button) {
+        // Remove the specific panel
+        const entry = button.closest('.guardian-entry');
+        entry.remove();
+        updateNumbers();
+    }
+
+    function updateNumbers() {
+        const entries = document.getElementsByClassName('guardian-entry');
+        const counts = document.getElementsByClassName('guardian-count');
+
+        for (let i = 0; i < entries.length; i++) {
+            counts[i].innerText = i + 1;
+
+            // Safety check: Hide delete button on the very first entry if it's the only one left
+            const removeBtn = entries[i].querySelector('.btn-remove');
+            if (entries.length === 1) {
+                removeBtn.style.display = 'none';
+            } else if (i > 0) {
+                removeBtn.style.display = 'block';
+            }
+        }
+    }
+</script>
+{% endblock %}
