@@ -36,7 +36,7 @@
                         <div class="col-md-4 form-group">
                             <label>Jantina</label>
                             <select name="jantina" class="form-control" required>
-                                <option value="" disabled {{ 'selected' if not student else '' }}>Sila Pilih</option>
+                                <option value="" disabled {{ 'selected' if not student else '' }}>Pilih Jantina</option>
                                 <option value="LELAKI" {{ 'selected' if student and student.jantina=='LELAKI' else ''
                                     }}>Lelaki</option>
                                 <option value="PEREMPUAN" {{ 'selected' if student and student.jantina=='PEREMPUAN'
@@ -45,53 +45,80 @@
                         </div>
                         <div class="col-md-4 form-group">
                             <label>Bangsa</label>
-                            <input type="text" name="bangsa" class="form-control"
-                                value="{{ student.bangsa if student else '' }}" required>
+                            <select name="bangsa" class="form-control" required>
+                                <option value="" disabled {{ 'selected' if not student else '' }}>Pilih Bangsa</option>
+                                <option value="MELAYU" {{ 'selected' if student and student.bangsa=='MELAYU' else '' }}>
+                                    Melayu</option>
+                                <option value="CINA" {{ 'selected' if student and student.bangsa=='CINA' else '' }}>Cina
+                                </option>
+                                <option value="INDIA" {{ 'selected' if student and student.bangsa=='INDIA' else '' }}>
+                                    India</option>
+                                <option value="LAIN-LAIN" {{ 'selected' if student and student.bangsa=='LAIN-LAIN'
+                                    else '' }}>Lain-lain</option>
+                            </select>
                         </div>
                         <div class="col-md-4 form-group">
                             <label>Agama</label>
-                            <input type="text" name="agama" class="form-control"
-                                value="{{ student.agama if student else '' }}" required>
+                            <select name="agama" class="form-control" required>
+                                <option value="" disabled {{ 'selected' if not student else '' }}>Pilih Agama</option>
+                                <option value="ISLAM" {{ 'selected' if student and student.agama=='ISLAM' else '' }}>
+                                    Islam</option>
+                                <option value="BUDDHA" {{ 'selected' if student and student.agama=='BUDDHA' else '' }}>
+                                    Buddha</option>
+                                <option value="HINDU" {{ 'selected' if student and student.agama=='HINDU' else '' }}>
+                                    Hindu</option>
+                                <option value="KRISTIAN" {{ 'selected' if student and student.agama=='KRISTIAN' else ''
+                                    }}>Kristian</option>
+                                <option value="SIKH" {{ 'selected' if student and student.agama=='SIKH' else '' }}>Sikh
+                                </option>
+                                <option value="LAIN-LAIN" {{ 'selected' if student and student.agama=='LAIN-LAIN'
+                                    else '' }}>Lain-lain</option>
+                            </select>
                         </div>
                     </div>
 
                     <div class="row">
-                        <div class="col-md-4 form-group">
+                        <div class="col-md-6 form-group">
                             <label>Tarikh Lahir</label>
                             <input type="date" name="tarikh_lahir" class="form-control"
                                 value="{{ student.tarikh_lahir if student else '' }}" required>
                         </div>
-                        <div class="col-md-4 form-group">
+                        <div class="col-md-6 form-group">
                             <label>No. Telefon</label>
                             <input type="text" name="telefonNo" class="form-control"
                                 value="{{ student.telefonNo if student else '' }}" required>
-                        </div>
-                        <div class="col-md-4 form-group">
-                            <label>Cara Datang Sekolah</label>
-                            <select name="cara_datang_sekolah" class="form-control" required>
-                                <option value="" disabled {{ 'selected' if not student else '' }}>Sila Pilih</option>
-                                {% set ways = ['JALAN', 'KERETA', 'MOTOR', 'BASIKAL', 'BAS', 'LAIN-LAIN'] %}
-                                {% for way in ways %}
-                                <option value="{{ way }}" {{ 'selected' if student and student.cara_datang_sekolah==way
-                                    else '' }}>
-                                    {{ way|capitalize }}
-                                </option>
-                                {% endfor %}
-                            </select>
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label>Alamat Rumah</label>
-                        <textarea name="alamat_rumah" class="form-control" rows="2"
+                        <textarea name="alamat_rumah" class="form-control" rows="3"
                             required>{{ student.alamat_rumah if student else '' }}</textarea>
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6 form-group">
+                        <div class="col-md-4 form-group">
+                            <label>Cara Datang Sekolah</label>
+                            <select name="cara_datang_sekolah" class="form-control" required>
+                                <option value="" disabled {{ 'selected' if not student else '' }}>Pilih Cara</option>
+                                <option value="JALAN" {{ 'selected' if student and student.cara_datang_sekolah=='JALAN'
+                                    else '' }}>Jalan Kaki</option>
+                                <option value="KERETA" {{ 'selected' if student and
+                                    student.cara_datang_sekolah=='KERETA' else '' }}>Kereta</option>
+                                <option value="MOTOR" {{ 'selected' if student and student.cara_datang_sekolah=='MOTOR'
+                                    else '' }}>Motosikal</option>
+                                <option value="BASIKAL" {{ 'selected' if student and
+                                    student.cara_datang_sekolah=='BASIKAL' else '' }}>Basikal</option>
+                                <option value="BAS" {{ 'selected' if student and student.cara_datang_sekolah=='BAS'
+                                    else '' }}>Bas</option>
+                                <option value="LAIN-LAIN" {{ 'selected' if student and
+                                    student.cara_datang_sekolah=='LAIN-LAIN' else '' }}>Lain-lain</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 form-group">
                             <label>Warganegara</label><br>
                             <label class="radio-inline">
-                                <input type="radio" name="warganegara" value="1" {{ 'checked' if not student or
+                                <input type="radio" name="warganegara" value="1" {{ 'checked' if student and
                                     student.warganegara==1 else '' }} required> Ya
                             </label>
                             <label class="radio-inline">
@@ -99,7 +126,7 @@
                                     student.warganegara==0 else '' }}> Bukan
                             </label>
                         </div>
-                        <div class="col-md-6 form-group">
+                        <div class="col-md-4 form-group">
                             <label>Tarikh Tamat Sekolah</label>
                             <input type="date" name="sekolah_tamat" class="form-control"
                                 value="{{ student.sekolah_tamat if student else '' }}" required>

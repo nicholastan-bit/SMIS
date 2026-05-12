@@ -8,12 +8,65 @@
 
     <form action="/submit_guardians" method="POST">
         <div id="guardian-container">
+            {% if existing_guardians %}
+            {% for g in existing_guardians %}
+            <div class="panel panel-info guardian-entry">
+                <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 class="panel-title">Penjaga <span class="guardian-count">{{ loop.index }}</span></h3>
+                    <button type="button" class="btn btn-danger btn-xs btn-remove" onclick="removeGuardian(this)" {% if
+                        loop.length==1 %}style="display:none;" {% endif %}>
+                        <span class="glyphicon glyphicon-trash"></span> Buang
+                    </button>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>Nama Penuh</label>
+                            <input type="text" name="g_nama_penjaga[]" class="form-control" value="{{ g.nama_penjaga }}"
+                                required>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>No. KP Penjaga</label>
+                            <input type="text" name="g_no_kp_penjaga[]" class="form-control"
+                                value="{{ g.no_kp_penjaga }}" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 form-group">
+                            <label>Hubungan</label>
+                            <select name="g_hubungan[]" class="form-control" required>
+                                <option value="BAPA" {% if g.penjaga=='BAPA' %}selected{% endif %}>Bapa</option>
+                                <option value="IBU" {% if g.penjaga=='IBU' %}selected{% endif %}>Ibu</option>
+                                <option value="PENJAGA" {% if g.penjaga=='PENJAGA' %}selected{% endif %}>Penjaga
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>Pekerjaan</label>
+                            <input type="text" name="g_pekerjaan[]" class="form-control" value="{{ g.pekerjaan }}"
+                                required>
+                        </div>
+                        <div class="col-md-4 form-group">
+                            <label>Pendapatan (RM)</label>
+                            <input type="number" step="0.01" name="g_pendapatan[]" class="form-control"
+                                value="{{ g.pendapatan }}" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Alamat Tempat Kerja</label>
+                        <textarea name="g_alamat_kerja[]" class="form-control" rows="2"
+                            required>{{ g.alamat_tempat_kerja }}</textarea>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
             <div class="panel panel-info guardian-entry">
                 <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center;">
                     <h3 class="panel-title">Penjaga <span class="guardian-count">1</span></h3>
                     <button type="button" class="btn btn-danger btn-xs btn-remove" onclick="removeGuardian(this)"
                         style="display:none;">
-                        <span class="glyphicon glyphicon-trash"></span> Buang Penjaga
+                        <span class="glyphicon glyphicon-trash"></span> Buang
                     </button>
                 </div>
                 <div class="panel-body">
@@ -51,6 +104,7 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
         </div>
 
         <button type="button" class="btn btn-default" onclick="addGuardian()">
@@ -95,11 +149,11 @@
         for (let i = 0; i < entries.length; i++) {
             counts[i].innerText = i + 1;
 
-            // Safety check: Hide delete button on the very first entry if it's the only one left
+            // Hide delete button if only one entry remains
             const removeBtn = entries[i].querySelector('.btn-remove');
             if (entries.length === 1) {
                 removeBtn.style.display = 'none';
-            } else if (i > 0) {
+            } else {
                 removeBtn.style.display = 'block';
             }
         }

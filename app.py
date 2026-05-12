@@ -118,82 +118,82 @@ def register_page():
     return render_template('register.html', student=data, verified_kp=session.get('verified_kp'))
 
 @app.route('/submit', methods=['POST'])
-def submit():
+def submit_registration():
+    if not session.get('verified_kp'):
+        return redirect(url_for('gateway'))
+
+    # Retrieve form data
+    data = (
+        request.form.get('nama_pelajar'),
+        request.form.get('email'),
+        request.form.get('no_kp_pelajar'),
+        request.form.get('jantina'),
+        request.form.get('bangsa'),
+        request.form.get('agama'), 
+        request.form.get('tarikh_lahir'),
+        request.form.get('alamat_rumah'),
+        request.form.get('telefonNo'),
+        request.form.get('warganegara'),
+        request.form.get('sekolah_tamat'),
+        request.form.get('masalah_kesihatan'),
+        request.form.get('cara_datang_sekolah')
+    )
+
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
-        # Ambil No. KP dari borang (yang telah disahkan di gateway)
-        kp = request.form.get('no_kp_pelajar')
-        
-        # Pastikan data wujud sebelum memproses (Langkah keselamatan tambahan)
-        if not kp:
-            flash("Ralat: No. KP tidak ditemui.")
-            return redirect(url_for('gateway'))
-
-        # Semak jika pelajar sudah wujud dalam pangkalan data
-        cursor.execute("SELECT no_pendaftaran_pelajar FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
+        # Check for update vs new insert
+        cursor.execute("SELECT no_pendaftaran_pelajar FROM pelajar WHERE no_kp_pelajar = %s", (data[2],))
         existing = cursor.fetchone()
 
-        # Kumpul data dari borang. 
-        # Disebabkan anda telah meletakkan 'required' pada HTML, 
-        # data ini dijamin ada oleh pelayar web.
-        student_data = (
-            request.form['nama_pelajar'], 
-            request.form['email'], 
-            kp,
-            request.form['jantina'], 
-            request.form['bangsa'], 
-            request.form['agama'],
-            request.form['tarikh_lahir'], # Format YYYY-MM-DD dari input type="date"
-            request.form['alamat_rumah'],
-            request.form['telefonNo'], 
-            1 if 'warganegara' in request.form else 0,
-            request.form['sekolah_tamat'], # Tarikh tamat sekolah
-            request.form['masalah_kesihatan'],
-            request.form['cara_datang_sekolah'], 
-            1 # status_study (Aktif)
-        )
-
         if existing:
-            # KEMASKINI rekod sedia ada
-            s_id = existing[0]
-            update_query = """UPDATE pelajar SET 
-                nama_pelajar=%s, email=%s, no_kp_pelajar=%s, jantina=%s, bangsa=%s, agama=%s, 
-                tarikh_lahir=%s, alamat_rumah=%s, telefonNo=%s, warganegara=%s, 
-                sekolah_tamat=%s, masalah_kesihatan=%s, cara_datang_sekolah=%s, status_study=%s 
-                WHERE no_pendaftaran_pelajar=%s"""
-            cursor.execute(update_query, student_data + (s_id,))
-            flash("Maklumat anda berjaya dikemaskini!")
+            query = """UPDATE pelajar SET nama_pelajar=%s, email=%s, jantina=%s, bangsa=%s, agama=%s, 
+                       tarikh_lahir=%s, alamat_rumah=%s, telefonNo=%s, warganegara=%s, sekolah_tamat=%s, 
+                       masalah_kesihatan=%s, cara_datang_sekolah=%s WHERE no_kp_pelajar=%s"""
+            # Reorder params for UPDATE: name, email, jantina, bangsa, agama, dob, addr, tel, citizen, school, health, transport, KP
+            params = (data[0], data[1], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], data[12], data[2])
+            cursor.execute(query, params)
         else:
-            # MASUKKAN rekod baru
-            insert_query = """INSERT INTO pelajar 
-                (nama_pelajar, email, no_kp_pelajar, jantina, bangsa, agama, tarikh_lahir, alamat_rumah, 
-                telefonNo, warganegara, sekolah_tamat, masalah_kesihatan, cara_datang_sekolah, status_study) 
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
-            cursor.execute(insert_query, student_data)
-            flash("Pendaftaran pelajar baru berjaya!")
+            query = """INSERT INTO pelajar (nama_pelajar, email, no_kp_pelajar, jantina, bangsa, agama, 
+                       tarikh_lahir, alamat_rumah, telefonNo, warganegara, sekolah_tamat, masalah_kesihatan, 
+                       cara_datang_sekolah, status_study) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 1)"""
+            cursor.execute(query, data)
 
         conn.commit()
-
-    except Exception as e:
+        flash("Registration saved successfully!")
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
         conn.rollback()
-        flash(f"Error: {str(e)}")
+        flash("An error occurred while saving.")
     finally:
         cursor.close()
         conn.close()
 
-    # Kembali ke halaman utama (index) selepas selesai
-    return redirect(url_for('index'))
+    return redirect(url_for('view_own_profile'))
 
 @app.route('/register_guardian')
 def guardian_page():
-    # Security check: Ensure they entered their KP at the gateway first
     if not session.get('verified_kp'):
         flash("Sila masukkan No. KP anda terlebih dahulu.")
         return redirect(url_for('gateway'))
         
-    return render_template('guardian.html')
+    kp = session.get('verified_kp')
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # Fetch existing guardians
+    cursor.execute("""
+        SELECT g.* FROM penjaga g 
+        JOIN pelajar p ON g.no_pendaftaran_pelajar = p.no_pendaftaran_pelajar 
+        WHERE p.no_kp_pelajar = %s""", (kp,))
+    existing_guardians = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    # Pass guardians to the template
+    return render_template('guardian.html', existing_guardians=existing_guardians)
 
 @app.route('/submit_guardians', methods=['POST'])
 def submit_guardians():
@@ -215,6 +215,8 @@ def submit_guardians():
             
         student_id = student[0]
 
+        cursor.execute("DELETE FROM penjaga WHERE no_pendaftaran_pelajar = %s", (student_id,))
+        
         # 2. Extract lists from the form
         names = request.form.getlist('g_nama_penjaga[]')
         kps = request.form.getlist('g_no_kp_penjaga[]')
@@ -245,8 +247,24 @@ def submit_guardians():
 @app.route('/register_spm')
 def spm_page():
     if not session.get('verified_kp'):
+        flash("Sila masukkan No. KP anda terlebih dahulu.")
         return redirect(url_for('gateway'))
-    return render_template('spm.html') # You will need to create this file
+        
+    kp = session.get('verified_kp')
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # Fetch existing SPM results
+    cursor.execute("""
+        SELECT s.* FROM spm_hasil s 
+        JOIN pelajar p ON s.no_pendaftaran_pelajar = p.no_pendaftaran_pelajar 
+        WHERE p.no_kp_pelajar = %s""", (kp,))
+    existing_spm = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template('spm.html', existing_spm=existing_spm)
 
 @app.route('/submit_spm', methods=['POST'])
 def submit_spm():
@@ -257,7 +275,7 @@ def submit_spm():
     cursor = conn.cursor()
     
     try:
-        # Get student ID from session KP
+        # 1. Get student ID
         kp = session.get('verified_kp')
         cursor.execute("SELECT no_pendaftaran_pelajar FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
         student = cursor.fetchone()
@@ -268,28 +286,33 @@ def submit_spm():
             
         student_id = student[0]
 
-        # Get the lists from the form
+        # --- THE FIX STARTS HERE ---
+        # 2. Delete ALL existing SPM records for this student first
+        # This ensures that if a row was removed from the HTML, it's also gone from the DB.
+        cursor.execute("DELETE FROM spm_hasil WHERE no_pendaftaran_pelajar = %s", (student_id,))
+        # --- THE FIX ENDS HERE ---
+
+        # 3. Get the lists from the form
         subjects = request.form.getlist('subjek[]')
         other_subjects = request.form.getlist('subjek_lain[]')
         grades = request.form.getlist('gred[]')
 
         for i in range(len(subjects)):
-            # Logic to pick the subject name
             subject_name = subjects[i]
-            if subject_name == "LAIN-LAIN" and other_subjects[i]:
+            # Use the "Other" text if LAIN-LAIN is selected
+            if subject_name == "LAIN-LAIN" and i < len(other_subjects) and other_subjects[i]:
                 subject_name = other_subjects[i].strip().upper()
 
             if subject_name and grades[i]:
-                # The "Upsert" query
+                # We can use a simple INSERT now since we cleared the old data
                 query = """
                     INSERT INTO spm_hasil (no_pendaftaran_pelajar, subjek, gred) 
                     VALUES (%s, %s, %s)
-                    ON DUPLICATE KEY UPDATE gred = VALUES(gred)
                 """
                 cursor.execute(query, (student_id, subject_name, grades[i]))
 
         conn.commit()
-        flash("SPM results saved/updated successfully!")
+        flash("Keputusan SPM berjaya dikemaskini!")
     except Exception as e:
         conn.rollback()
         flash(f"Error: {str(e)}")
@@ -341,18 +364,69 @@ def view_students():
         flash("Admin access only.")
         return redirect(url_for('login'))
     
+    # Get all filter arguments
     search_query = request.args.get('search', '')
+    gender = request.args.get('gender', '')
+    race = request.args.get('race', '')
+    religion = request.args.get('religion', '')
+    transport = request.args.get('transport', '')
+    citizen = request.args.get('citizen', '')
+    min_income = request.args.get('min_income', '')
+    max_income = request.args.get('max_income', '')
+
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True, buffered=True)
     
+    # Base query with subqueries for calculated fields
+    query = """
+        SELECT p.*,
+               (SELECT SUM(pendapatan) FROM penjaga WHERE no_pendaftaran_pelajar = p.no_pendaftaran_pelajar) as total_income,
+               (SELECT COUNT(*) FROM spm_hasil WHERE no_pendaftaran_pelajar = p.no_pendaftaran_pelajar 
+                AND gred IN ('A+', 'A', 'A-')) as total_as
+        FROM pelajar p
+        WHERE 1=1
+    """
+    params = []
+
+    # Apply filters to the core 'pelajar' table
     if search_query:
-        query = "SELECT no_pendaftaran_pelajar, nama_pelajar, no_kp_pelajar FROM pelajar WHERE nama_pelajar LIKE %s OR no_kp_pelajar LIKE %s"
-        cursor.execute(query, (f"%{search_query}%", f"%{search_query}%"))
-    else:
-        query = "SELECT no_pendaftaran_pelajar, nama_pelajar, no_kp_pelajar FROM pelajar"
-        cursor.execute(query)
-        
+        query += " AND (p.nama_pelajar LIKE %s OR p.no_kp_pelajar LIKE %s)"
+        params.extend([f"%{search_query}%", f"%{search_query}%"])
+    
+    if gender:
+        query += " AND p.jantina = %s"
+        params.append(gender)
+
+    if race:
+        query += " AND p.bangsa = %s"
+        params.append(race)
+
+    if religion:
+        query += " AND p.agama = %s"
+        params.append(religion)
+
+    if transport:
+        query += " AND p.cara_datang_sekolah = %s"
+        params.append(transport)
+
+    if citizen != '' and citizen is not None:
+        query += " AND p.warganegara = %s"
+        params.append(int(citizen))
+
+    # Wrap in outer query to filter by calculated total_income
+    full_query = f"SELECT * FROM ({query}) AS student_records WHERE 1=1"
+    
+    filter_params = []
+    if min_income:
+        full_query += " AND total_income >= %s"
+        filter_params.append(float(min_income))
+    if max_income:
+        full_query += " AND total_income <= %s"
+        filter_params.append(float(max_income))
+
+    cursor.execute(full_query, tuple(params + filter_params))
     students = cursor.fetchall()
+    
     cursor.close()
     conn.close()
     return render_template('students_list.html', students=students)
@@ -384,6 +458,36 @@ def admin_view_profile(student_id):
 
     # Reuse the profile.html template!
     return render_template('profile.html', student=student, guardians=guardians, spm=spm_results, is_admin=True)
+
+# Tambahkan route ini di dalam app.py
+
+@app.route('/admin/update_status/<int:student_id>', methods=['POST'])
+def update_status(student_id):
+    # Security: Verify admin session
+    if not session.get('admin_logged'):
+        flash("Unauthorized access.")
+        return redirect(url_for('login'))
+
+    new_status = request.form.get('new_status')
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Update the status_study column in the database
+        query = "UPDATE pelajar SET status_study = %s WHERE no_pendaftaran_pelajar = %s"
+        cursor.execute(query, (new_status, student_id))
+        conn.commit()
+        flash("Student status updated successfully!")
+    except Exception as e:
+        conn.rollback()
+        flash(f"Error updating status: {str(e)}")
+    finally:
+        cursor.close()
+        conn.close()
+
+    # Redirect back to the profile view
+    return redirect(url_for('admin_view_profile', student_id=student_id))
 
 @app.route('/student/<int:student_id>')
 def view_profile(student_id):

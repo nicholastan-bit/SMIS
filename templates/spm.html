@@ -17,49 +17,17 @@
                 </tr>
             </thead>
             <tbody id="spm-body">
-                <tr class="spm-row">
-                    <td>
-                        <select name="subjek[]" class="form-control subject-select" onchange="toggleOther(this)"
-                            required>
-                            <option value="">-- Pilih Subjek --</option>
-                            <optgroup label="Teras">
-                                <option value="BAHASA MELAYU">Bahasa Melayu</option>
-                                <option value="BAHASA INGGERIS">Bahasa Inggeris</option>
-                                <option value="MATEMATIK">Matematik</option>
-                                <option value="SEJARAH">Sejarah</option>
-                                <option value="PENDIDIKAN ISLAM">Pendidikan Islam</option>
-                                <option value="PENDIDIKAN MORAL">Pendidikan Moral</option>
-                            </optgroup>
-                            <optgroup label="Elektif">
-                                <option value="MATEMATIK TAMBAHAN">Matematik Tambahan</option>
-                                <option value="FIZIK">Fizik</option>
-                                <option value="KIMIA">Kimia</option>
-                                <option value="BIOLOGI">Biologi</option>
-                                <option value="PRINSIP PERAKAUNAN">Prinsip Perakaunan</option>
-                                <option value="SAINS KOMPUTER">Sains Komputer</option>
-                            </optgroup>
-                            <option value="LAIN-LAIN">Lain-lain (Sila Nyatakan)</option>
-                        </select>
-                        <input type="text" name="subjek_lain[]" class="form-control other-input"
-                            placeholder="Taip nama subjek..." style="display:none; margin-top:5px;">
-                    </td>
-                    <td>
-                        <select name="gred[]" class="form-control" required>
-                            <option value="">Gred</option>
-                            <option value="A+">A+</option>
-                            <option value="A">A</option>
-                            <option value="A-">A-</option>
-                            <option value="B+">B+</option>
-                            <option value="B">B</option>
-                            <option value="C+">C+</option>
-                            <option value="C">C</option>
-                            <option value="D">D</option>
-                            <option value="E">E</option>
-                            <option value="G">G</option>
-                        </select>
-                    </td>
-                    <td class="action-cell"></td>
-                </tr>
+                {% if existing_spm %}
+                {% for s in existing_spm %}
+                {% set loop_index = loop.index0 %}
+                {% include "spm_row_template.html" %}
+                {% endfor %}
+                {% else %}
+                {# Render one empty row for new users so the script has a template to clone #}
+                {% set s = {'subjek': '', 'gred': ''} %}
+                {% set loop_index = 0 %}
+                {% include "spm_row_template.html" %}
+                {% endif %}
             </tbody>
         </table>
 
@@ -73,8 +41,14 @@
     </form>
 </div>
 
+{# Move the row structure to a reusable script template to make addRow() cleaner #}
+<script type="text/template" id="row-template">
+    {% set s = {'subjek': '', 'gred': ''} %}
+    {% set loop_index = 1 %}
+    {% include "spm_row_template.html" %}
+</script>
+
 <script>
-    // Function to show/hide the "Other" input field
     function toggleOther(selectElement) {
         const row = selectElement.closest('tr');
         const otherInput = row.querySelector('.other-input');
@@ -85,31 +59,25 @@
         } else {
             otherInput.style.display = "none";
             otherInput.required = false;
-            otherInput.value = ""; // Clear value if deselected
+            otherInput.value = "";
         }
     }
 
     function addRow() {
         const tbody = document.getElementById('spm-body');
-        const firstRow = tbody.querySelector('.spm-row');
+        const template = document.getElementById('row-template').innerHTML;
 
-        // Clone the row
-        const newRow = firstRow.cloneNode(true);
+        const newRow = document.createElement('tr');
+        newRow.className = "spm-row";
+        newRow.innerHTML = template.replace('<tr>', '').replace('</tr>', '');
 
-        // Reset all values in the cloned row
-        newRow.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
-        const otherInput = newRow.querySelector('.other-input');
-        otherInput.value = "";
-        otherInput.style.display = "none";
-        otherInput.required = false;
-
-        // Add the delete button to the action cell
+        // Add delete button to new rows
         const actionCell = newRow.querySelector('.action-cell');
         actionCell.innerHTML = `
-        <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()">
-            <span class="glyphicon glyphicon-trash"></span>
-        </button>
-    `;
+            <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()">
+                <span class="glyphicon glyphicon-trash"></span>
+            </button>
+        `;
 
         tbody.appendChild(newRow);
     }
