@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h2>Konfigurasi Status Borang</h2>
+    <form method="POST">
+        <table class="table">
+            {% for item in settings %}
+            <tr>
+                <td>{{ item.form_id }}</td>
+                <td>
+                    <input type="checkbox" name="enabled_forms" value="{{ item.form_id }}" {% if item.is_enabled
+                        %}checked{% endif %}>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        <button type="submit" class="btn btn-success">Simpan Tetapan</button>
+    </form>
+</div>
+{% endblock %}

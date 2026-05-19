@@ -1,43 +1,58 @@
 <tr class="spm-row">
     <td>
-        {% set core_list = ['BAHASA MELAYU', 'BAHASA INGGERIS', 'MATEMATIK', 'SEJARAH', 'PENDIDIKAN ISLAM', 'PENDIDIKAN MORAL', 'MATEMATIK TAMBAHAN', 'FIZIK', 'KIMIA', 'BIOLOGI', 'PRINSIP PERAKAUNAN', 'SAINS KOMPUTER'] %}
-        {% set is_core = s.subjek in core_list %}
-        
-        <select name="subjek[]" class="form-control subject-select" onchange="toggleOther(this)" required>
+        <select name="subjek[]" class="form-control subject-select" required>
             <option value="">-- Pilih Subjek --</option>
-            <optgroup label="Teras">
-                <option value="BAHASA MELAYU" {% if s.subjek == 'BAHASA MELAYU' %}selected{% endif %}>Bahasa Melayu</option>
-                <option value="BAHASA INGGERIS" {% if s.subjek == 'BAHASA INGGERIS' %}selected{% endif %}>Bahasa Inggeris</option>
-                <option value="MATEMATIK" {% if s.subjek == 'MATEMATIK' %}selected{% endif %}>Matematik</option>
-                <option value="SEJARAH" {% if s.subjek == 'SEJARAH' %}selected{% endif %}>Sejarah</option>
-                <option value="PENDIDIKAN ISLAM" {% if s.subjek == 'PENDIDIKAN ISLAM' %}selected{% endif %}>Pendidikan Islam</option>
-                <option value="PENDIDIKAN MORAL" {% if s.subjek == 'PENDIDIKAN MORAL' %}selected{% endif %}>Pendidikan Moral</option>
+
+            <optgroup label="MATA PELAJARAN ASAS">
+                <option value="BAHASA MELAYU" {% if s.subjek=='BAHASA MELAYU' %}selected{% endif %}>Bahasa Melayu
+                </option>
+                <option value="BAHASA INGGERIS" {% if s.subjek=='BAHASA INGGERIS' %}selected{% endif %}>Bahasa Inggeris
+                </option>
+                <option value="PENDIDIKAN ISLAM" {% if s.subjek=='PENDIDIKAN ISLAM' %}selected{% endif %}>Pendidikan
+                    Islam</option>
+                <option value="PENDIDIKAN MORAL" {% if s.subjek=='PENDIDIKAN MORAL' %}selected{% endif %}>Pendidikan
+                    Moral</option>
+                <option value="SEJARAH" {% if s.subjek=='SEJARAH' %}selected{% endif %}>Sejarah</option>
+                <option value="MATEMATIK" {% if s.subjek=='MATEMATIK' %}selected{% endif %}>Matematik</option>
+                <option value="SAINS" {% if s.subjek=='SAINS' %}selected{% endif %}>Sains</option>
             </optgroup>
-            <optgroup label="Elektif">
-                <option value="MATEMATIK TAMBAHAN" {% if s.subjek == 'MATEMATIK TAMBAHAN' %}selected{% endif %}>Matematik Tambahan</option>
-                <option value="FIZIK" {% if s.subjek == 'FIZIK' %}selected{% endif %}>Fizik</option>
-                <option value="KIMIA" {% if s.subjek == 'KIMIA' %}selected{% endif %}>Kimia</option>
-                <option value="BIOLOGI" {% if s.subjek == 'BIOLOGI' %}selected{% endif %}>Biologi</option>
-                <option value="PRINSIP PERAKAUNAN" {% if s.subjek == 'PRINSIP PERAKAUNAN' %}selected{% endif %}>Prinsip Perakaunan</option>
-                <option value="SAINS KOMPUTER" {% if s.subjek == 'SAINS KOMPUTER' %}selected{% endif %}>Sains Komputer</option>
+
+            <optgroup label="ALIRAN SAINS TULEN">
+                <option value="MATEMATIK TAMBAHAN" {% if s.subjek=='MATEMATIK TAMBAHAN' %}selected{% endif %}>Matematik
+                    Tambahan</option>
+                <option value="FIZIK" {% if s.subjek=='FIZIK' %}selected{% endif %}>Fizik</option>
+                <option value="KIMIA" {% if s.subjek=='KIMIA' %}selected{% endif %}>Kimia</option>
+                <option value="BIOLOGI" {% if s.subjek=='BIOLOGI' %}selected{% endif %}>Biologi</option>
+                <option value="ENGLISH FOR SCIENCE AND TECHNOLOGY" {% if s.subjek=='ENGLISH FOR SCIENCE AND TECHNOLOGY'
+                    %}selected{% endif %}>English for Science and Technology</option>
             </optgroup>
-            <option value="LAIN-LAIN" {% if s.subjek and not is_core %}selected{% endif %}>Lain-lain (Sila Nyatakan)</option>
+
+            <optgroup label="ALIRAN SAINS TULEN AGAMA">
+                <option value="PENDIDIKAN AL-QURAN DAN AS-SUNNAH" {% if s.subjek=='PENDIDIKAN AL-QURAN DAN AS-SUNNAH'
+                    %}selected{% endif %}>Pendidikan Al-Quran dan As-Sunnah</option>
+                <option value="PENDIDIKAN SYARIAH ISLAMIAH" {% if s.subjek=='PENDIDIKAN SYARIAH ISLAMIAH' %}selected{%
+                    endif %}>Pendidikan Syariah Islamiah</option>
+                <option value="TASAWWUR ISLAM" {% if s.subjek=='TASAWWUR ISLAM' %}selected{% endif %}>Tasawwur Islam
+                    (Gambaran Islam)</option>
+                <option value="BAHASA ARAB TINGGI" {% if s.subjek=='BAHASA ARAB TINGGI' %}selected{% endif %}>Bahasa
+                    Arab Tinggi</option>
+            </optgroup>
+
+            <optgroup label="ALIRAN SAINS KEMANUSIAAN">
+                <option value="KIMIA BIOLOGI" {% if s.subjek=='KIMIA BIOLOGI' %}selected{% endif %}>Kimia Biologi
+                </option>
+            </optgroup>
         </select>
-        
-        <input type="text" name="subjek_lain[]" class="form-control other-input" 
-               value="{{ s.subjek if (s.subjek and not is_core) else '' }}"
-               style="display: {{ 'block' if (s.subjek and not is_core) else 'none' }}; margin-top:5px;"
-               placeholder="Taip nama subjek...">
     </td>
     <td>
         <select name="gred[]" class="form-control" required>
             <option value="">Gred</option>
             {% for g in ['A+', 'A', 'A-', 'B+', 'B', 'C+', 'C', 'D', 'E', 'G'] %}
-            <option value="{{ g }}" {% if s.gred == g %}selected{% endif %}>{{ g }}</option>
+            <option value="{{ g }}" {% if s.gred==g %}selected{% endif %}>{{ g }}</option>
             {% endfor %}
         </select>
     </td>
-    <td class="action-cell">
+    <td class="action-cell" style="text-align: center; vertical-align: middle;">
         {% if loop_index > 0 %}
         <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()">
             <span class="glyphicon glyphicon-trash"></span>

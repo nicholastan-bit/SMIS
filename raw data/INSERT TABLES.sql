@@ -1,62 +1,95 @@
--- 1. DATA PELAJAR (10 Orang)
-INSERT INTO pelajar (nama_pelajar, email, no_kp_pelajar, jantina, bangsa, agama, tarikh_lahir, alamat_rumah, telefonNo, warganegara, sekolah_tamat, masalah_kesihatan, cara_datang_sekolah, status_study) VALUES
-('Aiman Hakim Bin Norazmi', 'aiman@email.com', '080512101133', 'LELAKI', 'MELAYU', 'ISLAM', '2008-05-12', 'No 23, Jalan Melati, Puchong', '0134455661', 1, '2024-12-31', 'Tiada', 'MOTOR', 1),
-('Lee Jia Xin', 'jiaxin@email.com', '080922145562', 'PEREMPUAN', 'CINA', 'BUDDHA', '2008-09-22', 'Lot 102, Apartment Suria, Kepong', '0172233445', 1, '2024-12-31', 'Tiada', 'KERETA', 1),
-('Arul Selvam A/L Mani', 'arul@email.com', '080130104433', 'LELAKI', 'INDIA', 'HINDU', '2008-01-30', 'No 5, Taman Seri Sentosa, Klang', '0149988771', 1, '2024-12-31', 'Tiada', 'BAS', 1),
-('Nur Balkis Binti Zamri', 'balkis@email.com', '081102035544', 'PEREMPUAN', 'MELAYU', 'ISLAM', '2008-11-02', 'No 14, Jalan Teratai, Gombak', '0112233445', 1, '2024-12-31', 'Tiada', 'JALAN', 1),
-('Kevin Low Wei Jian', 'kevinl@email.com', '080415147789', 'LELAKI', 'CINA', 'KRISTIAN', '2008-04-15', 'C-3-4, Sri Maya Condo, Setiawangsa', '0198877665', 1, '2024-12-31', 'Tiada', 'KERETA', 1),
-('Siti Aishah Binti Bakri', 'aishah@email.com', '080228016672', 'PEREMPUAN', 'MELAYU', 'ISLAM', '2008-02-28', 'No 9, Kampung Tengah, Rawang', '0165544332', 1, '2024-12-31', 'Tiada', 'BASIKAL', 1),
-('Rizal Bin Ramli', 'rizal@email.com', '081212038891', 'LELAKI', 'MELAYU', 'ISLAM', '2008-12-12', 'No 55, Jalan USJ 9, Subang Jaya', '0123344556', 1, '2024-12-31', 'Tiada', 'MOTOR', 1),
-('Michelle Tan', 'mich@email.com', '080618109982', 'PEREMPUAN', 'CINA', 'KRISTIAN', '2008-06-18', 'No 7, Jalan SS15, Subang Jaya', '0189900112', 1, '2024-12-31', 'Tiada', 'BAS', 1),
-('Hafiz Bin Hamidun', 'hafiz@email.com', '080303031121', 'LELAKI', 'MELAYU', 'ISLAM', '2008-03-03', 'No 1, Taman Melawati, KL', '0136677889', 1, '2024-12-31', 'Tiada', 'KERETA', 1),
-('Priya A/P Govinda', 'priya@email.com', '081010103342', 'PEREMPUAN', 'INDIA', 'HINDU', '2008-10-10', 'No 88, Jalan Klang Lama, KL', '0175566778', 1, '2024-12-31', 'Tiada', 'JALAN', 1);
+INSERT INTO pelajar (nama_pelajar, email, no_kp_pelajar, jantina, bangsa, agama, tarikh_lahir, alamat_rumah, telefonNo, sekolah_tamat, masalah_kesihatan, cara_datang_sekolah, status_study, id_pakej) VALUES
+('Ahmad Bin Ali', 'ahmad@gmail.com', '080101010001', 'LELAKI', 'MELAYU', 'ISLAM', '2008-01-01', 'Jalan 1, KL', '0123456789', '2025-11-20', 'Tiada', 'BAS', 1, 1),
+('Siti Nurhaliza', 'siti@gmail.com', '080202020002', 'PEREMPUAN', 'MELAYU', 'ISLAM', '2008-02-02', 'Jalan 2, KL', '0123456780', '2025-11-20', 'Asma', 'KERETA', 1, 2),
+('Lim Wei Kiat', 'lim@gmail.com', '080303030003', 'LELAKI', 'CINA', 'BUDDHA', '2008-03-03', 'Jalan 3, KL', '0123456781', '2025-11-20', 'Tiada', 'MOTOR', 1, 3),
+('Ravi A/L Muthu', 'ravi@gmail.com', '080404040004', 'LELAKI', 'INDIA', 'HINDU', '2008-04-04', 'Jalan 4, KL', '0123456782', '2025-11-20', 'Tiada', 'BASIKAL', 1, 4),
+('Maria Binti Musa', 'maria@gmail.com', '080505050005', 'PEREMPUAN', 'MELAYU', 'ISLAM', '2008-05-05', 'Jalan 5, KL', '0123456783', '2025-11-20', 'Tiada', 'JALAN', 1, 5),
+('John Doe', 'john@gmail.com', '080606060006', 'LELAKI', 'BUKAN WARGANEGARA', 'KRISTIAN', '2008-06-06', 'Jalan 6, KL', '0123456784', '2025-11-20', 'Tiada', 'LAIN-LAIN', 1, 6),
+('Tan Mei Ling', 'tan@gmail.com', '080707070007', 'PEREMPUAN', 'CINA', 'BUDDHA', '2008-07-07', 'Jalan 7, KL', '0123456785', '2025-11-20', 'Tiada', 'BAS', 1, 7),
+('Devi A/P Ramu', 'devi@gmail.com', '080808080008', 'PEREMPUAN', 'INDIA', 'HINDU', '2008-08-08', 'Jalan 8, KL', '0123456786', '2025-11-20', 'Tiada', 'KERETA', 1, 8),
+('Dayang Binti Bujang', 'dayang@gmail.com', '080909090009', 'PEREMPUAN', 'SABAH/SARAWAK', 'ISLAM', '2008-09-09', 'Jalan 9, KL', '0123456787', '2025-11-20', 'Tiada', 'MOTOR', 1, 9),
+('Mohd Razak', 'razak@gmail.com', '081010100010', 'LELAKI', 'MELAYU', 'ISLAM', '2008-10-10', 'Jalan 10, KL', '0123456788', '2025-11-20', 'Tiada', 'BASIKAL', 1, 10),
+('Fatima Zahra', 'fatima@gmail.com', '081111110011', 'PEREMPUAN', 'MELAYU', 'ISLAM', '2008-11-11', 'Jalan 11, KL', '0123456789', '2025-11-20', 'Tiada', 'JALAN', 1, 11),
+('Karthik A/L Selvam', 'karthik@gmail.com', '081212120012', 'LELAKI', 'INDIA', 'HINDU', '2008-12-12', 'Jalan 12, KL', '0123456790', '2025-11-20', 'Tiada', 'BAS', 1, 12),
+('Lee Sin Yee', 'lee@gmail.com', '080113130013', 'PEREMPUAN', 'CINA', 'BUDDHA', '2008-01-13', 'Jalan 13, KL', '0123456791', '2025-11-20', 'Tiada', 'KERETA', 1, 13),
+('Bujang Bin Jali', 'bujang@gmail.com', '080214140014', 'LELAKI', 'SABAH/SARAWAK', 'LAIN-LAIN', '2008-02-14', 'Jalan 14, KL', '0123456792', '2025-11-20', 'Tiada', 'MOTOR', 1, 14),
+('Anna Smith', 'anna@gmail.com', '080315150015', 'PEREMPUAN', 'BUKAN WARGANEGARA', 'KRISTIAN', '2008-03-15', 'Jalan 15, KL', '0123456793', '2025-11-20', 'Tiada', 'BASIKAL', 1, 15),
+('Zulhilmi Bin Omar', 'zul@gmail.com', '080416160016', 'LELAKI', 'MELAYU', 'ISLAM', '2008-04-16', 'Jalan 16, KL', '0123456794', '2025-11-20', 'Tiada', 'JALAN', 1, 1),
+('Nurul Ain', 'ain@gmail.com', '080517170017', 'PEREMPUAN', 'MELAYU', 'ISLAM', '2008-05-17', 'Jalan 17, KL', '0123456795', '2025-11-20', 'Tiada', 'BAS', 1, 2),
+('Wong Kok Fai', 'wong@gmail.com', '080618180018', 'LELAKI', 'CINA', 'BUDDHA', '2008-06-18', 'Jalan 18, KL', '0123456796', '2025-11-20', 'Tiada', 'KERETA', 1, 3),
+('Siva A/L Kumar', 'siva@gmail.com', '080719190019', 'LELAKI', 'INDIA', 'HINDU', '2008-07-19', 'Jalan 19, KL', '0123456797', '2025-11-20', 'Tiada', 'MOTOR', 1, 4),
+('Melissa Yap', 'melissa@gmail.com', '080820200020', 'PEREMPUAN', 'CINA', 'BUDDHA', '2008-08-20', 'Jalan 20, KL', '0123456798', '2025-11-20', 'Tiada', 'BASIKAL', 1, 5),
+('Hassan Bin Salleh', 'hassan@gmail.com', '080921210021', 'LELAKI', 'MELAYU', 'ISLAM', '2008-09-21', 'Jalan 21, KL', '0123456799', '2025-11-20', 'Tiada', 'JALAN', 1, 6),
+('Putri Balqis', 'putri@gmail.com', '081022220022', 'PEREMPUAN', 'MELAYU', 'ISLAM', '2008-10-22', 'Jalan 22, KL', '0123456800', '2025-11-20', 'Tiada', 'BAS', 1, 7),
+('Goh Seng', 'goh@gmail.com', '081123230023', 'LELAKI', 'CINA', 'BUDDHA', '2008-11-23', 'Jalan 23, KL', '0123456801', '2025-11-20', 'Tiada', 'KERETA', 1, 8),
+('Mani A/P Raja', 'mani@gmail.com', '081224240024', 'PEREMPUAN', 'INDIA', 'HINDU', '2008-12-24', 'Jalan 24, KL', '0123456802', '2025-11-20', 'Tiada', 'MOTOR', 1, 9),
+('Junaidi Bin Ali', 'junaidi@gmail.com', '080125250025', 'LELAKI', 'SABAH/SARAWAK', 'ISLAM', '2008-01-25', 'Jalan 25, KL', '0123456803', '2025-11-20', 'Tiada', 'BASIKAL', 1, 10),
+('Elena Rossi', 'elena@gmail.com', '080226260026', 'PEREMPUAN', 'BUKAN WARGANEGARA', 'KRISTIAN', '2008-02-26', 'Jalan 26, KL', '0123456804', '2025-11-20', 'Tiada', 'JALAN', 1, 11),
+('Farid Bin Kamil', 'farid@gmail.com', '080327270027', 'LELAKI', 'MELAYU', 'ISLAM', '2008-03-27', 'Jalan 27, KL', '0123456805', '2025-11-20', 'Tiada', 'BAS', 1, 12),
+('Siti Sarah', 'sarah@gmail.com', '080428280028', 'PEREMPUAN', 'MELAYU', 'ISLAM', '2008-04-28', 'Jalan 28, KL', '0123456806', '2025-11-20', 'Tiada', 'KERETA', 1, 13),
+('Tan Wei Kiat', 'tanwei@gmail.com', '080529290029', 'LELAKI', 'CINA', 'BUDDHA', '2008-05-29', 'Jalan 29, KL', '0123456807', '2025-11-20', 'Tiada', 'MOTOR', 1, 14),
+('Ramesh A/L Muni', 'ramesh@gmail.com', '080630300030', 'LELAKI', 'INDIA', 'HINDU', '2008-06-30', 'Jalan 30, KL', '0123456808', '2025-11-20', 'Tiada', 'BASIKAL', 1, 15);
 
--- 2. DATA PENJAGA (Campuran Bapa, Ibu, dan Penjaga Lain)
-INSERT INTO penjaga (no_pendaftaran_pelajar, nama_penjaga, no_kp_penjaga, penjaga, pekerjaan, pendapatan, alamat_tempat_kerja) VALUES
--- Pelajar 1: Ada Bapa & Ibu
-(1, 'Norazmi Bin Kassim', '750401105533', 'BAPA', 'PEGAWAI TLDM', 6500.00, 'Pangkalan TLDM Lumut'),
-(1, 'Zaiton Binti Ali', '780505106644', 'IBU', 'KERANI', 3200.00, 'Pejabat Tanah Puchong'),
--- Pelajar 2: Hanya Bapa
-(2, 'Lee Kok Seng', '700912145531', 'BAPA', 'PENIAGA', 15000.00, 'Pasar Borong Selayang'),
--- Pelajar 3: Hanya Penjaga (Pakcik)
-(3, 'Maniam A/L Rajoo', '650120104421', 'PENJAGA', 'PESARA', 2200.00, 'Tiada'),
--- Pelajar 4: Ada Bapa & Ibu
-(4, 'Zamri Bin Sidek', '731102035511', 'BAPA', 'PEMANDU TEKSI', 2800.00, 'Kuala Lumpur'),
-(4, 'Faridah Binti Ahmad', '761212034422', 'IBU', 'SURI RUMAH', 0.00, 'Tiada'),
--- Pelajar 5: Hanya Ibu
-(5, 'Wong Mei Yee', '800415143342', 'IBU', 'AGEN INSURANS', 7500.00, 'Prudential KLCC'),
--- Pelajar 6: Ada Bapa & Ibu
-(6, 'Bakri Bin Ahmad', '710228014451', 'BAPA', 'PETANI', 1800.00, 'Kebun Getah Rawang'),
-(6, 'Salmah Binti Dolah', '750315015562', 'IBU', 'PENJUAL NASI LEMAK', 1500.00, 'Gerai Simpang Tiga'),
--- Pelajar 7: Hanya Bapa
-(7, 'Ramli Bin Omar', '681212031123', 'BAPA', 'KONTRAKTOR', 9500.00, 'Damansara'),
--- Pelajar 8: Hanya Penjaga (Nenek)
-(8, 'Tan Siew Lan', '550618102232', 'PENJAGA', 'PESARA GURU', 3500.00, 'Tiada'),
--- Pelajar 9: Ada Bapa & Ibu
-(9, 'Hamidun Bin Salleh', '740303031141', 'BAPA', 'JURUTERA', 11000.00, 'Petronas Twin Towers'),
-(9, 'Mastura Binti Ibrahim', '770404032252', 'IBU', 'PENSYARAH', 8500.00, 'Universiti Malaya'),
--- Pelajar 10: Hanya Bapa
-(10, 'Govindaran A/L Arumugam', '721010103311', 'BAPA', 'PEGAWAI POLIS', 5800.00, 'IPD Brickfields');
+INSERT INTO penjaga (no_pendaftaran_pelajar, nama_penjaga, no_kp_penjaga, no_telefon, penjaga, pekerjaan, pendapatan, alamat_tempat_kerja) VALUES
+(1, 'Ali Bin Hassan', '700101010001', '0191112222', 'BAPA', 'Pekerja Am', 2000.00, 'Pejabat 1, KL'),
+(2, 'Aminah Binti Abu', '720202020002', '0191112223', 'IBU', 'Kerani', 2500.00, 'Pejabat 2, KL'),
+(3, 'Lim Ah Seng', '680303030003', '0191112224', 'BAPA', 'Peniaga', 3500.00, 'Kedai 3, KL'),
+(4, 'Muthu A/L Ramu', '710404040004', '0191112225', 'BAPA', 'Kontraktor', 4000.00, 'Tapak 4, KL'),
+(5, 'Musa Bin Omar', '730505050005', '0191112226', 'BAPA', 'Guru', 3800.00, 'Sekolah 5, KL'),
+(6, 'Jane Doe', '700606060006', '0191112227', 'IBU', 'Surirumah', 0.00, 'Rumah 6, KL'),
+(7, 'Tan Lee Peng', '750707070007', '0191112228', 'IBU', 'Jurutera', 5000.00, 'Pejabat 7, KL'),
+(8, 'Ramu A/L Muni', '690808080008', '0191112229', 'BAPA', 'Pemandu', 2200.00, 'Depot 8, KL'),
+(9, 'Bujang Bin Jali', '720909090009', '0191112230', 'BAPA', 'Petani', 1500.00, 'Ladang 9, SRK'),
+(10, 'Razak Bin Dollah', '741010100010', '0191112231', 'BAPA', 'Polis', 3200.00, 'Balai 10, KL'),
+(11, 'Zahra Binti Bakar', '761111110011', '0191112232', 'IBU', 'Juruwang', 2100.00, 'Pasaraya 11, KL'),
+(12, 'Selvam A/L Raju', '681212120012', '0191112233', 'BAPA', 'Pekerja Kilang', 2300.00, 'Kilang 12, KL'),
+(13, 'Lee Ah Moi', '710113130013', '0191112234', 'IBU', 'Peniaga', 2800.00, 'Kedai 13, KL'),
+(14, 'Jali Bin Bujang', '730214140014', '0191112235', 'BAPA', 'Nelayan', 1800.00, 'Jeti 14, SRK'),
+(15, 'John Smith', '750315150015', '0191112236', 'BAPA', 'Pengurus', 6000.00, 'Pejabat 15, KL'),
+(16, 'Omar Bin Bakar', '690416160016', '0191112237', 'BAPA', 'Arkitek', 5500.00, 'Pejabat 16, KL'),
+(17, 'Ain Binti Yusof', '740517170017', '0191112238', 'IBU', 'Jururawat', 3300.00, 'Hospital 17, KL'),
+(18, 'Wong Fai', '700618180018', '0191112239', 'BAPA', 'Kontraktor', 4200.00, 'Tapak 18, KL'),
+(19, 'Kumar A/L Muni', '720719190019', '0191112240', 'BAPA', 'Pekerja Am', 1900.00, 'Pejabat 19, KL'),
+(20, 'Yap Lee Kuan', '760820200020', '0191112241', 'IBU', 'Guru', 3600.00, 'Sekolah 20, KL'),
+(21, 'Salleh Bin Hassan', '680921210021', '0191112242', 'BAPA', 'Peniaga', 3100.00, 'Kedai 21, KL'),
+(22, 'Balqis Binti Aziz', '731022220022', '0191112243', 'IBU', 'Kerani', 2400.00, 'Pejabat 22, KL'),
+(23, 'Goh Seng Huat', '711123230023', '0191112244', 'BAPA', 'Pemandu', 2500.00, 'Depot 23, KL'),
+(24, 'Raja A/P Muni', '751224240024', '0191112245', 'IBU', 'Pekerja Am', 1700.00, 'Pejabat 24, KL'),
+(25, 'Ali Bin Jali', '690125250025', '0191112246', 'BAPA', 'Petani', 1600.00, 'Ladang 25, SRK'),
+(26, 'Maria Rossi', '740226260026', '0191112247', 'IBU', 'Suri rumah', 0.00, 'Rumah 26, KL'),
+(27, 'Kamil Bin Salleh', '700327270027', '0191112248', 'BAPA', 'Pekerja Kilang', 2200.00, 'Kilang 27, KL'),
+(28, 'Sarah Binti Hassan', '720428280028', '0191112249', 'IBU', 'Peniaga', 2900.00, 'Kedai 28, KL'),
+(29, 'Kiat Bin Wong', '760529290029', '0191112250', 'BAPA', 'Juruteknik', 2700.00, 'Bengkel 29, KL'),
+(30, 'Muni A/L Raja', '680630300030', '0191112251', 'BAPA', 'Pekerja Am', 2000.00, 'Pejabat 30, KL');
 
--- 3. DATA KEPUTUSAN SPM (7 Subjek untuk setiap Pelajar)
 INSERT INTO spm_hasil (no_pendaftaran_pelajar, subjek, gred) VALUES
--- Pelajar 1 (7 subjek)
-(1, 'BAHASA MELAYU', 'A'), (1, 'BAHASA INGGERIS', 'A-'), (1, 'SEJARAH', 'A'), (1, 'MATEMATIK', 'B+'), (1, 'PENDIDIKAN ISLAM', 'A+'), (1, 'SAINS', 'B'), (1, 'GEOGRAFI', 'B+'),
--- Pelajar 2 (7 subjek)
-(2, 'BAHASA MELAYU', 'A'), (2, 'BAHASA INGGERIS', 'A+'), (2, 'SEJARAH', 'B+'), (2, 'MATEMATIK', 'A+'), (2, 'MATEMATIK TAMBAHAN', 'A'), (2, 'FIZIK', 'A-'), (2, 'KIMIA', 'B+'),
--- Pelajar 3 (7 subjek)
-(3, 'BAHASA MELAYU', 'B'), (3, 'BAHASA INGGERIS', 'C+'), (3, 'SEJARAH', 'A-'), (3, 'MATEMATIK', 'B'), (3, 'PENDIDIKAN MORAL', 'A'), (3, 'SAINS', 'B'), (3, 'PERNIAGAAN', 'C'),
--- Pelajar 4 (7 subjek)
-(4, 'BAHASA MELAYU', 'A+'), (4, 'BAHASA INGGERIS', 'B'), (4, 'SEJARAH', 'A'), (4, 'MATEMATIK', 'A-'), (4, 'PENDIDIKAN ISLAM', 'A'), (4, 'SAINS', 'A'), (4, 'PRINSIP PERAKAUNAN', 'B+'),
--- Pelajar 5 (7 subjek)
-(5, 'BAHASA MELAYU', 'A'), (5, 'BAHASA INGGERIS', 'A'), (5, 'SEJARAH', 'B'), (5, 'MATEMATIK', 'A+'), (5, 'FIZIK', 'A'), (5, 'KIMIA', 'A-'), (5, 'BIOLOGI', 'B+'),
--- Pelajar 6 (7 subjek)
-(6, 'BAHASA MELAYU', 'A'), (6, 'BAHASA INGGERIS', 'B'), (6, 'SEJARAH', 'A'), (6, 'MATEMATIK', 'C+'), (6, 'PENDIDIKAN ISLAM', 'A'), (6, 'SAINS', 'B'), (6, 'EKONOMI', 'B'),
--- Pelajar 7 (7 subjek)
-(7, 'BAHASA MELAYU', 'A-'), (7, 'BAHASA INGGERIS', 'A-'), (7, 'SEJARAH', 'B+'), (7, 'MATEMATIK', 'A'), (7, 'MATEMATIK TAMBAHAN', 'B'), (7, 'FIZIK', 'B'), (7, 'SAINS KOMPUTER', 'A'),
--- Pelajar 8 (7 subjek)
-(8, 'BAHASA MELAYU', 'B+'), (8, 'BAHASA INGGERIS', 'A'), (8, 'SEJARAH', 'A'), (8, 'MATEMATIK', 'B'), (8, 'SAINS', 'A-'), (8, 'PRINSIP PERAKAUNAN', 'A'), (8, 'EKONOMI', 'B+'),
--- Pelajar 9 (7 subjek)
-(9, 'BAHASA MELAYU', 'A+'), (9, 'BAHASA INGGERIS', 'A+'), (9, 'SEJARAH', 'A+'), (9, 'MATEMATIK', 'A+'), (9, 'MATEMATIK TAMBAHAN', 'A'), (9, 'FIZIK', 'A'), (9, 'KIMIA', 'A'),
--- Pelajar 10 (7 subjek)
-(10, 'BAHASA MELAYU', 'A'), (10, 'BAHASA INGGERIS', 'A-'), (10, 'SEJARAH', 'B+'), (10, 'MATEMATIK', 'B'), (10, 'PENDIDIKAN MORAL', 'A'), (10, 'SAINS', 'B+'), (10, 'GEOGRAFI', 'A');
+(1, 'PENGAJIAN AM', 'A'), (1, 'BIOLOGI', 'B'), (1, 'KIMIA', 'A'),
+(2, 'PENGAJIAN AM', 'B'), (2, 'MATEMATIK T', 'A'), (2, 'FIZIK', 'B'),
+(3, 'PENGAJIAN AM', 'A'), (3, 'EKONOMI', 'A'), (3, 'SEJARAH', 'A'),
+(4, 'PENGAJIAN AM', 'C'), (4, 'MATEMATIK T', 'B'), (4, 'ICT', 'B'),
+(5, 'PENGAJIAN AM', 'A'), (5, 'BIOLOGI', 'A'), (5, 'KIMIA', 'B'),
+(6, 'PENGAJIAN AM', 'B'), (6, 'MATEMATIK T', 'B'), (6, 'FIZIK', 'A'),
+(7, 'PENGAJIAN AM', 'A'), (7, 'EKONOMI', 'A'), (7, 'SEJARAH', 'B'),
+(8, 'PENGAJIAN AM', 'B'), (8, 'MATEMATIK T', 'C'), (8, 'ICT', 'A'),
+(9, 'PENGAJIAN AM', 'A'), (9, 'BIOLOGI', 'B'), (9, 'KIMIA', 'B'),
+(10, 'PENGAJIAN AM', 'A'), (10, 'MATEMATIK T', 'A'), (10, 'FIZIK', 'A'),
+(11, 'PENGAJIAN AM', 'B'), (11, 'EKONOMI', 'B'), (11, 'SEJARAH', 'A'),
+(12, 'PENGAJIAN AM', 'C'), (12, 'MATEMATIK T', 'B'), (12, 'ICT', 'B'),
+(13, 'PENGAJIAN AM', 'A'), (13, 'BIOLOGI', 'A'), (13, 'KIMIA', 'A'),
+(14, 'PENGAJIAN AM', 'B'), (14, 'MATEMATIK T', 'A'), (14, 'FIZIK', 'B'),
+(15, 'PENGAJIAN AM', 'A'), (15, 'EKONOMI', 'B'), (15, 'SEJARAH', 'A'),
+(16, 'PENGAJIAN AM', 'A'), (16, 'MATEMATIK T', 'B'), (16, 'ICT', 'A'),
+(17, 'PENGAJIAN AM', 'B'), (17, 'BIOLOGI', 'A'), (17, 'KIMIA', 'B'),
+(18, 'PENGAJIAN AM', 'A'), (18, 'MATEMATIK T', 'A'), (18, 'FIZIK', 'A'),
+(19, 'PENGAJIAN AM', 'C'), (19, 'EKONOMI', 'C'), (19, 'SEJARAH', 'B'),
+(20, 'PENGAJIAN AM', 'B'), (20, 'MATEMATIK T', 'B'), (20, 'ICT', 'B'),
+(21, 'PENGAJIAN AM', 'A'), (21, 'BIOLOGI', 'B'), (21, 'KIMIA', 'A'),
+(22, 'PENGAJIAN AM', 'A'), (22, 'MATEMATIK T', 'A'), (22, 'FIZIK', 'B'),
+(23, 'PENGAJIAN AM', 'B'), (23, 'EKONOMI', 'A'), (23, 'SEJARAH', 'B'),
+(24, 'PENGAJIAN AM', 'B'), (24, 'MATEMATIK T', 'C'), (24, 'ICT', 'A'),
+(25, 'PENGAJIAN AM', 'A'), (25, 'BIOLOGI', 'A'), (25, 'KIMIA', 'B'),
+(26, 'PENGAJIAN AM', 'A'), (26, 'MATEMATIK T', 'A'), (26, 'FIZIK', 'A'),
+(27, 'PENGAJIAN AM', 'B'), (27, 'EKONOMI', 'B'), (27, 'SEJARAH', 'A'),
+(28, 'PENGAJIAN AM', 'C'), (28, 'MATEMATIK T', 'B'), (28, 'ICT', 'B'),
+(29, 'PENGAJIAN AM', 'A'), (29, 'BIOLOGI', 'A'), (29, 'KIMIA', 'A'),
+(30, 'PENGAJIAN AM', 'A'), (30, 'MATEMATIK T', 'B'), (30, 'FIZIK', 'A');

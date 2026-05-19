@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="jumbotron text-center"
+    style="padding: 30px 15px; margin-bottom: 25px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); background-color: #fcf8e3; border: 1px solid #faebcc;">
+    <h1 style="color: #8a6d3b;"><span class="glyphicon glyphicon-queen"></span> Panel Pentadbir</h1>
+    <p style="font-size: 16px; color: #666;">Sistem Maklumat Pengurusan Pelajar (SMIS)</p>
+    <p style="font-size: 14px;">
+        <span class="label label-danger" style="padding: 5px 10px; font-weight: bold;">PENTADBIR SISTEM (ADMIN
+            ACTIVE)</span>
+    </p>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="row">
+
+            <div class="col-md-6">
+                <div class="panel panel-danger"
+                    style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-color: #ebccd1;">
+                    <div class="panel-heading"
+                        style="background-color: #f2dede; border-color: #ebccd1; color: #a94442;">
+                        <h3 class="panel-title" style="font-weight: bold;">
+                            <span class="glyphicon glyphicon-cog"></span> Konfigurasi Utama Sistem
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                        <p class="text-muted" style="font-size: 13px;">Urus tetapan data asas sistem pendaftaran, edit
+                            kriteria mata pelajaran STPM, dan konfigurasi pakej pengajian aktif.</p>
+                        <a href="{{ url_for('admin_settings') }}" class="btn btn-danger btn-block"
+                            style="margin-top: 15px; padding: 10px; font-weight: bold;">
+                            <span class="glyphicon glyphicon-th-list"></span> Urus Tetapan &amp; Kriteria Aliran
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="panel panel-primary" style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="panel-heading">
+                        <h3 class="panel-title" style="font-weight: bold;">
+                            <span class="glyphicon glyphicon-user"></span> Direktori Pangkalan Pelajar
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                        <p class="text-muted" style="font-size: 13px;">Akses senarai induk data pendaftaran pelajar.
+                            Pantau kelayakan keputusan SPM, semak muat naik dokumen, dan sahkan status pengajian.</p>
+                        <a href="{{ url_for('admin_view_students_list') }}" class="btn btn-primary btn-block"
+                            style="margin-top: 15px; padding: 10px; font-weight: bold;">
+                            <span class="glyphicon glyphicon-list"></span> Lihat Senarai Pelajar Berdaftar
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<div class="row" style="margin-top: 20px;">
+    <div class="col-md-12">
+        <div class="panel panel-info" style="box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="panel-heading">
+                <h3 class="panel-title" style="font-weight: bold;">
+                    <span class="glyphicon glyphicon-stats"></span> Analitik Sistem
+                </h3>
+            </div>
+            <div class="panel-body text-center">
+                <p class="text-muted">Lihat taburan statistik pendaftaran pelajar dan pakej aliran.</p>
+                <a href="{{ url_for('admin_statistics') }}" class="btn btn-info" style="padding: 10px 30px;">
+                    <span class="glyphicon glyphicon-signal"></span> Buka Papan Pemuka Statistik
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

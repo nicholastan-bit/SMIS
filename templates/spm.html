@@ -7,7 +7,9 @@
         semula.</p>
     <hr>
 
-    <form action="/submit_spm" method="POST">
+    <form action="/submit_spm" method="POST" enctype="multipart/form-data"
+        onsubmit="return confirm('Adakah anda pasti keputusan SPM ini adalah betul sebelum menghantar?');">
+
         <table class="table table-bordered" id="spm-table">
             <thead>
                 <tr class="bg-primary">
@@ -17,50 +19,83 @@
                 </tr>
             </thead>
             <tbody id="spm-body">
-                {% if existing_spm %}
-                {% for s in existing_spm %}
-                {% set loop_index = loop.index0 %}
+               {% if existing_spm %}
+               {% for s in existing_spm %}
+               {% set loop_index = loop.index0 %}
                 {% include "spm_row_template.html" %}
                 {% endfor %}
                 {% else %}
-                {# Render one empty row for new users so the script has a template to clone #}
+               {# Render one empty row for new users so the system displays an input immediately #}
                 {% set s = {'subjek': '', 'gred': ''} %}
-                {% set loop_index = 0 %}
-                {% include "spm_row_template.html" %}
-                {% endif %}
+               {% set loop_index = 0 %}
+               {% include "spm_row_template.html" %}
+               {% endif %}
             </tbody>
         </table>
 
         <button type="button" class="btn btn-default" onclick="addRow()">
             <span class="glyphicon glyphicon-plus"></span> Tambah Subjek
         </button>
+
         <hr>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title"><span class="glyphicon glyphicon-upload"></span> Muat Naik Slip Keputusan SPM
+                    (Pilihan)</h4>
+            </div>
+            <div class="panel-body">
+                <div class="form-group">
+                    <label for="spm_slip">Sila pilih fail slip SPM anda (Format: PDF, PNG, JPG sahaja | Had Saiz:
+                        2MB):</label>
+                    <input type="file" name="spm_slip" id="spm_slip" class="form-control"
+                        accept=".pdf, .png, .jpg, .jpeg" onchange="validateFile(this)">
+                    <p class="help-block" id="file-error-msg"
+                        style="color: #a94442; display: none; font-weight: bold; margin-top: 5px;"></p>
+                </div>
+            </div>
+        </div>
+
         <button type="submit" class="btn btn-success">
             <span class="glyphicon glyphicon-floppy-disk"></span> Simpan Keputusan
         </button>
     </form>
 </div>
 
-{# Move the row structure to a reusable script template to make addRow() cleaner #}
+{# Reusable template slot used by the script engine #}
 <script type="text/template" id="row-template">
     {% set s = {'subjek': '', 'gred': ''} %}
     {% set loop_index = 1 %}
     {% include "spm_row_template.html" %}
 </script>
 
-<script>
-    function toggleOther(selectElement) {
-        const row = selectElement.closest('tr');
-        const otherInput = row.querySelector('.other-input');
+<script type="text/javascript">
+    function validateFile(input) {
+        const errorMsg = document.getElementById('file-error-msg');
+        const file = input.files[0];
 
-        if (selectElement.value === "LAIN-LAIN") {
-            otherInput.style.display = "block";
-            otherInput.required = true;
-        } else {
-            otherInput.style.display = "none";
-            otherInput.required = false;
-            otherInput.value = "";
+        if (!file) {
+            errorMsg.style.display = 'none';
+            return;
         }
+
+        const maxSize = 2 * 1024 * 1024;
+        if (file.size > maxSize) {
+            errorMsg.innerText = "Ralat: Saiz fail melebihi had 2MB. Sila pilih fail yang lebih kecil.";
+            errorMsg.style.display = 'block';
+            input.value = '';
+            return;
+        }
+
+        const allowedExtensions = /(\.pdf|\.png|\.jpg|\.jpeg)$/i;
+        if (!allowedExtensions.exec(input.value)) {
+            errorMsg.innerText = "Ralat: Format fail tidak sah. Hanya format PDF, PNG, dan JPG sahaja yang dibenarkan.";
+            errorMsg.style.display = 'block';
+            input.value = '';
+            return;
+        }
+
+        errorMsg.style.display = 'none';
     }
 
     function addRow() {
@@ -71,13 +106,15 @@
         newRow.className = "spm-row";
         newRow.innerHTML = template.replace('<tr>', '').replace('</tr>', '');
 
-        // Add delete button to new rows
+        // Safely map the close/delete action structure to newly appended row configurations
         const actionCell = newRow.querySelector('.action-cell');
-        actionCell.innerHTML = `
-            <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()">
-                <span class="glyphicon glyphicon-trash"></span>
-            </button>
-        `;
+        if (actionCell) {
+            actionCell.innerHTML = `
+                <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()">
+                    <span class="glyphicon glyphicon-trash"></span>
+                </button>
+            `;
+        }
 
         tbody.appendChild(newRow);
     }

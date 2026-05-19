@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 col-md-offset-1">
+        <h2 class="text-center">SMIS - Pemilihan Pakej Mata Pelajaran Tingkatan 6</h2>
+        <p class="text-muted text-center">Sistem menapis secara automatik pakej kelas yang layak anda sertai berdasarkan
+            keputusan gred SPM.</p>
+        <hr>
+
+        <div class="panel panel-default">
+            <div class="panel-heading"><span class="glyphicon glyphicon-dashboard"></span> Ringkasan Profil Kelayakan
+                Akademik</div>
+            <div class="panel-body">
+                <div class="row text-center">
+                    <div class="col-sm-4">
+                        <h5><strong>Matematik SPM:</strong></h5>
+                        {% if math_pass %}
+                        <span class="label label-success" style="font-size: 13px;"><span
+                                class="glyphicon glyphicon-ok-sign"></span> Lulus Syarat (Gred &ge; C)</span>
+                        {% else %}
+                        <span class="label label-danger" style="font-size: 13px;"><span
+                                class="glyphicon glyphicon-remove-sign"></span> Kurang Gred C</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-sm-4">
+                        <h5><strong>Sains / Sains Tulen SPM:</strong></h5>
+                        {% if science_pass %}
+                        <span class="label label-success" style="font-size: 13px;"><span
+                                class="glyphicon glyphicon-ok-sign"></span> Lulus Syarat (Gred &ge; C)</span>
+                        {% else %}
+                        <span class="label label-danger" style="font-size: 13px;"><span
+                                class="glyphicon glyphicon-remove-sign"></span> Kurang Gred C</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-sm-4">
+                        <h5><strong>Keadaan Kesihatan Mata:</strong></h5>
+                        {% if eyes_good %}
+                        <span class="label label-success" style="font-size: 13px;"><span
+                                class="glyphicon glyphicon-eye-open"></span> Normal / Baik</span>
+                        {% else %}
+                        <span class="label label-warning" style="font-size: 13px;"><span
+                                class="glyphicon glyphicon-eye-close"></span> Rabun Warna / Bermasalah</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 30px; margin-bottom: 20px;"><span class="glyphicon glyphicon-list-alt"></span> Senarai
+            Pakej Aliran Yang Layak Disertai</h3>
+
+        {% if packages %}
+        <form action="/submit_package" method="POST"
+            onsubmit="return confirm('Adakah anda pasti mahu menyimpan pilihan pakej ini? Tindakan ini memuktamadkan pendaftaran aliran pengajian anda.');">
+            <div class="row">
+                {% for p in packages %}
+                <div class="col-md-6">
+                    <div class="panel {{ 'panel-primary' if p.id_pakej == current_package_id else 'panel-info' }}"
+                        style="box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 25px;">
+                        <div class="panel-heading"
+                            style="display: flex; justify-content: space-between; align-items: center;">
+                            <h4 class="panel-title" style="font-weight: bold;">
+                                <span class="glyphicon glyphicon-book"></span> KOD PAKEJ: {{ p.kod_pakej }}
+                            </h4>
+                            <span class="label label-default"
+                                style="text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px;">{{ p.aliran
+                                }}</span>
+                        </div>
+                        <div class="panel-body">
+                            <h5 style="margin-bottom: 12px; font-weight: bold; color: #555;">Mata Pelajaran Ditawarkan:
+                            </h5>
+                            <ul class="list-group" style="margin-bottom: 15px;">
+                                {% for subjek in p.subjek %}
+                                <li class="list-group-item"
+                                    style="padding: 8px 15px; font-size: 12px; border-left: 3px solid #5bc0de;">
+                                    <span class="glyphicon glyphicon-chevron-right text-muted"
+                                        style="font-size: 10px; margin-right: 5px;"></span> {{ subjek }}
+                                </li>
+                                {% endfor %}
+                            </ul>
+
+                            <div class="well well-sm text-center"
+                                style="margin-bottom: 15px; background-color: #fafafa; border: 1px dashed #ddd;">
+                                <small class="text-muted" style="font-size: 11px;">Kekosongan Semasa: </small>
+                                <strong style="color: #2e6da4; font-size: 14px;">{{ p.kekosongan }}</strong> / {{
+                                p.had_maksimum }} Tempat Kosong
+                            </div>
+
+                            <div class="radio text-center" style="margin-top: 10px; margin-bottom: 5px;">
+                                <label
+                                    style="font-size: 14px; font-weight: bold; cursor: pointer; display: inline-block;">
+                                    <input type="radio" name="pilihan_pakej" value="{{ p.id_pakej }}" required
+                                        {{ 'checked' if p.id_pakej==current_package_id else '' }}
+                                        style="margin-right: 8px; vertical-align: middle;">
+                                    {% if p.id_pakej == current_package_id %}
+                                    <span class="text-primary"><span class="glyphicon glyphicon-saved"></span> Pakej
+                                        Pilihan Anda Semasa</span>
+                                    {% else %}
+                                    <span>Pilih Pakej Ini</span>
+                                    {% endif %}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <hr style="margin-top: 15px; margin-bottom: 25px;">
+            <button type="submit" class="btn btn-success btn-lg btn-block"
+                style="font-weight: bold; height: 50px; font-size: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">
+                <span class="glyphicon glyphicon-floppy-saved"></span> Sahkan Dan Simpan Pilihan Pakej Aliran
+            </button>
+        </form>
+        {% else %}
+        <div class="alert alert-danger text-center"
+            style="margin-top: 20px; padding: 30px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <h4><span class="glyphicon glyphicon-exclamation-sign"
+                    style="font-size: 24px; margin-bottom: 10px; display: block;"></span> Tiada Pakej Tersedia</h4>
+            <p style="font-size: 14px; line-height: 1.6;">Maaf, tiada kombinasi pakej kelas pengajian yang sepadan
+                dengan kriteria kelayakan akademik SPM anda, atau pilihan kelas yang layak disertai telah memenuhi had
+                kapasiti maksimum kuota pendaftaran. Sila berhubung terus dengan pihak pentadbir sekolah untuk bantuan
+                lanjut.</p>
+        </div>
+        {% endif %}
+
+        <div class="text-center" style="margin-top: 25px; margin-bottom: 60px;">
+            <a href="{{ url_for('index') }}" class="btn btn-default" style="padding: 8px 20px;"><span
+                    class="glyphicon glyphicon-home"></span> Kembali ke Menu Utama</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -6,7 +6,8 @@
         <h2 class="text-center">SMIS - Pendaftaran Pelajar</h2>
         <hr>
 
-        <form action="/submit" method="POST">
+        <form action="/submit" method="POST"
+            onsubmit="return confirm('Adakah anda pasti maklumat profil pelajar ini adalah betul sebelum menghantar?');">
             <div class="well" style="background-color: #f9f9f9; border-left: 5px solid #337ab7;">
                 <div class="form-group" style="margin-bottom: 0;">
                     <label for="no_kp_pelajar">No. Kad Pengenalan (Identiti Disahkan)</label>
@@ -43,20 +44,19 @@
                                     else '' }}>Perempuan</option>
                             </select>
                         </div>
-                        <div class="col-md-4 form-group">
-                            <label>Bangsa</label>
-                            <select name="bangsa" class="form-control" required>
-                                <option value="" disabled {{ 'selected' if not student else '' }}>Pilih Bangsa</option>
-                                <option value="MELAYU" {{ 'selected' if student and student.bangsa=='MELAYU' else '' }}>
-                                    Melayu</option>
-                                <option value="CINA" {{ 'selected' if student and student.bangsa=='CINA' else '' }}>Cina
-                                </option>
-                                <option value="INDIA" {{ 'selected' if student and student.bangsa=='INDIA' else '' }}>
-                                    India</option>
-                                <option value="LAIN-LAIN" {{ 'selected' if student and student.bangsa=='LAIN-LAIN'
-                                    else '' }}>Lain-lain</option>
-                            </select>
-                        </div>
+                    <div class="col-md-4 form-group">
+                        <label>Bangsa</label>
+                        <select name="bangsa" class="form-control" required>
+                            <option value="">-- Sila Pilih --</option>
+                            <option value="MELAYU" {{ 'selected' if student and student.bangsa=='MELAYU' else '' }}>Melayu</option>
+                            <option value="CINA" {{ 'selected' if student and student.bangsa=='CINA' else '' }}>Cina</option>
+                            <option value="INDIA" {{ 'selected' if student and student.bangsa=='INDIA' else '' }}>India</option>
+                            <option value="SABAH/SARAWAK" {{ 'selected' if student and student.bangsa=='SABAH/SARAWAK' else '' }}>Sabah /
+                                Sarawak</option>
+                            <option value="BUKAN WARGANEGARA" {{ 'selected' if student and student.bangsa=='BUKAN WARGANEGARA' else '' }}>
+                                Bukan Warganegara</option>
+                        </select>
+                    </div>
                         <div class="col-md-4 form-group">
                             <label>Agama</label>
                             <select name="agama" class="form-control" required>
@@ -86,6 +86,7 @@
                         <div class="col-md-6 form-group">
                             <label>No. Telefon</label>
                             <input type="text" name="telefonNo" class="form-control"
+                                oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                 value="{{ student.telefonNo if student else '' }}" required>
                         </div>
                     </div>
@@ -114,17 +115,6 @@
                                 <option value="LAIN-LAIN" {{ 'selected' if student and
                                     student.cara_datang_sekolah=='LAIN-LAIN' else '' }}>Lain-lain</option>
                             </select>
-                        </div>
-                        <div class="col-md-4 form-group">
-                            <label>Warganegara</label><br>
-                            <label class="radio-inline">
-                                <input type="radio" name="warganegara" value="1" {{ 'checked' if student and
-                                    student.warganegara==1 else '' }} required> Ya
-                            </label>
-                            <label class="radio-inline">
-                                <input type="radio" name="warganegara" value="0" {{ 'checked' if student and
-                                    student.warganegara==0 else '' }}> Bukan
-                            </label>
                         </div>
                         <div class="col-md-4 form-group">
                             <label>Tarikh Tamat Sekolah</label>

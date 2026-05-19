@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 col-md-offset-1">
+        <h2 class="text-center">SMIS - Maklumat Tambahan Pelajar</h2>
+        <p class="text-muted text-center">Sila lengkapkan maklumat tambahan dan muat naik dokumen sokongan yang
+            diperlukan di bawah.</p>
+        <hr>
+
+        <form action="/submit_additional" method="POST" enctype="multipart/form-data"
+            onsubmit="return confirm('Adakah anda pasti semua maklumat tambahan dan dokumen ini adalah betul sebelum menghantar?');">
+
+            <div class="well" style="background-color: #f9f9f9; border-left: 5px solid #5cb85c;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="no_kp_pelajar">No. Kad Pengenalan (Identiti Disahkan)</label>
+                    <input type="text" name="no_kp_pelajar" id="no_kp_pelajar" class="form-control input-lg"
+                        value="{{ verified_kp }}" readonly
+                        style="background-color: #eee; cursor: not-allowed; font-weight: bold;">
+                </div>
+            </div>
+
+            <div class="panel panel-success">
+                <div class="panel-heading">Maklumat Tambahan Peribadi</div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label for="tempat_lahir_pelajar">Tempat Lahir <span class="text-danger">*</span></label>
+                            <input type="text" name="tempat_lahir_pelajar" id="tempat_lahir_pelajar" class="form-control"
+                                placeholder="Contoh: HOSPITAL KUALA LUMPUR" value="{{ student.tempat_lahir if student.tempat_lahir else '' }}"
+                                required>
+                        </div>
+
+                        <div class="col-md-6 form-group">
+                            <label for="no_surat_beranak_pelajar">No. Sijil Kelahiran / Surat Beranak <span class="text-danger">*</span></label>
+                            <input type="text" name="no_surat_beranak_pelajar" id="no_surat_beranak_pelajar" class="form-control"
+                                placeholder="Contoh: AA12345" value="{{ student.no_surat_beranak if student.no_surat_beranak else '' }}"
+                                required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label for="keadaan_mata">Keadaan Mata <span style="color: red;">*</span></label>
+                            <select name="keadaan_mata" id="keadaan_mata" class="form-control" required>
+                                <option value="">-- Pilih Keadaan Mata --</option>
+                                <option value="BAIK" {{ 'selected' if existing_additional and
+                                    existing_additional.keadaan_mata=='BAIK' else '' }}>Baik</option>
+                                <option value="KURANG BAIK" {{ 'selected' if existing_additional and
+                                    existing_additional.keadaan_mata=='KURANG BAIK' else '' }}>Kurang Baik</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel panel-info">
+                <div class="panel-heading">Muat Naik Dokumen Sokongan (Maksimum 2MB per fail)</div>
+                <div class="panel-body">
+
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label for="surat_tawaran">Muat Naik Surat Tawaran (Format: PDF, PNG, JPG sahaja) <span
+                                style="color: red;">*</span></label>
+                        <input type="file" name="surat_tawaran" id="surat_tawaran" class="form-control"
+                            accept=".pdf, .png, .jpg, .jpeg" onchange="validateFile(this)" required>
+                        {% if existing_additional and existing_additional.surat_tawaran_path %}
+                        <p class="help-block text-success"><span class="glyphicon glyphicon-ok-sign"></span> Fail surat
+                            tawaran sedia ada telah disimpan.</p>
+                        {% endif %}
+                    </div>
+
+                    <hr style="margin: 15px 0;">
+
+                    <div class="form-group">
+                        <label for="ic_photo">Muat Naik Kad Pengenalan / Gambar IC (Format: PDF, PNG, JPG sahaja) <span
+                                style="color: red;">*</span></label>
+                        <input type="file" name="ic_photo" id="ic_photo" class="form-control"
+                            accept=".pdf, .png, .jpg, .jpeg" onchange="validateFile(this)" required>
+                        {% if existing_additional and existing_additional.ic_photo_path %}
+                        <p class="help-block text-success"><span class="glyphicon glyphicon-ok-sign"></span> Fail gambar
+                            IC sedia ada telah disimpan.</p>
+                        {% endif %}
+                    </div>
+
+                    <p class="help-block" id="file-error-msg"
+                        style="color: #a94442; display: none; font-weight: bold; margin-top: 15px;"></p>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-success btn-block btn-lg">
+                {{ 'Kemaskini Maklumat Tambahan' if existing_additional else 'Hantar Maklumat Tambahan' }}
+            </button>
+        </form>
+    </div>
+</div>
+
+<script type="text/javascript">
+    function validateFile(input) {
+        const errorMsg = document.getElementById('file-error-msg');
+        const file = input.files[0];
+
+        if (!file) {
+            errorMsg.style.display = 'none';
+            return;
+        }
+
+        // 1. Had Saiz Keselamatan 2MB (2 * 1024 * 1024 bytes)
+        const maxSize = 2 * 1024 * 1024;
+        if (file.size > maxSize) {
+            errorMsg.innerText = "Ralat: Saiz fail '" + file.name + "' melebihi had 2MB. Sila pilih fail yang lebih kecil.";
+            errorMsg.style.display = 'block';
+            input.value = ''; // Reset pilihan input fail
+            return;
+        }
+
+        // 2. Had Jenis Format Fail Keselamatan
+        const allowedExtensions = /(\.pdf|\.png|\.jpg|\.jpeg)$/i;
+        if (!allowedExtensions.exec(input.value)) {
+            errorMsg.innerText = "Ralat: Format fail '" + file.name + "' tidak sah. Hanya format PDF, PNG, dan JPG sahaja yang dibenarkan.";
+            errorMsg.style.display = 'block';
+            input.value = ''; // Reset pilihan input fail
+            return;
+        }
+
+        // Sembunyikan mesej ralat sekiranya semua validasi lulus
+        errorMsg.style.display = 'none';
+    }
+</script>
+{% endblock %}

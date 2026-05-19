@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container">
+    <h2>Analitik Sistem</h2>
+
+    <div class="row">
+        <div class="col-md-3">
+            <div class="panel panel-primary text-center">
+                <div class="panel-heading">Jumlah Pelajar</div>
+                <div class="panel-body">
+                    <h3>{{ total_students }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="panel panel-success text-center">
+                <div class="panel-heading">Jumlah Pakej</div>
+                <div class="panel-body">
+                    <h3>{{ total_packages }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="GET" class="form-inline" style="margin-bottom: 20px;">
+        <label>Pilih Kategori:</label>
+        <select name="type" class="form-control" onchange="this.form.submit()">
+            <option value="jantina" {% if current_type=='jantina' %}selected{% endif %}>Jantina</option>
+            <option value="bangsa" {% if current_type=='bangsa' %}selected{% endif %}>Bangsa</option>
+            <option value="agama" {% if current_type=='agama' %}selected{% endif %}>Agama</option>
+            <option value="cara_datang" {% if current_type=='cara_datang' %}selected{% endif %}>Cara Datang</option>
+        </select>
+
+        <label style="margin-left: 10px;">Pilih Pakej:</label>
+        <select name="package_id" class="form-control" onchange="this.form.submit()">
+            <option value="all">Semua Pakej</option>
+            {% for pkg in all_packages %}
+            <option value="{{ pkg.id_pakej }}" {% if current_pkg|string==pkg.id_pakej|string %}selected{% endif %}>
+                {{ pkg.kod_pakej }}
+            </option>
+            {% endfor %}
+        </select>
+    </form>
+
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr style="background-color: #f5f5f5;">
+                <th>Pakej Aliran</th>
+                <th>Kategori ({{ current_type|replace('_', ' ')|title }})</th>
+                <th>Jumlah Pelajar</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% set ns = namespace(last_pkg='') %}
+            {% for row in stats %}
+            <tr>
+                <td style="vertical-align: middle; font-weight: bold;">
+                    {% if row.nama_pakej != ns.last_pkg %}
+                    {{ row.nama_pakej }}
+                    {% set ns.last_pkg = row.nama_pakej %}
+                    {% endif %}
+                </td>
+                <td>{{ row.category }}</td>
+                <td>
+                    <span class="badge">{{ row.total }}</span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
