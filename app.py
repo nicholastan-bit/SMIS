@@ -14,12 +14,14 @@ def get_db_connection():
 UPLOAD_FOLDER_SPM = os.path.join(app.root_path, 'static', 'uploads', 'spm_slips')
 UPLOAD_FOLDER_DOCS = os.path.join(app.root_path, 'static', 'uploads', 'student_docs')
 
+# Add this line to your existing configuration block
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER_SPM  # <--- ADD THIS LINE
 app.config['UPLOAD_FOLDER_SPM'] = UPLOAD_FOLDER_SPM
 app.config['UPLOAD_FOLDER_DOCS'] = UPLOAD_FOLDER_DOCS
-app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # Kekalkan had keselamatan 2MB
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
 
 # Pastikan kedua-dua folder wujud di dalam direktori
-os.makedirs(UPLOAD_FOLDER_SPM, exist_ok=True)
+os.makedirs(UPLOAD_FOLDER_SPM, exist_ok=True)   
 os.makedirs(UPLOAD_FOLDER_DOCS, exist_ok=True)
 
 def allowed_file(filename):
@@ -504,7 +506,7 @@ def submit_spm():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Retrieve internal index identifier targeting active session identity
+    # Retrieve internal index identifier
     cursor.execute("SELECT no_pendaftaran_pelajar FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
     student_record = cursor.fetchone()
 
@@ -516,29 +518,37 @@ def submit_spm():
 
     student_id = student_record[0]
 
-    # --- NEW: SAFE FILE UPLOAD PROCESSING SEGMENT ---
-    file_path_to_save = None
+    # --- FILE UPLOAD PROCESSING ---
+    secure_new_name = None
     if 'spm_slip' in request.files:
         file = request.files['spm_slip']
         if file and file.filename != '' and allowed_file(file.filename):
             original_filename = secure_filename(file.filename)
             file_ext = original_filename.rsplit('.', 1)[1].lower()
             
-            # Format clean, uniform filename bound to student identification keys
+            # Format filename bound to student KP
             secure_new_name = f"{kp}_slip.{file_ext}"
-            file_path_to_save = os.path.join(app.config['UPLOAD_FOLDER'], secure_new_name)
-            file.save(file_path_to_save)
-    # ------------------------------------------------
+            # Use UPLOAD_FOLDER_SPM specifically
+            save_path = os.path.join(app.config['UPLOAD_FOLDER_SPM'], secure_new_name)
+            file.save(save_path)
 
-    # Extract dynamic arrays representing subjects and grades from frontend inputs
+            # Update the pelajar table with the filename
+            update_query = """
+                UPDATE pelajar 
+                SET spm_slip_filename = %s 
+                WHERE no_pendaftaran_pelajar = %s
+            """
+            cursor.execute(update_query, (secure_new_name, student_id))
+
+    # --- ACADEMIC DATA PROCESSING ---
     subjek_list = request.form.getlist('subjek[]')
     gred_list = request.form.getlist('gred[]')
 
     try:
-        # Purge existing stale academic rows to overwrite with fresh data structures cleanly
+        # Purge existing stale academic rows
         cursor.execute("DELETE FROM spm_hasil WHERE no_pendaftaran_pelajar = %s", (student_id,))
 
-        # Batch insert operation utilizing normalized values
+        # Batch insert operation
         for subjek, gred in zip(subjek_list, gred_list):
             if subjek.strip() != "" and gred.strip() != "":
                 cursor.execute(
@@ -555,6 +565,8 @@ def submit_spm():
     finally:
         cursor.close()
         conn.close()
+
+    return redirect(url_for('index'))
 
     return redirect(url_for('index'))
 
@@ -634,9 +646,6 @@ def package_page():
         flash("Borang ini sedang ditutup oleh pentadbir.", "warning")
         return redirect(url_for('index'))
 
-    """Evaluates student qualifications and dynamic class capacity limits to 
-    display only open, eligible Form 6 packages. Blocks entry if already selected.
-    """
     kp = session.get('verified_kp')
     if not kp:
         flash("Sila masukkan No. KP anda terlebih dahulu.", "warning")
@@ -655,24 +664,21 @@ def package_page():
     if not student:
         cursor.close()
         conn.close()
-        flash("Sila lengkapkan Profil Pendaftaran utama terlebih dahulu di Langkah 1.", "warning")
+        flash("Sila lengkapkan Profil Pendaftaran utama terlebih dahulu.", "warning")
         return redirect(url_for('index'))
 
-    # =========================================================================
-    # 🔒 NEW GATEKEEPER CHECK: Block access if a package has already been chosen
-    # =========================================================================
+    # Gatekeeper: Block if already chosen
     if student['id_pakej'] is not None and student['id_pakej'] != 0:
         cursor.close()
         conn.close()
-        flash("Akses Ditutup: Anda telah menghantar pilihan pakej aliran pengajian anda. Sila hubungi guru bertugas untuk ubahsuai maklumat.", "warning")
+        flash("Akses Ditutup: Anda telah menghantar pilihan pakej.", "warning")
         return redirect(url_for('index'))
-    # =========================================================================
 
-    # REQUIREMENT CHECK: Ensure Step 3 (Maklumat Tambahan) is complete first
+    # Requirement Check
     if not student['tempat_lahir'] or not student['no_surat_beranak'] or not student['keadaan_mata']:
         cursor.close()
         conn.close()
-        flash("Akses Disekat: Sila lengkapkan Borang Maklumat Tambahan & Dokumen Sokongan terlebih dahulu.", "warning")
+        flash("Akses Disekat: Sila lengkapkan Borang Maklumat Tambahan.", "warning")
         return redirect(url_for('index'))
 
     student_id = student['no_pendaftaran_pelajar']
@@ -687,46 +693,35 @@ def package_page():
     if not spm_results:
         cursor.close()
         conn.close()
-        flash("Akses Disekat: Sila masukkan Keputusan Akademik SPM anda terlebih dahulu.", "warning")
+        flash("Akses Disekat: Sila masukkan Keputusan Akademik SPM.", "warning")
         return redirect(url_for('index'))
 
-    # Clean subject and grade collections
     grades = {str(row['subjek']).strip().upper(): str(row['gred']).strip().upper() for row in spm_results}
 
     def pass_c(subject_name):
-        gred = grades.get(subject_name)
-        return gred in ['A+', 'A', 'A-', 'B+', 'B', 'C+', 'C']
+        return grades.get(subject_name) in ['A+', 'A', 'A-', 'B+', 'B', 'C+', 'C']
 
     has_math_c = pass_c('MATEMATIK')
-    has_science_c = (
-        pass_c('SAINS') or pass_c('KIMIA') or pass_c('BIOLOGI') or 
-        pass_c('FIZIK') or pass_c('KIMIA BIOLOGI')
-    )
+    has_science_c = any(pass_c(sub) for sub in ['SAINS', 'KIMIA', 'BIOLOGI', 'FIZIK', 'KIMIA BIOLOGI'])
 
-    # 3. Qualification filter lists matching institutional matrices
-    eligible_prefixes = []
-    if has_math_c:
-        if has_science_c:
-            eligible_prefixes = ['BK', 'CK', 'FK', 'AH', 'CV', 'AP', 'BP', 'BS', 'BY', 'GB', 'GP', 'HT', 'HP', 'HY', 'VB', 'VS'] if eyes_good else ['BK', 'CK', 'FK', 'AH', 'AP', 'BP', 'BS', 'BY', 'GB', 'GP', 'HT', 'HP', 'HY']
-        else:
-            eligible_prefixes = ['AH', 'CV', 'AP', 'BP', 'BS', 'BY', 'GB', 'GP', 'HT', 'HP', 'HY', 'VB', 'VS'] if eyes_good else ['AH', 'AP', 'BP', 'BS', 'BY', 'GB', 'GP', 'HT', 'HP', 'HY']
-    else:
-        if has_science_c:
-            eligible_prefixes = ['AH', 'CV', 'AP', 'BP', 'BS', 'BY', 'GB', 'GP', 'HT', 'HP', 'HY', 'VB', 'VS'] if eyes_good else ['AH', 'AP', 'BP', 'BS', 'BY', 'GB', 'GP', 'HT', 'HP', 'HY']
-        else:
-            eligible_prefixes = ['AH', 'CV', 'AP', 'BP', 'BS', 'BY', 'GB', 'GP', 'HT', 'HP', 'HY', 'VB', 'VS'] if eyes_good else ['AH', 'AP', 'BP', 'BY', 'GB', 'GP', 'HT', 'HP', 'HY']
+    # 3. FIXED LOGIC: Strict Requirement Enforcement
+    # Start with all available packages
+    all_packages_list = ['AH', 'AP', 'BP', 'BS', 'BY', 'GB', 'GP', 'HT', 'HP', 'HY', 'CV', 'VB', 'VS', 'BK', 'CK', 'FK']
+    
+    # Rule A: Science Packages require BOTH Math and Science >= C
+    if not (has_math_c and has_science_c):
+        all_packages_list = [p for p in all_packages_list if p not in ['BK', 'CK', 'FK']]
 
-    # 4. Fetch the real-time registration counts per package dynamically
-    cursor.execute("""
-        SELECT id_pakej, COUNT(*) as total_registered 
-        FROM pelajar 
-        WHERE id_pakej IS NOT NULL AND id_pakej != 0 
-        GROUP BY id_pakej
-    """)
-    counts_rows = cursor.fetchall()
-    package_counts = {row['id_pakej']: row['total_registered'] for row in counts_rows}
+    # Rule B: Seni Visual packages require good eyesight
+    if not eyes_good:
+        all_packages_list = [p for p in all_packages_list if p not in ['CV', 'VB', 'VS']]
+    
+    eligible_prefixes = all_packages_list
 
-    # 5. Pull internal institutional packages alongside their mapped subjects
+    # 4 & 5. Fetch Counts & Package Data
+    cursor.execute("SELECT id_pakej, COUNT(*) as total_registered FROM pelajar WHERE id_pakej IS NOT NULL AND id_pakej != 0 GROUP BY id_pakej")
+    package_counts = {row['id_pakej']: row['total_registered'] for row in cursor.fetchall()}
+
     cursor.execute("""
         SELECT p.id_pakej, p.kod_pakej, p.aliran, s.nama_subjek 
         FROM pakej p
@@ -739,54 +734,33 @@ def package_page():
     cursor.close()
     conn.close()
 
-    # 6. Build the dynamic view list filtering by requirements and full capacity limits
+    # 6. Build Map
     packages_map = {}
     for row in all_rows:
         raw_kod = str(row['kod_pakej']).strip()
-        kod_upper = raw_kod.upper()
         p_id = row['id_pakej']
+        prefix = ''.join([c for c in raw_kod.upper() if c.isalpha()])
         
-        # Strip trailing numeric tokens to extract clean letters (e.g., BK1 -> BK)
-        prefix = ''.join([char for char in kod_upper if char.isalpha()])
-        
-        # Rule Check A: Remove package from visibility if student lacks prerequisites
         if prefix not in eligible_prefixes:
             continue
 
-        # Rule Check B: Enforce customized institutional seating caps
         current_enrollment = package_counts.get(p_id, 0)
-        
-        if prefix in ['BK', 'FK', 'CK']:
-            max_limit = 20
-        elif prefix == 'CV':
-            max_limit = 30
-        else:
-            max_limit = 45
+        # Defining capacity
+        max_limit = 20 if prefix in ['BK', 'FK', 'CK'] else (30 if prefix == 'CV' else 45)
 
-        # If a class is full, hide it entirely.
-        # Exception: Keep showing the choice if the current student is already the one holding that seat!
         if current_enrollment >= max_limit and p_id != current_package_id:
             continue
 
         if raw_kod not in packages_map:
             packages_map[raw_kod] = {
-                'id_pakej': p_id,
-                'kod_pakej': raw_kod, 
-                'aliran': row['aliran'],
-                'kekosongan': max_limit - current_enrollment,
-                'had_maksimum': max_limit,
-                'subjek': []
+                'id_pakej': p_id, 'kod_pakej': raw_kod, 'aliran': row['aliran'],
+                'kekosongan': max_limit - current_enrollment, 'had_maksimum': max_limit, 'subjek': []
             }
         packages_map[raw_kod]['subjek'].append(row['nama_subjek'])
 
-    return render_template(
-        'package.html', 
-        packages=list(packages_map.values()), 
-        current_package_id=current_package_id,
-        math_pass=has_math_c,
-        science_pass=has_science_c,
-        eyes_good=eyes_good
-    )
+    return render_template('package.html', 
+                           packages=list(packages_map.values()), 
+                           current_package_id=current_package_id)
 
 @app.route('/submit_package', methods=['POST'])
 def submit_package():
@@ -1060,6 +1034,20 @@ def admin_statistics():
                            all_packages=all_packages,
                            current_type=category,
                            current_pkg=selected_pkg)
+
+@app.route('/admin/toggle_status/<int:student_id>', methods=['POST'])
+def toggle_status(student_id):
+    if session.get('role') != 'admin':
+        return {"error": "Unauthorized"}, 403
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    # Toggle logic: 1 becomes 0, 0 becomes 1
+    cursor.execute("UPDATE pelajar SET status_study = NOT status_study WHERE no_pendaftaran_pelajar = %s", (student_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return {"success": True}
 
 if __name__ == '__main__':
     app.run(debug=True)

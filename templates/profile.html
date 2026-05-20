@@ -17,14 +17,25 @@
                         </h4>
                     </div>
                     <div class="col-md-6 text-right">
-                        <span style="margin-right: 15px; font-size: 13px;">Status Pengajian:</span>
-                        {% if student.status_study == 1 %}
-                        <span class="label label-success" style="padding: 6px 12px; font-size: 12px;">AKTIF</span>
-                        {% else %}
-                        <span class="label label-danger" style="padding: 6px 12px; font-size: 12px;">TIDAK AKTIF /
-                            TAMAT</span>
-                        {% endif %}
-                    </div>
+    <span style="margin-right: 10px; font-size: 13px;">Status Pengajian:</span>
+    <button id="statusBtn" 
+            onclick="toggleStatus({{ student.no_pendaftaran_pelajar }})"
+            class="btn btn-sm {% if student.status_study == 1 %}btn-success{% else %}btn-danger{% endif %}">
+        {{ "AKTIF" if student.status_study == 1 else "TIDAK AKTIF" }}
+    </button>
+</div>
+
+<script>
+function toggleStatus(studentId) {
+    fetch(`/admin/toggle_status/${studentId}`, { method: 'POST' })
+    .then(response => response.json())
+    .then(data => {
+        if(data.success) {
+            location.reload(); // Refresh to show new status
+        }
+    });
+}
+</script>
                 </div>
             </div>
 

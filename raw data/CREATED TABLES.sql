@@ -1,7 +1,11 @@
 -- 1. Hapus tabel jika sudah ada (Urutan dari yang memiliki Foreign Key terbanyak)
 DROP TABLE IF EXISTS spm_hasil;
 DROP TABLE IF EXISTS penjaga;
+DROP TABLE IF EXISTS edit_logs;
 DROP TABLE IF EXISTS pelajar;
+DROP TABLE IF EXISTS pakej_subjek;
+DROP TABLE IF EXISTS pakej;
+DROP TABLE IF EXISTS subjek_stpm;
 
 TRUNCATE TABLE penjaga;
 TRUNCATE TABLE spm_hasil;
@@ -10,52 +14,6 @@ TRUNCATE TABLE pelajar;
 SET FOREIGN_KEY_CHECKS = 1;
 
 SELECT * FROM pelajar;
-
--- 1. Jadual Pelajar
-CREATE TABLE pelajar (
-    no_pendaftaran_pelajar INT AUTO_INCREMENT PRIMARY KEY,
-    id_pakej INT,
-    nama_pelajar VARCHAR(100),
-    email VARCHAR(100),
-    no_kp_pelajar VARCHAR(20),
-    jantina ENUM('LELAKI', 'PEREMPUAN'),
-    bangsa ENUM('MELAYU', 'CINA', 'INDIA', 'SABAH/SARAWAK', 'BUKAN WARGANEGARA'),
-    agama ENUM('ISLAM', 'BUDDHA', 'HINDU', 'KRISTIAN', 'SIKH', 'LAIN-LAIN'),
-    tarikh_lahir DATE,
-    alamat_rumah TEXT,
-    telefonNo VARCHAR(20),
-    sekolah_tamat DATE,
-    masalah_kesihatan TEXT,
-    cara_datang_sekolah ENUM('JALAN', 'KERETA', 'MOTOR', 'BASIKAL', 'BAS', 'LAIN-LAIN'),
-    status_study TINYINT(1) DEFAULT 1,
-    spm_slip_blob LONGBLOB,
-    spm_slip_filename VARCHAR(100),
-    FOREIGN KEY (id_pakej) REFERENCES pakej(id_pakej) ON DELETE SET NULL
-) ENGINE=InnoDB;
-
--- 2. Jadual Penjaga
-CREATE TABLE penjaga (
-    no_penjaga INT AUTO_INCREMENT PRIMARY KEY,
-    no_pendaftaran_pelajar INT,
-    nama_penjaga VARCHAR(100),
-    no_kp_penjaga VARCHAR(20),
-    no_telefon VARCHAR(20),
-    penjaga ENUM('IBU', 'BAPA', 'PENJAGA'),
-    pekerjaan VARCHAR(50),
-    pendapatan DECIMAL(10, 2),
-    alamat_tempat_kerja TEXT,
-    FOREIGN KEY (no_pendaftaran_pelajar) REFERENCES pelajar(no_pendaftaran_pelajar) ON DELETE CASCADE
-) ENGINE=InnoDB;
-
--- 3. Jadual Keputusan SPM
-CREATE TABLE spm_hasil (
-    id_spm INT AUTO_INCREMENT PRIMARY KEY,
-    no_pendaftaran_pelajar INT,
-    subjek VARCHAR(100) NOT NULL,
-    gred VARCHAR(5) NOT NULL,
-    FOREIGN KEY (no_pendaftaran_pelajar) REFERENCES pelajar(no_pendaftaran_pelajar) ON DELETE CASCADE,
-    UNIQUE KEY student_subject (no_pendaftaran_pelajar, subjek)
-) ENGINE=InnoDB;
 
 -- 1. MASTER TABLE: PAKEJ
 CREATE TABLE pakej (
@@ -94,3 +52,54 @@ INSERT INTO form_settings (form_id, is_enabled) VALUES
 ('tambahan_form', TRUE),
 ('pakej_form', TRUE),
 ('penjaga_form', TRUE);
+
+CREATE TABLE pelajar (
+	no_pendaftaran_pelajar INT NOT NULL AUTO_INCREMENT,
+	nama_pelajar VARCHAR(100) DEFAULT NULL,
+	email VARCHAR(100) DEFAULT NULL,
+	no_kp_pelajar VARCHAR(20) DEFAULT NULL,
+	jantina ENUM('LELAKI', 'PEREMPUAN') DEFAULT NULL,
+	bangsa ENUM('MELAYU', 'CINA', 'INDIA', 'SABAH/SARAWAK', 'BUKAN WARGANEGARA') DEFAULT NULL,
+	agama ENUM('ISLAM', 'BUDDHA', 'HINDU', 'KRISTIAN', 'SIKH', 'LAIN-LAIN') DEFAULT NULL,
+	tarikh_lahir DATE DEFAULT NULL,
+	alamat_rumah TEXT,
+	telefonNo VARCHAR(20) DEFAULT NULL,
+	sekolah_tamat DATE DEFAULT NULL,
+	masalah_kesihatan TEXT,
+	cara_datang_sekolah ENUM('JALAN', 'KERETA', 'MOTOR', 'BASIKAL', 'BAS', 'LAIN-LAIN') DEFAULT NULL,
+	tempat_lahir VARCHAR(200) DEFAULT NULL,
+	no_surat_beranak VARCHAR(50) DEFAULT NULL,
+	keadaan_mata ENUM('BAIK', 'KURANG BAIK') DEFAULT NULL,
+	status_study TINYINT(1) DEFAULT NULL,
+	spm_slip_blob LONGBLOB,
+	spm_slip_filename VARCHAR(100) DEFAULT NULL,
+	surat_tawaran_path VARCHAR(255) DEFAULT NULL,
+	ic_photo_path VARCHAR(255) DEFAULT NULL,
+	id_pakej INT DEFAULT NULL,
+	PRIMARY KEY (no_pendaftaran_pelajar),
+	CONSTRAINT fk_pelajar_pakej FOREIGN KEY (id_pakej) REFERENCES pakej (id_pakej) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 2. Jadual Penjaga
+CREATE TABLE penjaga (
+    no_penjaga INT AUTO_INCREMENT PRIMARY KEY,
+    no_pendaftaran_pelajar INT,
+    nama_penjaga VARCHAR(100),
+    no_kp_penjaga VARCHAR(20),
+    no_telefon VARCHAR(20),
+    penjaga ENUM('IBU', 'BAPA', 'PENJAGA'),
+    pekerjaan VARCHAR(50),
+    pendapatan DECIMAL(10, 2),
+    alamat_tempat_kerja TEXT,
+    FOREIGN KEY (no_pendaftaran_pelajar) REFERENCES pelajar(no_pendaftaran_pelajar) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- 3. Jadual Keputusan SPM
+CREATE TABLE spm_hasil (
+    id_spm INT AUTO_INCREMENT PRIMARY KEY,
+    no_pendaftaran_pelajar INT,
+    subjek VARCHAR(100) NOT NULL,
+    gred VARCHAR(5) NOT NULL,
+    FOREIGN KEY (no_pendaftaran_pelajar) REFERENCES pelajar(no_pendaftaran_pelajar) ON DELETE CASCADE,
+    UNIQUE KEY student_subject (no_pendaftaran_pelajar, subjek)
+) ENGINE=InnoDB;

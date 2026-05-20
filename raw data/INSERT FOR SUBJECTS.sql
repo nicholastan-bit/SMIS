@@ -63,8 +63,3 @@ INSERT INTO pakej_subjek (id_pakej, id_subjek) VALUES (14,1),(14,2),(14,12),(14,
 
 -- BS1 (PA, MUET, PP, S.SUKAN, BM)
 INSERT INTO pakej_subjek (id_pakej, id_subjek) VALUES (15,1),(15,2),(15,12),(15,14),(15,13);
-
-SELECT p.id_pakej, p.kod_pakej, p.aliran, s.nama_subjek 
-FROM pakej p
-JOIN pakej_subjek ps ON p.id_pakej = ps.id_pakej
-JOIN subjek_stpm s ON ps.id_subjek = s.id_subjek
