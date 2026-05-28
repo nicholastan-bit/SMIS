@@ -44,9 +44,6 @@
         </div>
 
         <ul class="nav navbar-nav">
-            {% if not session.get('admin_logged') %}
-            <li><a href="{{ url_for('register_page') }}">Pendaftaran</a></li>
-            {% endif %}
 
             {% if session.get('admin_logged') %}
             <li><a href="{{ url_for('view_students') }}">Senarai Pelajar</a></li>

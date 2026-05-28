@@ -1,20 +1,3 @@
--- 1. Hapus tabel jika sudah ada (Urutan dari yang memiliki Foreign Key terbanyak)
-DROP TABLE IF EXISTS spm_hasil;
-DROP TABLE IF EXISTS penjaga;
-DROP TABLE IF EXISTS edit_logs;
-DROP TABLE IF EXISTS pelajar;
-DROP TABLE IF EXISTS pakej_subjek;
-DROP TABLE IF EXISTS pakej;
-DROP TABLE IF EXISTS subjek_stpm;
-
-TRUNCATE TABLE penjaga;
-TRUNCATE TABLE spm_hasil;
-SET FOREIGN_KEY_CHECKS = 0;
-TRUNCATE TABLE pelajar;
-SET FOREIGN_KEY_CHECKS = 1;
-
-SELECT * FROM pelajar;
-
 -- 1. MASTER TABLE: PAKEJ
 CREATE TABLE pakej (
     id_pakej INT AUTO_INCREMENT PRIMARY KEY,
@@ -30,7 +13,6 @@ CREATE TABLE subjek_stpm (
     kod_subjek VARCHAR(10) NOT NULL UNIQUE,                             -- e.g., 'PA', 'MUET', 'KIM', 'EKO'
     nama_subjek VARCHAR(100) NOT NULL                                   -- e.g., 'Pengajian Am', 'Ekonomi'
 );
-
 -- 3. JUNCTION TABLE: PAKEJ_SUBJEK (Many-to-Many Bridge)
 CREATE TABLE pakej_subjek (
     id_pakej INT NOT NULL,
@@ -54,7 +36,7 @@ INSERT INTO form_settings (form_id, is_enabled) VALUES
 ('penjaga_form', TRUE);
 
 CREATE TABLE pelajar (
-	no_pendaftaran_pelajar INT NOT NULL AUTO_INCREMENT,
+	no_pendaftaran_pelajar INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
 	nama_pelajar VARCHAR(100) DEFAULT NULL,
 	email VARCHAR(100) DEFAULT NULL,
 	no_kp_pelajar VARCHAR(20) DEFAULT NULL,
@@ -76,9 +58,17 @@ CREATE TABLE pelajar (
 	surat_tawaran_path VARCHAR(255) DEFAULT NULL,
 	ic_photo_path VARCHAR(255) DEFAULT NULL,
 	id_pakej INT DEFAULT NULL,
-	PRIMARY KEY (no_pendaftaran_pelajar),
+    aliran_dipohon ENUM('SAINS', 'SAINS SOSIAL') DEFAULT NULL,
+    status_oku ENUM('TIDAK', 'YA') DEFAULT 'TIDAK',
+    kelas VARCHAR(10),
 	CONSTRAINT fk_pelajar_pakej FOREIGN KEY (id_pakej) REFERENCES pakej (id_pakej) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE pelajar_eligibility (
+    no_kp_pelajar VARCHAR(20) NOT NULL,
+    subjek_khas ENUM('SYARIAH', 'SAINS SUKAN') NOT NULL,
+    PRIMARY KEY (no_kp_pelajar, subjek_khas)
+);
 
 -- 2. Jadual Penjaga
 CREATE TABLE penjaga (
@@ -87,7 +77,7 @@ CREATE TABLE penjaga (
     nama_penjaga VARCHAR(100),
     no_kp_penjaga VARCHAR(20),
     no_telefon VARCHAR(20),
-    penjaga ENUM('IBU', 'BAPA', 'PENJAGA'),
+    hubungan ENUM('IBU', 'BAPA', 'PENJAGA'),
     pekerjaan VARCHAR(50),
     pendapatan DECIMAL(10, 2),
     alamat_tempat_kerja TEXT,

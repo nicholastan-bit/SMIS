@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Kelayakan Subjek Khas</h2>
+<p><em>Tip: Masukkan No. KP pelajar dan pilih subjek untuk menambah atau mengemaskini kelayakan.</em></p>
+
+<!-- Form for Adding -->
+<form action="{{ url_for('submit_eligibility') }}" method="POST" class="form-inline">
+    <input type="hidden" name="action" value="add">
+    <input type="text" name="no_kp_pelajar" placeholder="No. KP Pelajar" required class="form-control">
+    <select name="subjek_khas" class="form-control">
+        <option value="SYARIAH">SYARIAH</option>
+        <option value="SAINS SUKAN">SAINS SUKAN</option>
+    </select>
+    <button type="submit" class="btn btn-success">Simpan</button>
+</form>
+
+<hr>
+
+<!-- Search Bar -->
+<form method="GET" class="form-inline">
+    <input type="text" name="search" value="{{ search }}" placeholder="Cari KP atau Nama..." class="form-control">
+    <button type="submit" class="btn btn-default">Cari</button>
+</form>
+
+<!-- Table -->
+<table class="table">
+    <thead>
+        <tr>
+            <th>No. KP Pelajar</th>
+            <th>Nama Pelajar</th>
+            <th>Subjek Khas</th>
+            <th>Tindakan</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for s in students %}
+        <tr>
+            <td>{{ s.no_kp_pelajar }}</td>
+            <td>{{ s.nama_pelajar }}</td>
+            <td>{{ s.subjek_khas }}</td>
+            <td>
+                <form action="{{ url_for('submit_eligibility') }}" method="POST">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="no_kp_pelajar" value="{{ s.no_kp_pelajar }}">
+                    <input type="hidden" name="subjek_khas" value="{{ s.subjek_khas }}">
+                    <button type="submit" class="btn btn-danger btn-sm">Padam</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

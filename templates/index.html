@@ -30,19 +30,18 @@
                 </span>
             </li>
             <li style="margin-right: 15px;">
+                <span class="{{ 'text-success' if completion_status.tambahan else 'text-danger' }}" style="font-weight: 600;">
+                    <span
+                        class="glyphicon {{ 'glyphicon-ok-sign' if completion_status.tambahan else 'glyphicon-remove-sign' }}"></span>
+                    Dokumen Pelajar
+                </span>
+            </li>
+            <li style="margin-right: 15px;">
                 <span class="{{ 'text-success' if completion_status.spm else 'text-danger' }}"
                     style="font-weight: 600;">
                     <span
                         class="glyphicon {{ 'glyphicon-ok-sign' if completion_status.spm else 'glyphicon-remove-sign' }}"></span>
                     Akademik (SPM)
-                </span>
-            </li>
-            <li style="margin-right: 15px;">
-                <span class="{{ 'text-success' if completion_status.tambahan else 'text-danger' }}"
-                    style="font-weight: 600;">
-                    <span
-                        class="glyphicon {{ 'glyphicon-ok-sign' if completion_status.tambahan else 'glyphicon-remove-sign' }}"></span>
-                    Tambahan &amp; Dokumen
                 </span>
             </li>
             <li>
@@ -51,6 +50,13 @@
                     <span
                         class="glyphicon {{ 'glyphicon-ok-sign' if completion_status.pakej else 'glyphicon-remove-sign' }}"></span>
                     Pakej Aliran
+                </span>
+            </li>
+            <li>
+                <span class="{{ 'text-success' if completion_status.penjaga else 'text-danger' }}" style="font-weight: 600;">
+                    <span
+                        class="glyphicon {{ 'glyphicon-ok-sign' if completion_status.penjaga else 'glyphicon-remove-sign' }}"></span>
+                    Maklumat Penjaga
                 </span>
             </li>
         </ul>
@@ -79,10 +85,10 @@
             <div class="panel-body">
                 <div class="row">
                     <div class="col-md-9">
-                        <h4>2. Keputusan SPM</h4>
+                        <h4>2. Dokumen Pelajar</h4>
                     </div>
                     <div class="col-md-3">
-                        <a class="btn btn-primary btn-block" href="{{ url_for('spm_page') }}">Isi Keputusan</a>
+                        <a class="btn btn-primary btn-block" href="{{ url_for('additional_page') }}">Buka Borang</a>
                     </div>
                 </div>
             </div>
@@ -92,10 +98,10 @@
             <div class="panel-body">
                 <div class="row">
                     <div class="col-md-9">
-                        <h4>3. Maklumat Tambahan</h4>
+                        <h4>3. Keputusan SPM</h4> <h5 class="text-muted">Masukkan Maklumat Peribadi dahulu</h5>
                     </div>
                     <div class="col-md-3">
-                        <a class="btn btn-primary btn-block" href="{{ url_for('additional_page') }}">Buka Borang</a>
+                        <a class="btn btn-primary btn-block" href="{{ url_for('spm_page') }}">Isi Keputusan</a>
                     </div>
                 </div>
             </div>
@@ -105,7 +111,7 @@
             <div class="panel-body">
                 <div class="row">
                     <div class="col-md-9">
-                        <h4>4. Pemilihan Pakej</h4>
+                        <h4>4. Pemilihan Pakej</h4> <h5 class="text-muted">Masukkan Maklumat Peribadi dan Keputusan SPM dahulu</h5>
                     </div>
                     <div class="col-md-3">
                         <a class="btn btn-primary btn-block" href="{{ url_for('package_page') }}">Pilih Pakej</a>
@@ -113,14 +119,19 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="col-md-12 text-center" style="margin-top: 20px; margin-bottom: 30px;">
-        <hr>
-        <p class="text-muted" style="margin-bottom: 10px;">Perlukan maklumat lanjut mengenai penjaga?</p>
-        <a href="{{ url_for('guardian_page') }}" class="btn btn-default" style="min-width: 200px;">
-            <span class="glyphicon glyphicon-user"></span> Isi Maklumat Penjaga
-        </a>
+        <div class="panel panel-default" style="margin-bottom: 25px;">
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-9">
+                        <h4>Isi Maklumat Penjaga</h4> <h5 class="text-muted">Masukkan Maklumat Peribadi dahulu</h5>
+                    </div>
+                    <div class="col-md-3">
+                        <a class="btn btn-primary btn-block" href="{{ url_for('guardian_page') }}">Kemaskini Maklumat</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     {% else %}

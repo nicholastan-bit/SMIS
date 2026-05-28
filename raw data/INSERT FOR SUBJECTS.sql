@@ -1,7 +1,7 @@
 -- 1. Insert the core subjects into the subjek_stpm table with subject codes
 INSERT INTO subjek_stpm (id_subjek, kod_subjek, nama_subjek) VALUES 
 (1, 'PA', 'PENGAJIAN AM'),
-(2, 'MUET', 'MUET'),
+(2, 'BI', 'BAHSA INGGERIS'),
 (3, 'KIM', 'KIMIA'),
 (4, 'MT', 'MATEMATIK T'),
 (5, 'BIO', 'BIOLOGI'),
@@ -18,48 +18,40 @@ INSERT INTO subjek_stpm (id_subjek, kod_subjek, nama_subjek) VALUES
 (16, 'GEO', 'GEOGRAFI'),
 (17, 'BT', 'BAHASA TAMIL');
 
--- 2. Insert your individual packages into the pakej table
-INSERT INTO pakej (id_pakej, kod_pakej, aliran, status_aktif) VALUES
-(1, 'BK1', 'SAINS', 1), (2, 'BK2', 'SAINS', 1), (3, 'BK3', 'SAINS', 1), (4, 'BK4', 'SAINS', 1),
-(5, 'CK1', 'SAINS', 1),
-(6, 'FK1', 'SAINS', 1), (7, 'FK2', 'SAINS', 1), (8, 'FK3', 'SAINS', 1),
-(9, 'AH1', 'SAINS SOSIAL', 1),
-(10, 'CV1', 'SAINS SOSIAL', 1),
-(11, 'AP1', 'SAINS SOSIAL', 1), (12, 'AP2', 'SAINS SOSIAL', 1), (13, 'AP3', 'SAINS SOSIAL', 1),
-(14, 'BP1', 'SAINS SOSIAL', 1),
-(15, 'BS1', 'SAINS SOSIAL', 1);
+INSERT INTO pakej (kod_pakej, nama_pakej, aliran) VALUES
+('BK', 'Pakej BK', 'SAINS'), ('BK1', 'Pakej BK1', 'SAINS'), ('BK2', 'Pakej BK2', 'SAINS'), ('BK3', 'Pakej BK3', 'SAINS'), ('BK4', 'Pakej BK4', 'SAINS'),
+('CK', 'Pakej CK', 'SAINS'), ('CK1', 'Pakej CK1', 'SAINS'),
+('FK', 'Pakej FK', 'SAINS'), ('FK1', 'Pakej FK1', 'SAINS'), ('FK2', 'Pakej FK2', 'SAINS'), ('FK3', 'Pakej FK3', 'SAINS'),
+('AH', 'Pakej AH', 'SAINS SOSIAL'), ('AH1', 'Pakej AH1', 'SAINS SOSIAL'),
+('CV', 'Pakej CV', 'SAINS SOSIAL'), ('CV1', 'Pakej CV1', 'SAINS SOSIAL'),
+('AP', 'Pakej AP', 'SAINS SOSIAL'), ('AP1', 'Pakej AP1', 'SAINS SOSIAL'), ('AP2', 'Pakej AP2', 'SAINS SOSIAL'), ('AP3', 'Pakej AP3', 'SAINS SOSIAL'),
+('BP', 'Pakej BP', 'SAINS SOSIAL'), ('BP1', 'Pakej BP1', 'SAINS SOSIAL'),
+('BS', 'Pakej BS', 'SAINS SOSIAL'), ('BS1', 'Pakej BS1', 'SAINS SOSIAL'),
+('BY', 'Pakej BY', 'SAINS SOSIAL'), ('BY1', 'Pakej BY1', 'SAINS SOSIAL'),
+('GB', 'Pakej GB', 'SAINS SOSIAL'), ('GB1', 'Pakej GB1', 'SAINS SOSIAL'),
+('GP', 'Pakej GP', 'SAINS SOSIAL'), ('GP1', 'Pakej GP1', 'SAINS SOSIAL'),
+('HT', 'Pakej HT', 'SAINS SOSIAL'), ('HT1', 'Pakej HT1', 'SAINS SOSIAL'),
+('HP', 'Pakej HP', 'SAINS SOSIAL'), ('HP1', 'Pakej HP1', 'SAINS SOSIAL'),
+('HY', 'Pakej HY', 'SAINS SOSIAL'), ('HY1', 'Pakej HY1', 'SAINS SOSIAL'),
+('VB', 'Pakej VB', 'SAINS SOSIAL'), ('VB1', 'Pakej VB1', 'SAINS SOSIAL'),
+('VS', 'Pakej VS', 'SAINS SOSIAL'), ('VS1', 'Pakej VS1', 'SAINS SOSIAL');
 
--- 3. Link packages to subjects in the pakej_subjek bridge table
--- BK1, BK2, BK3, BK4 (PA, MUET, KIM, MT, BIO)
-INSERT INTO pakej_subjek (id_pakej, id_subjek) VALUES 
-(1,1),(1,2),(1,3),(1,4),(1,5),
-(2,1),(2,2),(2,3),(2,4),(2,5),
-(3,1),(3,2),(3,3),(3,4),(3,5),
-(4,1),(4,2),(4,3),(4,4),(4,5);
-
--- CK1 (PA, MUET, KIM, MT, ICT)
-INSERT INTO pakej_subjek (id_pakej, id_subjek) VALUES (5,1),(5,2),(5,3),(5,4),(5,6);
-
--- FK1, FK2, FK3 (PA, MUET, KIM, MT, FIZ)
-INSERT INTO pakej_subjek (id_pakej, id_subjek) VALUES 
-(6,1),(6,2),(6,3),(6,4),(6,7),
-(7,1),(7,2),(7,3),(7,4),(7,7),
-(8,1),(8,2),(8,3),(8,4),(8,7);
-
--- AH1 (PA, MUET, EKO, SEJ, AK)
-INSERT INTO pakej_subjek (id_pakej, id_subjek) VALUES (9,1),(9,2),(9,8),(9,9),(9,10);
-
--- CV1 (PA, MUET, EKO, SENI, ICT)
-INSERT INTO pakej_subjek (id_pakej, id_subjek) VALUES (10,1),(10,2),(10,8),(10,11),(10,6);
-
--- AP1, AP2, AP3 (PA, MUET, PP, EKO, AK)
-INSERT INTO pakej_subjek (id_pakej, id_subjek) VALUES 
-(11,1),(11,2),(11,12),(11,8),(11,10),
-(12,1),(12,2),(12,12),(12,8),(12,10),
-(13,1),(13,2),(13,12),(13,8),(13,10);
-
--- BP1 (PA, MUET, PP, EKO, BM)
-INSERT INTO pakej_subjek (id_pakej, id_subjek) VALUES (14,1),(14,2),(14,12),(14,8),(14,13);
-
--- BS1 (PA, MUET, PP, S.SUKAN, BM)
-INSERT INTO pakej_subjek (id_pakej, id_subjek) VALUES (15,1),(15,2),(15,12),(15,14),(15,13);
+INSERT INTO pakej_subjek (id_pakej, id_subjek)
+SELECT p.id_pakej, s.id_subjek
+FROM pakej p, subjek_stpm s
+WHERE (p.kod_pakej IN ('BK', 'BK1', 'BK2', 'BK3', 'BK4') AND s.kod_subjek IN ('PA', 'BI', 'KIM', 'MT', 'BIO'))
+   OR (p.kod_pakej IN ('CK', 'CK1') AND s.kod_subjek IN ('PA', 'BI', 'KIM', 'MT', 'ICT'))
+   OR (p.kod_pakej IN ('FK', 'FK1', 'FK2', 'FK3') AND s.kod_subjek IN ('PA', 'BI', 'KIM', 'MT', 'FIZ'))
+   OR (p.kod_pakej IN ('AH', 'AH1') AND s.kod_subjek IN ('PA', 'BI', 'EKO', 'SEJ', 'AK'))
+   OR (p.kod_pakej IN ('CV', 'CV1') AND s.kod_subjek IN ('PA', 'BI', 'EKO', 'SENI', 'ICT'))
+   OR (p.kod_pakej IN ('AP', 'AP1', 'AP2', 'AP3') AND s.kod_subjek IN ('PA', 'BI', 'PP', 'EKO', 'AK'))
+   OR (p.kod_pakej IN ('BP', 'BP1') AND s.kod_subjek IN ('PA', 'BI', 'PP', 'EKO', 'BM'))
+   OR (p.kod_pakej IN ('BS', 'BS1') AND s.kod_subjek IN ('PA', 'BI', 'PP', 'SS', 'BM'))
+   OR (p.kod_pakej IN ('BY', 'BY1') AND s.kod_subjek IN ('PA', 'BI', 'BM', 'SYA', 'GEO'))
+   OR (p.kod_pakej IN ('GB', 'GB1') AND s.kod_subjek IN ('PA', 'BI', 'PP', 'BM', 'GEO'))
+   OR (p.kod_pakej IN ('GP', 'GP1') AND s.kod_subjek IN ('PA', 'BI', 'PP', 'EKO', 'GEO'))
+   OR (p.kod_pakej IN ('HT', 'HT1') AND s.kod_subjek IN ('PA', 'BI', 'PP', 'SEJ', 'BT'))
+   OR (p.kod_pakej IN ('HP', 'HP1') AND s.kod_subjek IN ('PA', 'BI', 'PP', 'EKO', 'SEJ'))
+   OR (p.kod_pakej IN ('HY', 'HY1') AND s.kod_subjek IN ('PA', 'BI', 'BM', 'SEJ', 'SYA'))
+   OR (p.kod_pakej IN ('VB', 'VB1') AND s.kod_subjek IN ('PA', 'BI', 'BM', 'PP', 'SENI'))
+   OR (p.kod_pakej IN ('VS', 'VS1') AND s.kod_subjek IN ('PA', 'BI', 'PP', 'SENI', 'SS'));

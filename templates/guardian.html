@@ -3,12 +3,13 @@
 {% block content %}
 <div class="container">
     <h2>Maklumat Penjaga</h2>
-    <p class="text-muted">Sila isi maklumat penjaga. Anda boleh menambah lebih daripada satu penjaga.</p>
+    <p class="text-info fw-semibold h4">Sila isi maklumat <strong>IBU dan BAPA</strong>. Jika tidak tinggal bersama, sila isi maklumat <strong>PENJAGA</strong>.</p>
+    <p class="text-warning fw-semibold h4">Maklumat tambahan: Sila isikan maklumat penuh semasa mengemaskini maklumat.</p>
     <hr>
 
     <form action="/submit_guardians" method="POST"
         onsubmit="return confirm('Adakah anda pasti maklumat penjaga ini adalah betul sebelum menghantar?');">
-        <div id=\"guardian-container\">
+        <div id="guardian-container">
             {% if existing_guardians %}
             {% for g in existing_guardians %}
             <div class="panel panel-info guardian-entry">
@@ -34,19 +35,23 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-4 form-group">
+                        <div class="col-md-6 form-group">
                             <label>Hubungan</label>
-                            <input type="text" name="g_hubungan[]" class="form-control"
-                                placeholder="Contoh: BAPA, IBU, ABANG" value="{{ g.penjaga }}" required>
+                            <select name="g_hubungan[]" class="form-control" required>
+                                <option value="">-- Pilih Hubungan --</option>
+                                <option value="IBU" {{ 'selected' if g.hubungan=='IBU' else '' }}>IBU</option>
+                                <option value="BAPA" {{ 'selected' if g.hubungan=='BAPA' else '' }}>BAPA</option>
+                                <option value="PENJAGA" {{ 'selected' if g.hubungan=='PENJAGA' else '' }}>PENJAGA</option>
+                            </select>
                         </div>
-                        <div class="col-md-4 form-group">
+                        <div class="col-md-3 form-group">
                             <label>No. Telefon</label>
                             <input type="tel" name="g_no_telefon[]" class="form-control"
                                 placeholder="Contoh: 0123456789" pattern="[0-9]+"
                                 oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                 value="{{ g.no_telefon if g.no_telefon else '' }}" required>
                         </div>
-                        <div class="col-md-4 form-group">
+                        <div class="col-md-3 form-group">
                             <label>Pekerjaan</label>
                             <input type="text" name="g_pekerjaan[]" class="form-control" value="{{ g.pekerjaan }}"
                                 required>
@@ -90,10 +95,14 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-4 form-group">
+                        <div class="col-md-6 form-group">
                             <label>Hubungan</label>
-                            <input type="text" name="g_hubungan[]" class="form-control"
-                                placeholder="Contoh: BAPA, IBU, ABANG" required>
+                            <select name="g_hubungan[]" class="form-control" required>
+                                <option value="">-- Pilih Hubungan --</option>
+                                <option value="IBU">IBU</option>
+                                <option value="BAPA">BAPA</option>
+                                <option value="PENJAGA">PENJAGA</option>
+                            </select>
                         </div>
                         <div class="col-md-4 form-group">
                             <label>No. Telefon</label>
@@ -137,16 +146,23 @@
 <script type="text/javascript">
     function addGuardian() {
         const container = document.getElementById('guardian-container');
+        // Get all current entries
         const entries = document.getElementsByClassName('guardian-entry');
 
-        // Clone the first guardian box
-        const newEntry = entries[0].cloneNode(true);
+        // Clone the last entry to ensure we are always duplicating the latest row structure
+        const newEntry = entries[entries.length - 1].cloneNode(true);
 
-        // Clear all inputs in the cloned box
-        const inputs = newEntry.querySelectorAll('input, textarea');
-        inputs.forEach(input => input.value = '');
+        // Clear all form fields: input, textarea, AND select
+        const fields = newEntry.querySelectorAll('input, textarea, select');
+        fields.forEach(field => {
+            if (field.tagName === 'SELECT') {
+                field.selectedIndex = 0; // Reset dropdown to "-- Pilih Hubungan --"
+            } else {
+                field.value = ''; // Reset text/number fields
+            }
+        });
 
-        // Show the delete button for the new entry
+        // Ensure the remove button is visible for the new row
         const removeBtn = newEntry.querySelector('.btn-remove');
         removeBtn.style.display = 'block';
 
@@ -155,8 +171,7 @@
     }
 
     function removeGuardian(button) {
-        const entry = button.closest('.guardian-entry');
-        entry.remove();
+        button.closest('.guardian-entry').remove();
         updateNumbers();
     }
 
@@ -167,12 +182,9 @@
         for (let i = 0; i < entries.length; i++) {
             counts[i].innerText = i + 1;
 
+            // Only hide the button if there is only one entry left
             const removeBtn = entries[i].querySelector('.btn-remove');
-            if (entries.length === 1) {
-                removeBtn.style.display = 'none';
-            } else {
-                removeBtn.style.display = 'block';
-            }
+            removeBtn.style.display = (entries.length === 1) ? 'none' : 'block';
         }
     }
 </script>

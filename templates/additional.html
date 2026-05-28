@@ -3,7 +3,7 @@
 {% block content %}
 <div class="row">
     <div class="col-md-10 col-md-offset-1">
-        <h2 class="text-center">SMIS - Maklumat Tambahan Pelajar</h2>
+        <h2 class="text-center">SMIS - Dokumen Pelajar</h2>
         <p class="text-muted text-center">Sila lengkapkan maklumat tambahan dan muat naik dokumen sokongan yang
             diperlukan di bawah.</p>
         <hr>
@@ -17,40 +17,6 @@
                     <input type="text" name="no_kp_pelajar" id="no_kp_pelajar" class="form-control input-lg"
                         value="{{ verified_kp }}" readonly
                         style="background-color: #eee; cursor: not-allowed; font-weight: bold;">
-                </div>
-            </div>
-
-            <div class="panel panel-success">
-                <div class="panel-heading">Maklumat Tambahan Peribadi</div>
-                <div class="panel-body">
-                    <div class="row">
-                        <div class="col-md-6 form-group">
-                            <label for="tempat_lahir_pelajar">Tempat Lahir <span class="text-danger">*</span></label>
-                            <input type="text" name="tempat_lahir_pelajar" id="tempat_lahir_pelajar" class="form-control"
-                                placeholder="Contoh: HOSPITAL KUALA LUMPUR" value="{{ student.tempat_lahir if student.tempat_lahir else '' }}"
-                                required>
-                        </div>
-
-                        <div class="col-md-6 form-group">
-                            <label for="no_surat_beranak_pelajar">No. Sijil Kelahiran / Surat Beranak <span class="text-danger">*</span></label>
-                            <input type="text" name="no_surat_beranak_pelajar" id="no_surat_beranak_pelajar" class="form-control"
-                                placeholder="Contoh: AA12345" value="{{ student.no_surat_beranak if student.no_surat_beranak else '' }}"
-                                required>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 form-group">
-                            <label for="keadaan_mata">Keadaan Mata <span style="color: red;">*</span></label>
-                            <select name="keadaan_mata" id="keadaan_mata" class="form-control" required>
-                                <option value="">-- Pilih Keadaan Mata --</option>
-                                <option value="BAIK" {{ 'selected' if existing_additional and
-                                    existing_additional.keadaan_mata=='BAIK' else '' }}>Baik</option>
-                                <option value="KURANG BAIK" {{ 'selected' if existing_additional and
-                                    existing_additional.keadaan_mata=='KURANG BAIK' else '' }}>Kurang Baik</option>
-                            </select>
-                        </div>
-                    </div>
                 </div>
             </div>
 

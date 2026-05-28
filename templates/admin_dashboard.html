@@ -53,25 +53,43 @@
                 </div>
             </div>
 
-        </div>
-    </div>
-</div>
-<div class="row" style="margin-top: 20px;">
-    <div class="col-md-12">
-        <div class="panel panel-info" style="box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-            <div class="panel-heading">
-                <h3 class="panel-title" style="font-weight: bold;">
-                    <span class="glyphicon glyphicon-stats"></span> Analitik Sistem
-                </h3>
+            <!-- Inside admin_dashboard.html -->
+            <div class="col-md-6">
+                <div class="panel panel-success" style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="panel-heading">
+                        <h3 class="panel-title" style="font-weight: bold;">
+                            <span class="glyphicon glyphicon-book"></span> Kelayakan Subjek Khas
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                        <p class="text-muted" style="font-size: 13px;">Urus kelayakan pelajar untuk subjek Syariah atau Sains Sukan.
+                        </p>
+                        <a href="{{ url_for('eligible_subject_page') }}" class="btn btn-success btn-block"
+                            style="margin-top: 15px; padding: 10px; font-weight: bold;">
+                            <span class="glyphicon glyphicon-edit"></span> Urus Kelayakan Pelajar
+                        </a>
+                    </div>
+                </div>
             </div>
-            <div class="panel-body text-center">
-                <p class="text-muted">Lihat taburan statistik pendaftaran pelajar dan pakej aliran.</p>
-                <a href="{{ url_for('admin_statistics') }}" class="btn btn-info" style="padding: 10px 30px;">
-                    <span class="glyphicon glyphicon-signal"></span> Buka Papan Pemuka Statistik
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
 
+            <div class="col-md-6">
+                <div class="panel panel-info" style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="panel-heading">
+                        <h3 class="panel-title" style="font-weight: bold;">
+                            <span class="glyphicon glyphicon-book"></span> Kelayakan Subjek Khas
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                        <p class="text-muted" style="font-size: 13px;">Lihat taburan statistik pendaftaran pelajar dan pakej aliran.</p>
+                        <a href="{{ url_for('admin_statistics') }}" class="btn btn-info btn-block"
+                            style="margin-top: 15px; padding: 10px; font-weight: bold;">
+                            <span class="glyphicon glyphicon-signal"></span> Buka Papan Pemuka Statistik
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
 {% endblock %}

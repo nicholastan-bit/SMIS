@@ -31,8 +31,24 @@
                             <input type="email" name="email" class="form-control"
                                 value="{{ student.email if student else '' }}" required>
                         </div>
+                        
+                    <div class="col-md-4 form-group">
+                        <label>Kelas</label>
+                        <select name="kelas" class="form-control" required>
+                            <option value="">-- Pilih Kelas --</option>
+                            {% for prefix in ['A', 'B'] %}
+                            {% for i in range(1, 16) %}
+                            {% set class_name = prefix ~ i %}
+                            <option value="{{ class_name }}" {{ 'selected' if student and student.kelas==class_name else '' }}>
+                                {{ class_name }}
+                            </option>
+                            {% endfor %}
+                            {% endfor %}
+                        </select>
                     </div>
 
+                    </div>
+                    
                     <div class="row">
                         <div class="col-md-4 form-group">
                             <label>Jantina</label>
@@ -121,6 +137,17 @@
                             <input type="date" name="sekolah_tamat" class="form-control"
                                 value="{{ student.sekolah_tamat if student else '' }}" required>
                         </div>
+
+                        <div class="col-md-4 form-group">
+                            <div class="col-md-6 form-group">
+                                <label>Status OKU</label>
+                                <select name="status_oku" class="form-control" required>
+                                    <option value="TIDAK" {{ 'selected' if student and student.status_oku=='TIDAK' else '' }}>Tidak</option>
+                                    <option value="YA" {{ 'selected' if student and student.status_oku=='YA' else '' }}>Ya</option>
+                                </select>
+                            </div>
+                        </div>
+
                     </div>
 
                     <div class="form-group">
@@ -128,6 +155,36 @@
                         <textarea name="masalah_kesihatan" class="form-control" rows="2"
                             placeholder="Nyatakan jika ada... (Tulis 'TIADA' jika tiada)"
                             required>{{ student.masalah_kesihatan if student else '' }}</textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>Tempat Lahir</label>
+                            <input type="text" name="tempat_lahir" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>No. Sijil Kelahiran / Surat Beranak</label>
+                            <input type="text" name="no_surat_beranak" class="form-control" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>Keadaan Mata</label>
+                            <select name="keadaan_mata" class="form-control" required>
+                                <option value="">-- Pilih --</option>
+                                <option value="BAIK">Baik</option>
+                                <option value="KURANG BAIK">Kurang Baik</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>Aliran Dipohon</label>
+                            <select name="aliran_dipohon" class="form-control" required>
+                                <option value="">-- Pilih Aliran --</option>
+                                <option value="SAINS">Sains</option>
+                                <option value="SAINS SOSIAL">Sains Sosial</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
