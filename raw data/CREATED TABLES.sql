@@ -1,3 +1,8 @@
+CREATE TABLE form_settings (
+    form_id VARCHAR(50) PRIMARY KEY,
+    is_enabled BOOLEAN DEFAULT TRUE
+);
+
 -- Insert the default states
 INSERT INTO form_settings (form_id, is_enabled) VALUES 
 ('profil_form', TRUE),
@@ -38,11 +43,6 @@ CREATE TABLE pakej_subjek (
     FOREIGN KEY (id_subjek) REFERENCES subjek_stpm(id_subjek) ON DELETE RESTRICT
 );
 
-CREATE TABLE form_settings (
-    form_id VARCHAR(50) PRIMARY KEY,
-    is_enabled BOOLEAN DEFAULT TRUE
-);
-
 CREATE TABLE pelajar (
 	bil_kemasukan INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
 	nama_pelajar VARCHAR(100) DEFAULT NULL,
@@ -66,7 +66,7 @@ CREATE TABLE pelajar (
 	surat_tawaran_path VARCHAR(255) DEFAULT NULL,
 	ic_photo_path VARCHAR(255) DEFAULT NULL,
 	id_pakej INT DEFAULT NULL,
-    aliran_dipohon ENUM('SAINS', 'SAINS SOSIAL') DEFAULT NULL,
+    aliran_ditawar ENUM('SAINS', 'SAINS SOSIAL') DEFAULT NULL,
     status_oku ENUM('TIDAK', 'YA') DEFAULT 'TIDAK',
     kelas VARCHAR(10),
 	CONSTRAINT fk_pelajar_pakej FOREIGN KEY (id_pakej) REFERENCES pakej (id_pakej) ON DELETE SET NULL
