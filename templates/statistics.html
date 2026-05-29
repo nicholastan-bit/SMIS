@@ -3,23 +3,10 @@
 
 <div class="container">
     <h2>Analitik Sistem</h2>
-
-    <div class="row">
-        <div class="col-md-2">
-            <div class="panel panel-primary text-center">
-                <div class="panel-heading">Jumlah Pelajar</div>
-                <div class="panel-body">
-                    <h3>{{ total_students }}</h3>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <form method="GET" class="form-inline" style="margin-bottom: 20px;">
         <select name="type" class="form-control" onchange="this.form.submit()">
-            <option value="bangsa" {% if current_type=='bangsa' %}selected{% endif %}>Race</option>
-            <option value="jantina" {% if current_type=='jantina' %}selected{% endif %}>Gender</option>
-            <option value="agama" {% if current_type=='agama' %}selected{% endif %}>Religion</option>
+            <option value="bangsa" {% if current_type=='bangsa' %}selected{% endif %}>Bangsa</option>
+            <option value="agama" {% if current_type=='agama' %}selected{% endif %}>Agama</option>
             <option value="cara_datang_sekolah" {% if current_type=='cara_datang_sekolah' %}selected{% endif %}>Transport
             </option>
         </select>
@@ -27,28 +14,37 @@
     
     <table class="table table-bordered table-striped">
         <thead>
-            <tr>
-                <th class="info">Package</th>
+            <tr class="info">
+                <th rowspan="2">Package</th>
                 {% for cat in categories %}
-                <th class="info">{{ cat }}</th>
+                <th colspan="2" class="text-center">{{ cat }}</th>
                 {% endfor %}
-                <th class="info">Total</th>
+                <th rowspan="2">Jumlah Besar</th>
+            </tr>
+            <tr class="info">
+                {% for cat in categories %}
+                <th>LELAKI</th>
+                <th>PEREMPUAN</th>
+                {% endfor %}
             </tr>
         </thead>
         <tbody>
             {% for pkg in all_packages %}
             <tr>
-                <td class="info"><strong>{{ pkg.kod_pakej }}</strong></td>
+                <td><strong>{{ pkg.kod_pakej }}</strong></td>
                 {% for cat in categories %}
-                <td>{{ counts[pkg.id_pakej][cat] }}</td>
+                <td>{{ counts[pkg.id_pakej][cat]['LELAKI'] }}</td>
+                <td>{{ counts[pkg.id_pakej][cat]['PEREMPUAN'] }}</td>
                 {% endfor %}
-                <td class="info"><strong>{{ row_totals[pkg.id_pakej] }}</strong></td>
+                <td><strong>{{ row_totals[pkg.id_pakej] }}</strong></td>
             </tr>
             {% endfor %}
-            <tr class="info">
-                <td><strong>TOTAL</strong></td>
+    
+            <tr class="success">
+                <td><strong>JUMLAH</strong></td>
                 {% for cat in categories %}
-                <td><strong>{{ col_totals[cat] }}</strong></td>
+                <td><strong>{{ col_totals[cat]['LELAKI'] }}</strong></td>
+                <td><strong>{{ col_totals[cat]['PEREMPUAN'] }}</strong></td>
                 {% endfor %}
                 <td><strong>{{ grand_total }}</strong></td>
             </tr>

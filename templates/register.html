@@ -36,13 +36,19 @@
                         <label>Kelas</label>
                         <select name="kelas" class="form-control" required>
                             <option value="">-- Pilih Kelas --</option>
-                            {% for prefix in ['A', 'B'] %}
-                            {% for i in range(1, 16) %}
-                            {% set class_name = prefix ~ i %}
+                        
+                            {% for i in range(1, 9) %}
+                            {% set class_name = 'A' ~ i %}
                             <option value="{{ class_name }}" {{ 'selected' if student and student.kelas==class_name else '' }}>
                                 {{ class_name }}
                             </option>
                             {% endfor %}
+                        
+                            {% for i in range(1, 16) %}
+                            {% set class_name = 'B' ~ i %}
+                            <option value="{{ class_name }}" {{ 'selected' if student and student.kelas==class_name else '' }}>
+                                {{ class_name }}
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
@@ -133,11 +139,11 @@
                             </select>
                         </div>
                         <div class="col-md-4 form-group">
-                            <label>Tarikh Tamat Sekolah</label>
-                            <input type="date" name="sekolah_tamat" class="form-control"
-                                value="{{ student.sekolah_tamat if student else '' }}" required>
+                            <label>Tarikh Tamat STPM (Abaikan dahulu)</label>
+                            <input type="date" name="sekolah_tamat" class="form-control" value="{{ student.sekolah_tamat if student else '' }}">
+                        
+                            <small class="text-muted">Ruangan ini adalah untuk tarikh akhir STPM.</small>                  
                         </div>
-
                         <div class="col-md-4 form-group">
                             <div class="col-md-6 form-group">
                                 <label>Status OKU</label>
@@ -179,8 +185,8 @@
                         </div>
                         <div class="col-md-6 form-group">
                             <label>Aliran Dipohon</label>
-                            <select name="aliran_dipohon" class="form-control" required>
-                                <option value="">-- Pilih Aliran --</option>
+                            <select name="aliran_ditawar" class="form-control" required>
+                                <option value="">-- Pilih Aliran yang ditawar --</option>
                                 <option value="SAINS">Sains</option>
                                 <option value="SAINS SOSIAL">Sains Sosial</option>
                             </select>

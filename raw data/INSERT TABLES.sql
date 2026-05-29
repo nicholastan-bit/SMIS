@@ -17,7 +17,7 @@ INSERT INTO pelajar (nama_pelajar, no_kp_pelajar, jantina, bangsa, agama, cara_d
 ('Sarah Jane', '061215150015', 'PEREMPUAN', 'SABAH/SARAWAK', 'KRISTIAN', 'KERETA', 36, 'SAINS SOSIAL');
 
 -- 2. Insert 15 Penjaga (One for each student)
-INSERT INTO penjaga (no_pendaftaran_pelajar, nama_penjaga, hubungan, no_telefon) VALUES
+INSERT INTO penjaga (bil_kemasukan, nama_penjaga, hubungan, no_telefon) VALUES
 (1, 'Ali Bin Ahmad', 'BAPA', '0123456789'), (2, 'Aminah Binti Ali', 'IBU', '0123456790'),
 (3, 'Wei Long', 'BAPA', '0123456791'), (4, 'Devi Kumar', 'IBU', '0123456792'),
 (5, 'Jane Doe', 'IBU', '0123456793'), (6, 'Tan Soon', 'BAPA', '0123456794'),
@@ -35,7 +35,7 @@ INSERT INTO pelajar_eligibility (no_kp_pelajar, subjek_khas) VALUES
 
 -- 4. Insert SPM Results (7 subjects per student)
 -- Pattern: MATEMATIK, SAINS, BAHASA MELAYU, SEJARAH, PENDIDIKAN ISLAM, BAHASA INGGERIS, GEOGRAFI
-INSERT INTO spm_hasil (no_pendaftaran_pelajar, subjek, gred) VALUES
+INSERT INTO spm_hasil (bil_kemasukan, subjek, gred) VALUES
 (1, 'MATEMATIK', 'A'), (1, 'SAINS', 'A'), (1, 'BAHASA MELAYU', 'B+'), (1, 'SEJARAH', 'A'), (1, 'PENDIDIKAN ISLAM', 'A-'), (1, 'BAHASA INGGERIS', 'B'), (1, 'GEOGRAFI', 'C+'),
 (2, 'MATEMATIK', 'A-'), (2, 'SAINS', 'B'), (2, 'BAHASA MELAYU', 'A'), (2, 'SEJARAH', 'B+'), (2, 'PENDIDIKAN ISLAM', 'A'), (2, 'BAHASA INGGERIS', 'B'), (2, 'GEOGRAFI', 'C'),
 (3, 'MATEMATIK', 'B+'), (3, 'SAINS', 'B+'), (3, 'BAHASA MELAYU', 'A'), (3, 'SEJARAH', 'A-'), (3, 'PENDIDIKAN ISLAM', 'B'), (3, 'BAHASA INGGERIS', 'A'), (3, 'GEOGRAFI', 'B'),

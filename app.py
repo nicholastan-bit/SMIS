@@ -39,7 +39,7 @@ def allowed_file(filename):
 
 def is_form_enabled(form_id):
     conn = get_db_connection() # Use your defined helper
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(dictionary=True, buffered=True)
     cursor.execute("SELECT is_enabled FROM form_settings WHERE form_id = %s", (form_id,))
     result = cursor.fetchone()
     cursor.close()
@@ -55,7 +55,7 @@ def gateway():
         kp_input = request.form.get('no_kp')
         
         conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor(dictionary=True, buffered=True)
         # Check if student already exists
         cursor.execute("SELECT * FROM pelajar WHERE no_kp_pelajar = %s", (kp_input,))
         student = cursor.fetchone()
@@ -124,27 +124,27 @@ def index():
     
     if kp:
         conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor(dictionary=True, buffered=True)
         
         # Fetch student details (includes joining for ID lookup efficiency)
         cursor.execute("""
-            SELECT no_pendaftaran_pelajar, nama_pelajar, surat_tawaran_path, ic_photo_path, id_pakej 
+            SELECT bil_kemasukan, nama_pelajar, surat_tawaran_path, ic_photo_path, id_pakej 
             FROM pelajar WHERE no_kp_pelajar = %s
         """, (kp,))
         student = cursor.fetchone()
         
         if student:
-            student_id = student['no_pendaftaran_pelajar']
+            student_id = student['bil_kemasukan']
             completion_status['profil'] = True
             
             # 1. Check SPM
-            cursor.execute("SELECT COUNT(*) as total FROM spm_hasil WHERE no_pendaftaran_pelajar = %s", (student_id,))
+            cursor.execute("SELECT COUNT(*) as total FROM spm_hasil WHERE bil_kemasukan = %s", (student_id,))
             spm_count = cursor.fetchone()
             if spm_count and spm_count['total'] > 0:
                 completion_status['spm'] = True
                 
             # 2. Check Penjaga (New Logic)
-            cursor.execute("SELECT COUNT(*) as total FROM penjaga WHERE no_pendaftaran_pelajar = %s", (student_id,))
+            cursor.execute("SELECT COUNT(*) as total FROM penjaga WHERE bil_kemasukan = %s", (student_id,))
             penjaga_count = cursor.fetchone()
             if penjaga_count and penjaga_count['total'] > 0:
                 completion_status['penjaga'] = True
@@ -174,7 +174,7 @@ def register_page():
         
     # Check if student profile already exists in the 'pelajar' table
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True) # Changed to dictionary=True
+    cursor = conn.cursor(dictionary=True, buffered=True) # Changed to dictionary=True, buffered=True
     cursor.execute("SELECT * FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
     student = cursor.fetchone()
     cursor.close()
@@ -198,7 +198,7 @@ def submit_registration():
             nama_pelajar, email, no_kp_pelajar, jantina, bangsa, agama, 
             tarikh_lahir, alamat_rumah, telefonNo, sekolah_tamat, masalah_kesihatan, 
             cara_datang_sekolah, tempat_lahir, no_surat_beranak, keadaan_mata, 
-            aliran_dipohon, status_oku, kelas, status_study
+            aliran_ditawar, status_oku, kelas, status_study
         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 1)
         ON DUPLICATE KEY UPDATE 
             nama_pelajar=VALUES(nama_pelajar), email=VALUES(email), jantina=VALUES(jantina),
@@ -207,17 +207,22 @@ def submit_registration():
             sekolah_tamat=VALUES(sekolah_tamat), masalah_kesihatan=VALUES(masalah_kesihatan),
             cara_datang_sekolah=VALUES(cara_datang_sekolah), tempat_lahir=VALUES(tempat_lahir),
             no_surat_beranak=VALUES(no_surat_beranak), keadaan_mata=VALUES(keadaan_mata),
-            aliran_dipohon=VALUES(aliran_dipohon), status_oku=VALUES(status_oku), kelas=VALUES(kelas)
+            aliran_ditawar=VALUES(aliran_ditawar), status_oku=VALUES(status_oku), kelas=VALUES(kelas)
     """
+
+    sekolah_tamat = request.form.get('sekolah_tamat')
+
+    if not sekolah_tamat:
+        sekolah_tamat = None
 
     data = (
         request.form.get('nama_pelajar'), request.form.get('email'), kp,
         request.form.get('jantina'), request.form.get('bangsa'), request.form.get('agama'),
         request.form.get('tarikh_lahir'), request.form.get('alamat_rumah'), request.form.get('telefonNo'),
-        request.form.get('sekolah_tamat'), request.form.get('masalah_kesihatan'),
+        sekolah_tamat, request.form.get('masalah_kesihatan'),
         request.form.get('cara_datang_sekolah'), request.form.get('tempat_lahir'),
         request.form.get('no_surat_beranak'), request.form.get('keadaan_mata'),
-        request.form.get('aliran_dipohon'), request.form.get('status_oku'), request.form.get('kelas')
+        request.form.get('aliran_ditawar'), request.form.get('status_oku'), request.form.get('kelas')
     )
 
     try:
@@ -250,11 +255,11 @@ def additional_page():
         return redirect(url_for('gateway'))
 
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(dictionary=True, buffered=True)
     
     # Check if student exists and see if fields are already filled
     cursor.execute("""
-        SELECT no_pendaftaran_pelajar, tempat_lahir, no_surat_beranak, keadaan_mata 
+        SELECT bil_kemasukan, tempat_lahir, no_surat_beranak, keadaan_mata 
         FROM pelajar WHERE no_kp_pelajar = %s
     """, (kp,))
     student = cursor.fetchone()
@@ -273,10 +278,10 @@ def submit_additional():
         return redirect(url_for('gateway'))
 
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(dictionary=True, buffered=True)
     
     # 1. Fetch current record
-    cursor.execute("SELECT no_pendaftaran_pelajar FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
+    cursor.execute("SELECT bil_kemasukan FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
     student = cursor.fetchone()
 
     if not student:
@@ -285,7 +290,7 @@ def submit_additional():
         flash("Sila lengkapkan Profil Pendaftaran utama terlebih dahulu.", "warning")
         return redirect(url_for('index'))
 
-    student_id = student['no_pendaftaran_pelajar']
+    student_id = student['bil_kemasukan']
 
     # 2. Handle File Uploads
     file_ic = request.files.get('ic_photo')
@@ -342,11 +347,11 @@ def guardian_page():
         return redirect(url_for('gateway'))
     
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(dictionary=True, buffered=True)
 
     # 1. Fetch student base details
     cursor.execute("""
-        SELECT no_pendaftaran_pelajar, nama_pelajar, no_surat_beranak, keadaan_mata, id_pakej 
+        SELECT bil_kemasukan, nama_pelajar, no_surat_beranak, keadaan_mata, id_pakej 
         FROM pelajar WHERE no_kp_pelajar = %s
     """, (kp,))
     student = cursor.fetchone()
@@ -380,7 +385,7 @@ def submit_guardians():
     try:
         # 1. Get the student ID using the verified KP
         kp = session.get('verified_kp')
-        cursor.execute("SELECT no_pendaftaran_pelajar FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
+        cursor.execute("SELECT bil_kemasukan FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
         student = cursor.fetchone()
         
         if not student:
@@ -389,7 +394,7 @@ def submit_guardians():
             
         student_id = student[0]
 
-        cursor.execute("DELETE FROM penjaga WHERE no_pendaftaran_pelajar = %s", (student_id,))
+        cursor.execute("DELETE FROM penjaga WHERE bil_kemasukan = %s", (student_id,))
         
         # 2. Extract lists from the form (Termasuk g_no_telefon[])
         names = request.form.getlist('g_nama_penjaga[]')
@@ -405,7 +410,7 @@ def submit_guardians():
             if names[i]: # Only insert if name is filled
                 # PENTING: Lajur no_telefon dan satu lagi penanda %s ditambah di sini
                 query = """INSERT INTO penjaga 
-                    (no_pendaftaran_pelajar, nama_penjaga, no_kp_penjaga, hubungan, no_telefon, pekerjaan, pendapatan, alamat_tempat_kerja) 
+                    (bil_kemasukan, nama_penjaga, no_kp_penjaga, hubungan, no_telefon, pekerjaan, pendapatan, alamat_tempat_kerja) 
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
                 cursor.execute(query, (student_id, names[i], kps[i], relationships[i], telephones[i], jobs[i], incomes[i], addresses[i]))
 
@@ -431,11 +436,11 @@ def spm_page():
         return redirect(url_for('gateway'))
     
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(dictionary=True, buffered=True)
 
     # 1. Fetch student base details
     cursor.execute("""
-        SELECT no_pendaftaran_pelajar, tempat_lahir, no_surat_beranak, keadaan_mata, id_pakej 
+        SELECT bil_kemasukan, tempat_lahir, no_surat_beranak, keadaan_mata, id_pakej 
         FROM pelajar WHERE no_kp_pelajar = %s
     """, (kp,))
     student = cursor.fetchone()
@@ -461,7 +466,7 @@ def submit_spm():
     cursor = conn.cursor()
 
     # Retrieve internal index identifier
-    cursor.execute("SELECT no_pendaftaran_pelajar FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
+    cursor.execute("SELECT bil_kemasukan FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
     student_record = cursor.fetchone()
 
     if not student_record:
@@ -490,7 +495,7 @@ def submit_spm():
             update_query = """
                 UPDATE pelajar 
                 SET spm_slip_filename = %s 
-                WHERE no_pendaftaran_pelajar = %s
+                WHERE bil_kemasukan = %s
             """
             cursor.execute(update_query, (secure_new_name, student_id))
 
@@ -500,13 +505,13 @@ def submit_spm():
 
     try:
         # Purge existing stale academic rows
-        cursor.execute("DELETE FROM spm_hasil WHERE no_pendaftaran_pelajar = %s", (student_id,))
+        cursor.execute("DELETE FROM spm_hasil WHERE bil_kemasukan = %s", (student_id,))
 
         # Batch insert operation
         for subjek, gred in zip(subjek_list, gred_list):
             if subjek.strip() != "" and gred.strip() != "":
                 cursor.execute(
-                    "INSERT INTO spm_hasil (no_pendaftaran_pelajar, subjek, gred) VALUES (%s, %s, %s)",
+                    "INSERT INTO spm_hasil (bil_kemasukan, subjek, gred) VALUES (%s, %s, %s)",
                     (student_id, subjek.upper(), gred.upper())
                 )
 
@@ -540,11 +545,11 @@ def package_page():
     DECOY_IDS = [1, 6, 8, 12, 14, 16, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38]
 
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(dictionary=True, buffered=True)
 
     # Fetch student details
     cursor.execute("""
-        SELECT no_pendaftaran_pelajar, tempat_lahir, no_surat_beranak, keadaan_mata, id_pakej, aliran_dipohon 
+        SELECT bil_kemasukan, tempat_lahir, no_surat_beranak, keadaan_mata, id_pakej, aliran_ditawar 
         FROM pelajar WHERE no_kp_pelajar = %s
     """, (kp,))
     student = cursor.fetchone()
@@ -555,7 +560,7 @@ def package_page():
         flash("Rekod pelajar tidak dijumpai.", "danger")
         return redirect(url_for('index'))
 
-    cursor.execute("SELECT COUNT(*) as count FROM spm_hasil WHERE no_pendaftaran_pelajar = %s", (student['no_pendaftaran_pelajar'],))
+    cursor.execute("SELECT COUNT(*) as count FROM spm_hasil WHERE bil_kemasukan = %s", (student['bil_kemasukan'],))
     spm_check = cursor.fetchone()
     
     if spm_check['count'] == 0:
@@ -588,7 +593,7 @@ def package_page():
     is_eligible_sukan = 'SAINS SUKAN' in eligible_subjects
 
     # 2. Fetch SPM grades
-    cursor.execute("SELECT subjek, gred FROM spm_hasil WHERE no_pendaftaran_pelajar = %s", (student['no_pendaftaran_pelajar'],))
+    cursor.execute("SELECT subjek, gred FROM spm_hasil WHERE bil_kemasukan = %s", (student['bil_kemasukan'],))
     spm_results = cursor.fetchall()
     grades = {str(row['subjek']).strip().upper(): str(row['gred']).strip().upper() for row in spm_results}
 
@@ -600,12 +605,12 @@ def package_page():
     eyes_good = (str(student['keadaan_mata']).strip().upper() == 'BAIK')
 
     # 3. Stream Filtering
-    if student['aliran_dipohon'] == 'SAINS':
+    if student['aliran_ditawar'] == 'SAINS':
         final_list = ['BK', 'CK', 'FK']
     else:
         final_list = ['AH', 'AP', 'BP', 'BS', 'BY', 'GB', 'GP', 'HT', 'HP', 'HY', 'CV', 'VB', 'VS']
         if not (has_math_c and has_science_c):
-            final_list = [p for p in final_list if p not in ['BK', 'CK', 'FK']]
+            final_list = [p for p in final_list if p not in ['BK', 'CK', 'FK','CV']]
         if not eyes_good:
             final_list = [p for p in final_list if p not in ['CV', 'VB', 'VS']]
         if not is_eligible_syariah:
@@ -669,7 +674,7 @@ def submit_package():
         return redirect(url_for('package_page'))
 
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(dictionary=True, buffered=True)
 
     # 1. Fetch package details to get the code and define the limit
     cursor.execute("SELECT kod_pakej FROM pakej WHERE id_pakej = %s", (selected_package_id,))
@@ -726,7 +731,7 @@ def admin_view_students_list():
     sort_filter = request.args.get('sort', '') # 'assigned' or 'unassigned'
 
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(dictionary=True, buffered=True)
 
     # Base query
     # app.py -> admin_view_students_list route
@@ -734,7 +739,7 @@ def admin_view_students_list():
     SELECT p.*, pk.kod_pakej, 
            (SELECT SUM(penjaga.pendapatan) 
             FROM penjaga 
-            WHERE penjaga.no_pendaftaran_pelajar = p.no_pendaftaran_pelajar) as total_income
+            WHERE penjaga.bil_kemasukan = p.bil_kemasukan) as total_income
     FROM pelajar p 
     LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej 
     WHERE (p.nama_pelajar LIKE %s OR p.no_kp_pelajar LIKE %s)
@@ -768,10 +773,10 @@ def admin_view_profile(student_id):
         return redirect(url_for('gateway'))
 
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(dictionary=True, buffered=True)
     
     cursor.execute("""
-        SELECT no_pendaftaran_pelajar, tempat_lahir, no_surat_beranak, keadaan_mata, id_pakej, aliran_dipohon 
+        SELECT bil_kemasukan, tempat_lahir, no_surat_beranak, keadaan_mata, id_pakej, aliran_ditawar 
         FROM pelajar WHERE no_kp_pelajar = %s
     """, (student_id,))
     
@@ -784,7 +789,7 @@ def admin_view_profile(student_id):
             SELECT p.*, k.kod_pakej, k.aliran 
             FROM pelajar p
             LEFT JOIN pakej k ON p.id_pakej = k.id_pakej
-            WHERE p.no_pendaftaran_pelajar = %s
+            WHERE p.bil_kemasukan = %s
         """
         cursor.execute(student_query, (student_id,))
         student_data = cursor.fetchone()
@@ -796,7 +801,7 @@ def admin_view_profile(student_id):
         # Fetch all registered parents/guardians for this student
         cursor.execute("""
             SELECT * FROM penjaga 
-            WHERE no_pendaftaran_pelajar = %s 
+            WHERE bil_kemasukan = %s 
             ORDER BY no_penjaga ASC
         """, (student_id,))
         guardians_data = cursor.fetchall()
@@ -804,7 +809,7 @@ def admin_view_profile(student_id):
         # Fetch academic summary list from spm_hasil
         cursor.execute("""
             SELECT subjek, gred FROM spm_hasil 
-            WHERE no_pendaftaran_pelajar = %s 
+            WHERE bil_kemasukan = %s 
             ORDER BY id_spm ASC
         """, (student_id,))
         spm_data = cursor.fetchall()
@@ -818,7 +823,7 @@ def admin_view_profile(student_id):
         conn.close()
 
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(dictionary=True, buffered=True)
     cursor.execute("SELECT * FROM pakej")
     all_packages = cursor.fetchall()
     
@@ -834,6 +839,10 @@ def update_student_package(kp):
         return {"error": "Unauthorized"}, 403
     
     new_package_id = request.form.get('new_package')
+
+    if new_package_id == "":
+        new_package_id = None
+
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("UPDATE pelajar SET id_pakej = %s WHERE no_kp_pelajar = %s", (new_package_id, kp))
@@ -868,7 +877,7 @@ def admin_settings():
         return redirect(url_for('gateway'))
 
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(dictionary=True, buffered=True)
 
     if request.method == 'POST':
         enabled_forms = request.form.getlist('enabled_forms')
@@ -883,62 +892,77 @@ def admin_settings():
         cursor.close()
         conn.close()
         return redirect(url_for('admin_settings'))
+    
+    form_labels = {
+        'profil_form': 'Borang Maklumat Pelajar',
+        'tambahan_form': 'Borang Dokumen Pelajar',
+        'penjaga_form': 'Borang Maklumat Penjaga',
+        'spm_form': 'Borang Keputusan SPM',
+        'pakej_form': 'Borang Pemilihan Pakej'
+    }
         
     # Display settings
     cursor.execute("SELECT * FROM form_settings")
     settings = cursor.fetchall()
     cursor.close()
     conn.close()
-    return render_template('admin_settings.html', settings=settings)
+    return render_template('admin_settings.html', settings=settings, form_labels=form_labels)
 
 @app.route('/admin/statistics')
 def admin_statistics():
-    if session.get('role') != 'admin': 
+    if session.get('role') != 'admin':
         return redirect(url_for('login'))
     
+    # Get the category from the URL, default to 'bangsa'
     category = request.args.get('type', 'bangsa')
     if category not in ['jantina', 'bangsa', 'agama', 'cara_datang_sekolah']: 
         category = 'bangsa'
 
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(dictionary=True, buffered=True)
 
     cursor.execute("SELECT id_pakej, kod_pakej FROM pakej ORDER BY kod_pakej")
     all_packages = cursor.fetchall()
     all_packages.append({'id_pakej': 0, 'kod_pakej': 'Tiada'})
 
+    # Get distinct values for the chosen category (e.g., list of all Religions)
     cursor.execute(f"SELECT DISTINCT {category} as cat FROM pelajar WHERE {category} IS NOT NULL")
     categories = [row['cat'] for row in cursor.fetchall()]
+    genders = ['LELAKI', 'PEREMPUAN']
 
-    cursor.execute("SELECT COUNT(*) as total FROM pelajar")
-    results = cursor.fetchone()
-    total_students = results['total']
-    print(results)
-
-    # 2. Fetch counts
-    cursor.execute(f"""
-        SELECT COALESCE(id_pakej, 0) as id_pakej, {category} as cat, COUNT(*) as total
+    # Fetch counts: Group by Package, Chosen Category, AND Gender
+    query = f"""
+        SELECT COALESCE(id_pakej, 0) as id_pakej, {category} as cat, jantina, COUNT(*) as total
         FROM pelajar
-        GROUP BY id_pakej, {category}
-    """)
+        GROUP BY id_pakej, {category}, jantina
+    """
+    cursor.execute(query)
     results = cursor.fetchall()
 
-    # 3. RESTRUCTURED MATRIX: counts[pkg_id][cat]
-    counts = {pkg['id_pakej']: {cat: 0 for cat in categories} for pkg in all_packages}
+    # Structure: counts[pkg_id][cat_val][gender]
+    counts = {pkg['id_pakej']: {cat: {g: 0 for g in genders} for cat in categories} for pkg in all_packages}
+
+    col_totals = {cat: {'LELAKI': 0, 'PEREMPUAN': 0} for cat in categories}
     
+    # 1. First, ensure counts is fully populated (You already have this)
     for row in results:
         pkg_id = row['id_pakej']
         cat_val = row['cat']
+        gender = row['jantina']
+        total = row['total']
         if pkg_id in counts and cat_val in counts[pkg_id]:
-            counts[pkg_id][cat_val] = row['total']
+            counts[pkg_id][cat_val][gender] = total
 
-    # 4. Pre-calculate totals
-    row_totals = {pkg['id_pakej']: sum(counts[pkg['id_pakej']].values()) for pkg in all_packages}
-    col_totals = {cat: sum(counts[pkg['id_pakej']][cat] for pkg in all_packages) for cat in categories}
+    # 2. ADD THIS: Populate col_totals by iterating through the already-filled counts
+    for pkg in all_packages:
+        pkg_id = pkg['id_pakej']
+        for cat in categories:
+            col_totals[cat]['LELAKI'] += counts[pkg_id][cat]['LELAKI']
+            col_totals[cat]['PEREMPUAN'] += counts[pkg_id][cat]['PEREMPUAN']
+
+    # 3. Then calculate row_totals as you were doing
+    row_totals = {pkg['id_pakej']: sum(sum(counts[pkg['id_pakej']][cat].values()) for cat in categories) for pkg in all_packages}
     grand_total = sum(row_totals.values())
-
-    cursor.close()
-    conn.close()
 
     return render_template('statistics.html', 
                            categories=categories, 
@@ -947,7 +971,6 @@ def admin_statistics():
                            row_totals=row_totals,
                            col_totals=col_totals,
                            grand_total=grand_total,
-                           total_students = total_students,
                            current_type=category)
 
 @app.route('/admin/toggle_status/<int:student_id>', methods=['POST'])
@@ -958,7 +981,7 @@ def toggle_status(student_id):
     conn = get_db_connection()
     cursor = conn.cursor()
     # Toggle logic: 1 becomes 0, 0 becomes 1
-    cursor.execute("UPDATE pelajar SET status_study = NOT status_study WHERE no_pendaftaran_pelajar = %s", (student_id,))
+    cursor.execute("UPDATE pelajar SET status_study = NOT status_study WHERE bil_kemasukan = %s", (student_id,))
     conn.commit()
     cursor.close()
     conn.close()
@@ -973,7 +996,7 @@ def eligible_subject_page():
     search = request.args.get('search', '')
 
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(dictionary=True, buffered=True)
     
     # Removed LIMIT 10 OFFSET %s
     query = """

@@ -10,6 +10,7 @@
             <div class="form-group">
                 <label>Tukar Pakej Pilihan:</label>
                 <select name="new_package" class="form-control" onchange="this.form.submit()">
+                    <option value="">NONE</option>
                     {% for p in all_packages %}
                     <option value="{{ p.id_pakej }}" {% if p.id_pakej==student.id_pakej %}selected{% endif %}>
                         {{ p.kod_pakej }} - {{ p.aliran }}
@@ -79,7 +80,7 @@
                     <tbody>
                         <tr>
                             <th style="width: 35%;">No. Pendaftaran:</th>
-                            <td><code>{{ student.no_pendaftaran_pelajar }}</code></td>
+                            <td><code>{{ student.bil_kemasukan }}</code></td>
                         </tr>
                         <tr>
                             <th>No. Kad Pengenalan:</th>
@@ -139,6 +140,11 @@
                         <tr>
                             <th>Masalah Kesihatan:</th>
                             <td>{{ student.masalah_kesihatan if student.masalah_kesihatan else 'TIADA' }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Aliran ditawar:</th>
+                            <td>{{ student.aliran_ditawar if student.aliran_ditawar else 'TIADA' }}
                             </td>
                         </tr>
                         <tr>

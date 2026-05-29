@@ -2,14 +2,16 @@
 {% block content %}
 <div class="container">
     <h2>Konfigurasi Status Borang</h2>
+    <p class="text-info h4">"Toggle" butang checkmark untuk buka/tutup form</p>
     <form method="POST">
         <table class="table">
             {% for item in settings %}
             <tr>
-                <td>{{ item.form_id }}</td>
+                <td>{{ form_labels.get(item.form_id, item.form_id) }}</td>
+        
                 <td>
-                    <input type="checkbox" name="enabled_forms" value="{{ item.form_id }}" {% if item.is_enabled
-                        %}checked{% endif %}>
+                    <input type="checkbox" name="enabled_forms" value="{{ item.form_id }}"
+                        style="transform: scale(1.5); cursor: pointer; margin-left: 10px;" {% if item.is_enabled %}checked{% endif %}>
                 </td>
             </tr>
             {% endfor %}
