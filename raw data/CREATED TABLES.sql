@@ -34,6 +34,7 @@ CREATE TABLE subjek_stpm (
     kod_subjek VARCHAR(10) NOT NULL UNIQUE,                             -- e.g., 'PA', 'MUET', 'KIM', 'EKO'
     nama_subjek VARCHAR(100) NOT NULL                                   -- e.g., 'Pengajian Am', 'Ekonomi'
 );
+
 -- 3. JUNCTION TABLE: PAKEJ_SUBJEK (Many-to-Many Bridge)
 CREATE TABLE pakej_subjek (
     id_pakej INT NOT NULL,

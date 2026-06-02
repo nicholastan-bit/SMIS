@@ -2,54 +2,62 @@
 {% block content %}
 
 <div class="container">
-    <h2>Analitik Sistem</h2>
-    <form method="GET" class="form-inline" style="margin-bottom: 20px;">
-        <select name="type" class="form-control" onchange="this.form.submit()">
-            <option value="bangsa" {% if current_type=='bangsa' %}selected{% endif %}>Bangsa</option>
-            <option value="agama" {% if current_type=='agama' %}selected{% endif %}>Agama</option>
-            <option value="cara_datang_sekolah" {% if current_type=='cara_datang_sekolah' %}selected{% endif %}>Transport
-            </option>
-        </select>
-    </form>
+    <div class="page-header">
+        <h2>Analitik Sistem</h2>
+        <p class="text-muted">Paparan statistik pelajar mengikut kategori.</p>
+    </div>
+
+    <div class="well well-sm">
+        <form method="GET" class="form-inline">
+            <label style="margin-right: 10px;">Pilih Kategori:</label>
+            <select name="type" class="form-control" onchange="this.form.submit()">
+                <option value="bangsa" {% if current_type=='bangsa' %}selected{% endif %}>Bangsa</option>
+                <option value="agama" {% if current_type=='agama' %}selected{% endif %}>Agama</option>
+                <option value="cara_datang_sekolah" {% if current_type=='cara_datang_sekolah' %}selected{% endif %}>Cara Datang Sekolah</option>
+            </select>
+        </form>
+    </div>
     
-    <table class="table table-bordered table-striped">
-        <thead>
-            <tr class="info">
-                <th rowspan="2">Package</th>
-                {% for cat in categories %}
-                <th colspan="2" class="text-center">{{ cat }}</th>
+    <div class="table-responsive">
+        <table class="table table-hover table-bordered">
+            <thead>
+                <tr class="active">
+                    <th rowspan="2" style="vertical-align: middle; background-color: #f5f5f5;">Pakej</th>
+                    {% for cat in categories %}
+                    <th colspan="2" class="text-center" style="background-color: #eef6fc;">{{ cat }}</th>
+                    {% endfor %}
+                    <th rowspan="2" class="text-center" style="vertical-align: middle; background-color: #f5f5f5;">Jumlah Besar</th>
+                </tr>
+                <tr class="active">
+                    {% for cat in categories %}
+                    <th class="text-center text-primary">L</th>
+                    <th class="text-center text-danger">P</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for pkg in all_packages %}
+                <tr>
+                    <td><strong>{{ pkg.kod_pakej }}</strong></td>
+                    {% for cat in categories %}
+                    {# Use .get() to return 0 if the key is missing #}
+                    <td class="text-center">{{ counts.get(pkg.id_pakej, {}).get(cat, {}).get('LELAKI', 0) }}</td>
+                    <td class="text-center">{{ counts.get(pkg.id_pakej, {}).get(cat, {}).get('PEREMPUAN', 0) }}</td>
+                    {% endfor %}
+                    <td class="text-center"><strong>{{ row_totals.get(pkg.id_pakej, 0) }}</strong></td>
+                </tr>
                 {% endfor %}
-                <th rowspan="2">Jumlah Besar</th>
-            </tr>
-            <tr class="info">
-                {% for cat in categories %}
-                <th>LELAKI</th>
-                <th>PEREMPUAN</th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for pkg in all_packages %}
-            <tr>
-                <td><strong>{{ pkg.kod_pakej }}</strong></td>
-                {% for cat in categories %}
-                <td>{{ counts[pkg.id_pakej][cat]['LELAKI'] }}</td>
-                <td>{{ counts[pkg.id_pakej][cat]['PEREMPUAN'] }}</td>
-                {% endfor %}
-                <td><strong>{{ row_totals[pkg.id_pakej] }}</strong></td>
-            </tr>
-            {% endfor %}
-    
-            <tr class="success">
-                <td><strong>JUMLAH</strong></td>
-                {% for cat in categories %}
-                <td><strong>{{ col_totals[cat]['LELAKI'] }}</strong></td>
-                <td><strong>{{ col_totals[cat]['PEREMPUAN'] }}</strong></td>
-                {% endfor %}
-                <td><strong>{{ grand_total }}</strong></td>
-            </tr>
-        </tbody>
+            
+                <tr class="info" style="font-weight: bold;">
+                    <td>JUMLAH</td>
+                    {% for cat in categories %}
+                    <td class="text-center">{{ col_totals.get(cat, {}).get('LELAKI', 0) }}</td>
+                    <td class="text-center">{{ col_totals.get(cat, {}).get('PEREMPUAN', 0) }}</td>
+                    {% endfor %}
+                    <td class="text-center">{{ grand_total or 0 }}</td>
+                </tr>    </tbody>
         </table>
+    </div>
 </div>
 
 {% endblock %}

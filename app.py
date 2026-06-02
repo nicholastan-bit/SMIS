@@ -121,6 +121,8 @@ def index():
         'pakej': False,
         'penjaga': False # Added key
     }
+    package_class = None
+    className = None
     
     if kp:
         conn = get_db_connection()
@@ -128,7 +130,7 @@ def index():
         
         # Fetch student details (includes joining for ID lookup efficiency)
         cursor.execute("""
-            SELECT bil_kemasukan, nama_pelajar, surat_tawaran_path, ic_photo_path, id_pakej 
+            SELECT bil_kemasukan, nama_pelajar, surat_tawaran_path, ic_photo_path, id_pakej, kelas 
             FROM pelajar WHERE no_kp_pelajar = %s
         """, (kp,))
         student = cursor.fetchone()
@@ -156,11 +158,18 @@ def index():
             # 4. Step 4 (Pakej)
             if student['id_pakej'] is not None and student['id_pakej'] != 0:
                 completion_status['pakej'] = True
-        
+
+            if student['kelas'] is not None:
+                className = student['kelas']
+
+            cursor.execute("SELECT kod_pakej as name FROM pakej WHERE id_pakej = %s", (student['id_pakej'],))
+            pakej_name = cursor.fetchone()
+            package_class = pakej_name
+            
         cursor.close()
         conn.close()
         
-    return render_template('index.html', completion_status=completion_status)
+    return render_template('index.html', completion_status=completion_status, pkg_cls=package_class, clsName=className)
 
 @app.route('/register')
 def register_page():
@@ -728,13 +737,13 @@ def submit_package():
 @app.route('/admin/students-list')
 def admin_view_students_list():
     search = request.args.get('search', '')
-    sort_filter = request.args.get('sort', '') # 'assigned' or 'unassigned'
+    sort_filter = request.args.get('sort', '')
+    class_filter = request.args.get('class_filter', '') # This will now be 'A1', 'B5', etc.
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True, buffered=True)
 
-    # Base query
-    # app.py -> admin_view_students_list route
+    # 1. Base Query
     query = """
     SELECT p.*, pk.kod_pakej, 
            (SELECT SUM(penjaga.pendapatan) 
@@ -742,23 +751,32 @@ def admin_view_students_list():
             WHERE penjaga.bil_kemasukan = p.bil_kemasukan) as total_income
     FROM pelajar p 
     LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej 
-    WHERE (p.nama_pelajar LIKE %s OR p.no_kp_pelajar LIKE %s)
+    WHERE 1=1 
     """
-    params = [f"%{search}%", f"%{search}%"]
+    params = []
 
-    # Filter Logic
+    # 2. Only add Search if there is text
+    if search:
+        query += " AND (p.nama_pelajar LIKE %s OR p.no_kp_pelajar LIKE %s)"
+        params.extend([f"%{search}%", f"%{search}%"])
+
+    # 3. Sort Logic (keep your existing code)
     if sort_filter == 'unassigned':
-        # Selects students where package code has no digits (e.g., 'BK', 'CV')
         query += " AND pk.kod_pakej IS NOT NULL AND pk.kod_pakej REGEXP '^[^0-9]+$'"
     elif sort_filter == 'assigned':
-        # Selects students where package code has digits (e.g., 'BK1', 'CV1')
         query += " AND pk.kod_pakej IS NOT NULL AND pk.kod_pakej REGEXP '[0-9]'"
+
+    # 4. Class Logic (using the safe LIKE + TRIM)
+    if class_filter:
+        query += " AND TRIM(p.kelas) LIKE %s"
+        params.append(class_filter.strip())
 
     cursor.execute(query, params)
     students = cursor.fetchall()
     
     cursor.close()
     conn.close()
+    
     return render_template('students_list.html', students=students)
 
 
@@ -913,7 +931,6 @@ def admin_statistics():
     if session.get('role') != 'admin':
         return redirect(url_for('login'))
     
-    # Get the category from the URL, default to 'bangsa'
     category = request.args.get('type', 'bangsa')
     if category not in ['jantina', 'bangsa', 'agama', 'cara_datang_sekolah']: 
         category = 'bangsa'
@@ -921,30 +938,37 @@ def admin_statistics():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True, buffered=True)
 
-    cursor.execute("SELECT id_pakej, kod_pakej FROM pakej ORDER BY kod_pakej")
+    # 1. Fetch ONLY numbered packages (the real ones)
+    cursor.execute("SELECT id_pakej, kod_pakej FROM pakej WHERE kod_pakej REGEXP '[0-9]' ORDER BY kod_pakej")
     all_packages = cursor.fetchall()
-    all_packages.append({'id_pakej': 0, 'kod_pakej': 'Tiada'})
+    # Add 'Tiada' as the only bucket for NULLs AND Decoy packages
+    all_packages.append({'id_pakej': 0, 'kod_pakej': 'Belum Dipilih'})
 
-    # Get distinct values for the chosen category (e.g., list of all Religions)
     cursor.execute(f"SELECT DISTINCT {category} as cat FROM pelajar WHERE {category} IS NOT NULL")
     categories = [row['cat'] for row in cursor.fetchall()]
     genders = ['LELAKI', 'PEREMPUAN']
 
-    # Fetch counts: Group by Package, Chosen Category, AND Gender
+    # 2. SQL CASE logic: If kod_pakej doesn't have a number, treat id_pakej as 0
     query = f"""
-        SELECT COALESCE(id_pakej, 0) as id_pakej, {category} as cat, jantina, COUNT(*) as total
-        FROM pelajar
+        SELECT 
+            CASE 
+                WHEN pk.kod_pakej REGEXP '[0-9]' THEN p.id_pakej 
+                ELSE 0 
+            END as id_pakej, 
+            p.{category} as cat, 
+            p.jantina, 
+            COUNT(*) as total
+        FROM pelajar p
+        LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej
         GROUP BY id_pakej, {category}, jantina
     """
     cursor.execute(query)
     results = cursor.fetchall()
 
-    # Structure: counts[pkg_id][cat_val][gender]
+    # The rest of your Python logic remains exactly the same
     counts = {pkg['id_pakej']: {cat: {g: 0 for g in genders} for cat in categories} for pkg in all_packages}
-
     col_totals = {cat: {'LELAKI': 0, 'PEREMPUAN': 0} for cat in categories}
     
-    # 1. First, ensure counts is fully populated (You already have this)
     for row in results:
         pkg_id = row['id_pakej']
         cat_val = row['cat']
@@ -953,16 +977,20 @@ def admin_statistics():
         if pkg_id in counts and cat_val in counts[pkg_id]:
             counts[pkg_id][cat_val][gender] = total
 
-    # 2. ADD THIS: Populate col_totals by iterating through the already-filled counts
     for pkg in all_packages:
         pkg_id = pkg['id_pakej']
         for cat in categories:
             col_totals[cat]['LELAKI'] += counts[pkg_id][cat]['LELAKI']
             col_totals[cat]['PEREMPUAN'] += counts[pkg_id][cat]['PEREMPUAN']
 
-    # 3. Then calculate row_totals as you were doing
     row_totals = {pkg['id_pakej']: sum(sum(counts[pkg['id_pakej']][cat].values()) for cat in categories) for pkg in all_packages}
     grand_total = sum(row_totals.values())
+
+    cursor.close()
+    conn.close()
+
+    print(f"DEBUG: Row totals: {row_totals}")
+    print(f"DEBUG: Grand total: {grand_total}")
 
     return render_template('statistics.html', 
                            categories=categories, 

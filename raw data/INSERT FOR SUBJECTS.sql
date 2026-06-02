@@ -1,7 +1,7 @@
 -- 1. Insert the core subjects into the subjek_stpm table with subject codes
 INSERT INTO subjek_stpm (id_subjek, kod_subjek, nama_subjek) VALUES 
 (1, 'PA', 'PENGAJIAN AM'),
-(2, 'BI', 'BAHSA INGGERIS'),
+(2, 'BI', 'BAHASA INGGERIS'),
 (3, 'KIM', 'KIMIA'),
 (4, 'MT', 'MATEMATIK T'),
 (5, 'BIO', 'BIOLOGI'),

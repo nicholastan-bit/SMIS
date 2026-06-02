@@ -4,8 +4,8 @@
 <div class="jumbotron text-center"
     style="padding: 30px 15px; margin-bottom: 25px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
     <h1>Selamat Datang</h1>
-    <p style="font-size: 16px; color: #666;">KTESI School Management Information System (SMIS)</p>
-    <p style="font-size: 14px;">
+    <p style="font-size: 18px; color: #666;">KTESI School Management Information System (SMIS)</p>
+    <p style="font-size: 16px;">
         Status Semasa:
         {% if session.get('verified_kp') %}
         <span class="label label-success" style="padding: 5px 10px;">PELAJAR LOG MASUK</span>
@@ -13,6 +13,20 @@
         <span class="label label-default" style="padding: 5px 10px;">TIADA AKSES</span>
         {% endif %}
     </p>
+    <p style="font-size: 16px; gap: 15px;">
+        <span>Kelas:</span>
+        {% if clsName %}
+        <span class="label label-success" style="...">{{ clsName }}</span>
+        {% else %}
+        <span class="label label-default" style="...">Tiada</span>
+        {% endif %}
+    
+        <span>Pakej:</span>
+        {% if pkg_cls %}
+        <span class="label label-success" style="...">{{ pkg_cls.name }}</span>
+        {% else %}
+        <span class="label label-default" style="...">Tiada</span>
+        {% endif %}</p>
 
     {% if session.get('verified_kp') %}
     <div class="well well-sm"
