@@ -1,5 +1,5 @@
 -- 1. Insert 15 Pelajar bermula dengan bil_kemasukan 19207
-INSERT INTO pelajar (bil_kemasukan, nama_pelajar, no_kp_pelajar, jantina, bangsa, agama, cara_datang_sekolah, id_pakej, aliran_dipohon) VALUES
+INSERT INTO pelajar (bil_kemasukan, nama_pelajar, no_kp_pelajar, jantina, bangsa, agama, cara_datang_sekolah, id_pakej, aliran_ditawar) VALUES
 (19207, 'Ahmad Ali', '060101010001', 'LELAKI', 'MELAYU', 'ISLAM', 'BAS', 1, 'SAINS'),
 (19208, 'Siti Aminah', '060102020002', 'PEREMPUAN', 'MELAYU', 'ISLAM', 'KERETA', 6, 'SAINS'),
 (19209, 'Wei Ming', '060203030003', 'LELAKI', 'CINA', 'BUDDHA', 'MOTOR', 8, 'SAINS SOSIAL'),
