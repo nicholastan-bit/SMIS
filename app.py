@@ -931,75 +931,69 @@ def admin_statistics():
     if session.get('role') != 'admin':
         return redirect(url_for('login'))
     
+    # 1. Capture View Mode (Pakej vs Kelas)
+    mode = request.args.get('mode', 'pakej') # default to pakej
     category = request.args.get('type', 'bangsa')
+    
     if category not in ['jantina', 'bangsa', 'agama', 'cara_datang_sekolah']: 
         category = 'bangsa'
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True, buffered=True)
 
-    # 1. Fetch ONLY numbered packages (the real ones)
-    cursor.execute("SELECT id_pakej, kod_pakej FROM pakej WHERE kod_pakej REGEXP '[0-9]' ORDER BY kod_pakej")
-    all_packages = cursor.fetchall()
-    # Add 'Tiada' as the only bucket for NULLs AND Decoy packages
-    all_packages.append({'id_pakej': 0, 'kod_pakej': 'Belum Dipilih'})
+    # 2. Dynamic Source Fetching
+    if mode == 'kelas':
+        cursor.execute("SELECT DISTINCT kelas as id, kelas as label FROM pelajar WHERE kelas IS NOT NULL ORDER BY kelas")
+        items = cursor.fetchall()
+        group_col = "kelas"
+    else:
+        cursor.execute("SELECT id_pakej as id, kod_pakej as label FROM pakej WHERE kod_pakej REGEXP '[0-9]' ORDER BY kod_pakej")
+        items = cursor.fetchall()
+        items.append({'id': 0, 'label': 'Belum Dipilih'})
+        group_col = "CASE WHEN pk.kod_pakej REGEXP '[0-9]' THEN p.id_pakej ELSE 0 END"
 
+    # 3. Get distinct categories
     cursor.execute(f"SELECT DISTINCT {category} as cat FROM pelajar WHERE {category} IS NOT NULL")
     categories = [row['cat'] for row in cursor.fetchall()]
     genders = ['LELAKI', 'PEREMPUAN']
 
-    # 2. SQL CASE logic: If kod_pakej doesn't have a number, treat id_pakej as 0
+    # 4. Fetch counts
     query = f"""
-        SELECT 
-            CASE 
-                WHEN pk.kod_pakej REGEXP '[0-9]' THEN p.id_pakej 
-                ELSE 0 
-            END as id_pakej, 
-            p.{category} as cat, 
-            p.jantina, 
-            COUNT(*) as total
+        SELECT {group_col} as group_id, p.{category} as cat, p.jantina, COUNT(*) as total
         FROM pelajar p
         LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej
-        GROUP BY id_pakej, {category}, jantina
+        GROUP BY group_id, {category}, jantina
     """
     cursor.execute(query)
     results = cursor.fetchall()
 
-    # The rest of your Python logic remains exactly the same
-    counts = {pkg['id_pakej']: {cat: {g: 0 for g in genders} for cat in categories} for pkg in all_packages}
-    col_totals = {cat: {'LELAKI': 0, 'PEREMPUAN': 0} for cat in categories}
+    # Initialize structure
+    counts = {item['id']: {cat: {g: 0 for g in genders} for cat in categories} for item in items}
     
     for row in results:
-        pkg_id = row['id_pakej']
+        gid = row['group_id']
         cat_val = row['cat']
-        gender = row['jantina']
-        total = row['total']
-        if pkg_id in counts and cat_val in counts[pkg_id]:
-            counts[pkg_id][cat_val][gender] = total
+        if gid in counts and cat_val in counts[gid]:
+            counts[gid][cat_val][row['jantina']] = row['total']
 
-    for pkg in all_packages:
-        pkg_id = pkg['id_pakej']
+    # Totals logic
+    col_totals = {cat: {'LELAKI': 0, 'PEREMPUAN': 0} for cat in categories}
+    for item in items:
         for cat in categories:
-            col_totals[cat]['LELAKI'] += counts[pkg_id][cat]['LELAKI']
-            col_totals[cat]['PEREMPUAN'] += counts[pkg_id][cat]['PEREMPUAN']
+            col_totals[cat]['LELAKI'] += counts[item['id']][cat]['LELAKI']
+            col_totals[cat]['PEREMPUAN'] += counts[item['id']][cat]['PEREMPUAN']
 
-    row_totals = {pkg['id_pakej']: sum(sum(counts[pkg['id_pakej']][cat].values()) for cat in categories) for pkg in all_packages}
+    row_totals = {item['id']: sum(sum(counts[item['id']][cat].values()) for cat in categories) for item in items}
     grand_total = sum(row_totals.values())
 
-    cursor.close()
-    conn.close()
-
-    print(f"DEBUG: Row totals: {row_totals}")
-    print(f"DEBUG: Grand total: {grand_total}")
+    print(f"DEBUG: Mode is {mode}")
+    print(f"DEBUG: Items list has {len(items)} entries: {items}")
+    print(f"DEBUG: Categories list has {len(categories)} entries: {categories}")
 
     return render_template('statistics.html', 
-                           categories=categories, 
-                           all_packages=all_packages, 
-                           counts=counts, 
-                           row_totals=row_totals,
-                           col_totals=col_totals,
-                           grand_total=grand_total,
-                           current_type=category)
+                           categories=categories, items=items, counts=counts,
+                           row_totals=row_totals, col_totals=col_totals, grand_total=grand_total,
+                           current_type=category, current_mode=mode)
 
 @app.route('/admin/toggle_status/<int:student_id>', methods=['POST'])
 def toggle_status(student_id):

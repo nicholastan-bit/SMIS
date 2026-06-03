@@ -1,20 +1,20 @@
 -- 1. Insert 15 Pelajar bermula dengan bil_kemasukan 19207
-INSERT INTO pelajar (bil_kemasukan, nama_pelajar, no_kp_pelajar, jantina, bangsa, agama, cara_datang_sekolah, id_pakej, aliran_ditawar) VALUES
-(19207, 'Ahmad Ali', '060101010001', 'LELAKI', 'MELAYU', 'ISLAM', 'BAS', 1, 'SAINS'),
-(19208, 'Siti Aminah', '060102020002', 'PEREMPUAN', 'MELAYU', 'ISLAM', 'KERETA', 6, 'SAINS'),
-(19209, 'Wei Ming', '060203030003', 'LELAKI', 'CINA', 'BUDDHA', 'MOTOR', 8, 'SAINS SOSIAL'),
-(19210, 'Priya Devi', '060304040004', 'PEREMPUAN', 'INDIA', 'HINDU', 'BASIKAL', 12, 'SAINS SOSIAL'),
-(19211, 'John Doe', '060405050005', 'LELAKI', 'BUKAN WARGANEGARA', 'KRISTIAN', 'JALAN', 14, 'SAINS'),
-(19212, 'Tan Lee', '060506060006', 'PEREMPUAN', 'CINA', 'BUDDHA', 'KERETA', 16, 'SAINS SOSIAL'),
-(19213, 'Raj Kumar', '060607070007', 'LELAKI', 'INDIA', 'HINDU', 'MOTOR', 20, 'SAINS'),
-(19214, 'Nur Huda', '060708080008', 'PEREMPUAN', 'MELAYU', 'ISLAM', 'BAS', 22, 'SAINS SOSIAL'),
-(19215, 'Lee Wei', '060809090009', 'LELAKI', 'CINA', 'BUDDHA', 'BASIKAL', 24, 'SAINS'),
-(19216, 'Fatimah', '060910100010', 'PEREMPUAN', 'MELAYU', 'ISLAM', 'KERETA', 26, 'SAINS SOSIAL'),
-(19217, 'Muthu', '061011110011', 'LELAKI', 'INDIA', 'HINDU', 'MOTOR', 28, 'SAINS'),
-(19218, 'Anna Lim', '061112120012', 'PEREMPUAN', 'CINA', 'KRISTIAN', 'JALAN', 30, 'SAINS SOSIAL'),
-(19219, 'Abu Bakar', '061213130013', 'LELAKI', 'MELAYU', 'ISLAM', 'BAS', 32, 'SAINS'),
-(19220, 'Kavin', '061214140014', 'LELAKI', 'INDIA', 'HINDU', 'MOTOR', 34, 'SAINS SOSIAL'),
-(19221, 'Sarah Jane', '061215150015', 'PEREMPUAN', 'SABAH/SARAWAK', 'KRISTIAN', 'KERETA', 36, 'SAINS SOSIAL');
+INSERT INTO pelajar (bil_kemasukan, nama_pelajar, no_kp_pelajar, jantina, bangsa, agama, cara_datang_sekolah, id_pakej, aliran_ditawar, kelas) VALUES
+(19207, 'Ahmad Ali', '060101010001', 'LELAKI', 'MELAYU', 'ISLAM', 'BAS', 1, 'SAINS', 'A1'),
+(19208, 'Siti Aminah', '060102020002', 'PEREMPUAN', 'MELAYU', 'ISLAM', 'KERETA', 6, 'SAINS', 'B4'),
+(19209, 'Wei Ming', '060203030003', 'LELAKI', 'CINA', 'BUDDHA', 'MOTOR', 8, 'SAINS SOSIAL', 'B9'),
+(19210, 'Priya Devi', '060304040004', 'PEREMPUAN', 'INDIA', 'HINDU', 'BASIKAL', 12, 'SAINS SOSIAL', 'B12'),
+(19211, 'John Doe', '060405050005', 'LELAKI', 'BUKAN WARGANEGARA', 'KRISTIAN', 'JALAN', 14, 'SAINS', 'B7'),
+(19212, 'Tan Lee', '060506060006', 'PEREMPUAN', 'CINA', 'BUDDHA', 'KERETA', 16, 'SAINS SOSIAL', 'B5'),
+(19213, 'Raj Kumar', '060607070007', 'LELAKI', 'INDIA', 'HINDU', 'MOTOR', 20, 'SAINS', 'B11'),
+(19214, 'Nur Huda', '060708080008', 'PEREMPUAN', 'MELAYU', 'ISLAM', 'BAS', 22, 'SAINS SOSIAL', 'B1'),
+(19215, 'Lee Wei', '060809090009', 'LELAKI', 'CINA', 'BUDDHA', 'BASIKAL', 24, 'SAINS', 'A6'),
+(19216, 'Fatimah', '060910100010', 'PEREMPUAN', 'MELAYU', 'ISLAM', 'KERETA', 26, 'SAINS SOSIAL', 'A4'),
+(19217, 'Muthu', '061011110011', 'LELAKI', 'INDIA', 'HINDU', 'MOTOR', 28, 'SAINS', 'A1'),
+(19218, 'Anna Lim', '061112120012', 'PEREMPUAN', 'CINA', 'KRISTIAN', 'JALAN', 30, 'SAINS SOSIAL', 'A3'),
+(19219, 'Abu Bakar', '061213130013', 'LELAKI', 'MELAYU', 'ISLAM', 'BAS', 32, 'SAINS', 'A2'),
+(19220, 'Kavin', '061214140014', 'LELAKI', 'INDIA', 'HINDU', 'MOTOR', 34, 'SAINS SOSIAL', 'A8'),
+(19221, 'Sarah Jane', '061215150015', 'PEREMPUAN', 'SABAH/SARAWAK', 'KRISTIAN', 'KERETA', 36, 'SAINS SOSIAL', 'A5');
 
 -- 2. Insert 15 Penjaga (Merujuk kepada ID baharu)
 INSERT INTO penjaga (bil_kemasukan, nama_penjaga, hubungan, no_telefon) VALUES

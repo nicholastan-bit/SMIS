@@ -9,13 +9,25 @@
 
     <div class="well well-sm">
         <form method="GET" class="form-inline">
-            <label style="margin-right: 10px;">Pilih Kategori:</label>
+            <label>Lihat Berdasarkan:</label>
+            <select name="mode" class="form-control" onchange="this.form.submit()">
+                <option value="pakej" {% if current_mode=='pakej' %}selected{% endif %}>Pakej</option>
+                <option value="kelas" {% if current_mode=='kelas' %}selected{% endif %}>Kelas</option>
+            </select>
+        
+            <label style="margin-left: 20px;">Pilih Kategori:</label>
             <select name="type" class="form-control" onchange="this.form.submit()">
                 <option value="bangsa" {% if current_type=='bangsa' %}selected{% endif %}>Bangsa</option>
                 <option value="agama" {% if current_type=='agama' %}selected{% endif %}>Agama</option>
-                <option value="cara_datang_sekolah" {% if current_type=='cara_datang_sekolah' %}selected{% endif %}>Cara Datang Sekolah</option>
+                <option value="cara_datang_sekolah" {% if current_type=='cara_datang_sekolah' %}selected{% endif %}>Transport
+                </option>
             </select>
         </form>
+        
+        <thead>
+        </thead>
+        <tbody>
+            
     </div>
     
     <div class="table-responsive">
@@ -36,15 +48,15 @@
                 </tr>
             </thead>
             <tbody>
-                {% for pkg in all_packages %}
+                {% for item in items %}
                 <tr>
-                    <td><strong>{{ pkg.kod_pakej }}</strong></td>
+                    <td><strong>{{ item.label }}</strong></td>
                     {% for cat in categories %}
                     {# Use .get() to return 0 if the key is missing #}
-                    <td class="text-center">{{ counts.get(pkg.id_pakej, {}).get(cat, {}).get('LELAKI', 0) }}</td>
-                    <td class="text-center">{{ counts.get(pkg.id_pakej, {}).get(cat, {}).get('PEREMPUAN', 0) }}</td>
+                    <td class="text-center">{{ counts.get(item.id, {}).get(cat, {}).get('LELAKI', 0) }}</td>
+                    <td class="text-center">{{ counts.get(item.id, {}).get(cat, {}).get('PEREMPUAN', 0) }}</td>
                     {% endfor %}
-                    <td class="text-center"><strong>{{ row_totals.get(pkg.id_pakej, 0) }}</strong></td>
+                    <td class="text-center"><strong>{{ row_totals.get(item.id, 0) }}</strong></td>
                 </tr>
                 {% endfor %}
             
