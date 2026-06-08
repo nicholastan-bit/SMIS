@@ -1000,18 +1000,31 @@ def statistics():
         items = cursor.fetchall()
         group_col = "kelas"
     else:
-        # Fetch packages and filter by semester[cite: 1]
-        sem_query = "" if filter_sem == 'semua' else f" AND semester = {filter_sem}"
-        cursor.execute(f"SELECT id_pakej as id, kod_pakej as label FROM pakej WHERE kod_pakej REGEXP '[0-9]'{sem_query}")
+        cursor.execute("SELECT id_pakej as id, kod_pakej as label FROM pakej") 
         all_packages = cursor.fetchall()
         
-        # Stream Filtering
+        def is_tiada(p):
+            # If ID is None, or label has no numbers, it's a "TIADA" / Decoy
+            label = p.get('label', '') or ''
+            has_number = any(char.isdigit() for char in label)
+            return not has_number
+
+        # Sort all packages into regular and decoys
+        regular_packages = [p for p in all_packages if not is_tiada(p)]
+        decoy_packages = [p for p in all_packages if is_tiada(p)]
+        
+        # Merge all decoys into one "TIADA" item
+        tiada_item = {'id': 'TIADA', 'label': 'TIADA'}
+        
+        # Filter logic
         if filter_stream == 'sains':
-            items = [p for p in all_packages if is_sains(p['label'])]
+            items = [p for p in regular_packages if is_sains(p['label'])]
         elif filter_stream == 'sosial':
-            items = [p for p in all_packages if not is_sains(p['label'])]
+            items = [p for p in regular_packages if not is_sains(p['label'])]
         else:
-            items = all_packages
+            items = regular_packages
+            
+        items.append(tiada_item)
 
         group_col = "p.id_pakej"
 
@@ -1022,38 +1035,54 @@ def statistics():
 
     # 5. Fetch counts with semester filter applied to SQL query[cite: 1]
     sem_filter_sql = "" if filter_sem == 'semua' else f" AND pk.semester = {filter_sem}"
+    
     query = f"""
-        SELECT {group_col} as group_id, p.{category} as cat, p.jantina, COUNT(*) as total
+        SELECT 
+            CASE 
+                WHEN p.id_pakej IS NULL THEN 'TIADA'
+                WHEN pk.kod_pakej NOT REGEXP '[0-9]' THEN 'TIADA'
+                ELSE p.id_pakej 
+            END as group_id,
+            p.{category} as cat, 
+            p.jantina, 
+            COUNT(*) as total
         FROM pelajar p
         LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej
-        WHERE p.id_pakej IS NOT NULL {sem_filter_sql}
+        WHERE 1=1 {sem_filter_sql}
         GROUP BY group_id, {category}, jantina
     """
     cursor.execute(query)
     results = cursor.fetchall()
 
-    # Initialize structure
-    counts = {item['id']: {cat: {g: 0 for g in genders} for cat in categories} for item in items}
+    # 1. Force the keys in your 'counts' dictionary to be strings
+    # 1. Initialize structure (Force all IDs to string)
+    counts = {str(item['id']): {cat: {g: 0 for g in genders} for cat in categories} for item in items}
     
+    # 2. Process results (Already fixed, ensure this is inside the route)
     for row in results:
-        gid = row['group_id']
+        gid = str(row['group_id'])
         cat_val = row['cat']
+        
         if gid in counts and cat_val in counts[gid]:
             counts[gid][cat_val][row['jantina']] = row['total']
 
-    # Totals logic
+    # 3. Totals logic (FIXED: Use str(item['id']) here)
+    # Ensure this part uses strings for keys
     col_totals = {cat: {'LELAKI': 0, 'PEREMPUAN': 0} for cat in categories}
     for item in items:
+        # FORCE TO STRING
+        iid = str(item['id']) 
         for cat in categories:
-            col_totals[cat]['LELAKI'] += counts[item['id']][cat]['LELAKI']
-            col_totals[cat]['PEREMPUAN'] += counts[item['id']][cat]['PEREMPUAN']
+            col_totals[cat]['LELAKI'] += counts[iid][cat]['LELAKI']
+            col_totals[cat]['PEREMPUAN'] += counts[iid][cat]['PEREMPUAN']
 
-    row_totals = {item['id']: sum(sum(counts[item['id']][cat].values()) for cat in categories) for item in items}
+    # Ensure row_totals uses string keys
+    row_totals = {str(item['id']): sum(sum(counts[str(item['id'])][cat].values()) for cat in categories) for item in items}
     grand_total = sum(row_totals.values())
-    
+    # Ensure row_gender_totals uses string keys
     row_gender_totals = {}
     for item in items:
-        iid = item['id']
+        iid = str(item['id'])
         row_gender_totals[iid] = {
             'L': sum(counts[iid][cat]['LELAKI'] for cat in categories),
             'P': sum(counts[iid][cat]['PEREMPUAN'] for cat in categories)

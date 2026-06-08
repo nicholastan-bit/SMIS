@@ -68,18 +68,18 @@
                 {% for item in items %}
                 <tr>
                     <td><strong>{{ item.label }}</strong></td>
+                
+                    {% set iid = item.id | string %} {# Create a string version of the ID #}
+                
                     {% for cat in categories %}
-                    <td class="text-center">{{ counts.get(item.id, {}).get(cat, {}).get('LELAKI', 0) }}</td>
-                    <td class="text-center">{{ counts.get(item.id, {}).get(cat, {}).get('PEREMPUAN', 0) }}</td>
+                    <td class="text-center">{{ counts.get(iid, {}).get(cat, {}).get('LELAKI', 0) }}</td>
+                    <td class="text-center">{{ counts.get(iid, {}).get(cat, {}).get('PEREMPUAN', 0) }}</td>
                     {% endfor %}
-
-                    {# New Gender Columns #}
-                    <td class="text-center text-primary"><strong>{{ row_gender_totals.get(item.id, {}).get('L', 0)
-                            }}</strong></td>
-                    <td class="text-center text-danger"><strong>{{ row_gender_totals.get(item.id, {}).get('P', 0)
-                            }}</strong></td>
-
-                    <td class="text-center"><strong>{{ row_totals.get(item.id, 0) }}</strong></td>
+                
+                    <td class="text-center text-primary"><strong>{{ row_gender_totals.get(iid, {}).get('L', 0) }}</strong></td>
+                    <td class="text-center text-danger"><strong>{{ row_gender_totals.get(iid, {}).get('P', 0) }}</strong></td>
+                
+                    <td class="text-center"><strong>{{ row_totals.get(iid, 0) }}</strong></td>
                 </tr>
                 {% endfor %}
 
