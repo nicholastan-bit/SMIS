@@ -996,7 +996,14 @@ def statistics():
 
     # 3. Fetch Items with filtering
     if mode == 'kelas':
-        cursor.execute("SELECT DISTINCT kelas as id, kelas as label FROM pelajar WHERE kelas IS NOT NULL ORDER BY kelas")
+        # 1. Use COALESCE to turn NULLs into 'TIADA'
+        # 2. Remove the WHERE clause that filters out NULLs
+        cursor.execute("""
+            SELECT DISTINCT COALESCE(kelas, 'TIADA') as id, 
+                            COALESCE(kelas, 'TIADA') as label 
+            FROM pelajar 
+            ORDER BY id
+        """)
         items = cursor.fetchall()
         group_col = "kelas"
     else:
@@ -1033,16 +1040,26 @@ def statistics():
     categories = [row['cat'] for row in cursor.fetchall()]
     genders = ['LELAKI', 'PEREMPUAN']
 
-    # 5. Fetch counts with semester filter applied to SQL query[cite: 1]
+    # 5. Fetch counts
     sem_filter_sql = "" if filter_sem == 'semua' else f" AND pk.semester = {filter_sem}"
     
-    query = f"""
-        SELECT 
+    # Dynamically define the SQL group_id expression
+    if mode == 'kelas':
+        # For 'kelas', use the column directly. Use COALESCE to handle NULLs if needed.
+        group_id_sql = "COALESCE(p.kelas, 'TIADA')"
+    else:
+        # For 'pakej', use your existing CASE logic
+        group_id_sql = """
             CASE 
                 WHEN p.id_pakej IS NULL THEN 'TIADA'
                 WHEN pk.kod_pakej NOT REGEXP '[0-9]' THEN 'TIADA'
                 ELSE p.id_pakej 
-            END as group_id,
+            END
+        """
+
+    query = f"""
+        SELECT 
+            {group_id_sql} as group_id, 
             p.{category} as cat, 
             p.jantina, 
             COUNT(*) as total
@@ -1096,7 +1113,7 @@ def statistics():
                            row_totals=row_totals, col_totals=col_totals, grand_total=grand_total,
                            current_type=category, current_mode=mode, row_gender_totals=row_gender_totals,
                            filter_stream=filter_stream, filter_sem=filter_sem, # Pass filter_sem to template[cite: 1]
-                           grand_total_l=grand_total_l, grand_total_p=grand_total_p)
+                           grand_total_l=grand_total_l, grand_total_p=grand_total_p,group_col=group_col)
 
 @app.route('/admin/toggle_status/<int:student_id>', methods=['POST'])
 def toggle_status(student_id):
