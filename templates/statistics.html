@@ -3,48 +3,65 @@
 
 <div class="container">
     <div class="page-header">
-        <h2>Analitik Sistem</h2>
+        <h2>Enrolmen Pelajar KTE Sri Istana</h2>
         <p class="text-muted">Paparan statistik pelajar mengikut kategori.</p>
     </div>
 
     <div class="well well-sm">
         <form method="GET" class="form-inline">
-            <label>Lihat Berdasarkan:</label>
+            <label>Stream:</label>
+            <select name="filter_stream" class="form-control" onchange="this.form.submit()">
+                <option value="semua" {% if request.args.get('filter_stream')=='semua' %}selected{% endif %}>Semua
+                </option>
+                <option value="sains" {% if request.args.get('filter_stream')=='sains' %}selected{% endif %}>Sains (BK,
+                    CK, FK)</option>
+                <option value="sosial" {% if request.args.get('filter_stream')=='sosial' %}selected{% endif %}>Sosial
+                </option>
+            </select>
+
+            <label style="margin-left: 15px;">Semester:</label>
+            <select name="filter_sem" class="form-control" onchange="this.form.submit()">
+                <option value="semua" {% if filter_sem=='semua' %}selected{% endif %}>Semua</option>
+                <option value="1" {% if filter_sem=='1' %}selected{% endif %}>1</option>
+                <option value="2" {% if filter_sem=='2' %}selected{% endif %}>2</option>
+                <option value="3" {% if filter_sem=='3' %}selected{% endif %}>3</option>
+            </select>
+
+            <label style="margin-left: 15px;">Lihat Berdasarkan:</label>
             <select name="mode" class="form-control" onchange="this.form.submit()">
                 <option value="pakej" {% if current_mode=='pakej' %}selected{% endif %}>Pakej</option>
                 <option value="kelas" {% if current_mode=='kelas' %}selected{% endif %}>Kelas</option>
             </select>
-        
-            <label style="margin-left: 20px;">Pilih Kategori:</label>
+
+            <label style="margin-left: 15px;">Pilih Kategori:</label>
             <select name="type" class="form-control" onchange="this.form.submit()">
                 <option value="bangsa" {% if current_type=='bangsa' %}selected{% endif %}>Bangsa</option>
                 <option value="agama" {% if current_type=='agama' %}selected{% endif %}>Agama</option>
-                <option value="cara_datang_sekolah" {% if current_type=='cara_datang_sekolah' %}selected{% endif %}>Transport
-                </option>
+                <option value="cara_datang_sekolah" {% if current_type=='cara_datang_sekolah' %}selected{% endif %}>
+                    Transport</option>
             </select>
         </form>
-        
-        <thead>
-        </thead>
-        <tbody>
-            
     </div>
-    
+
     <div class="table-responsive">
         <table class="table table-hover table-bordered">
             <thead>
                 <tr class="active">
-                    <th rowspan="2" style="vertical-align: middle; background-color: #f5f5f5;">Pakej</th>
+                    <th rowspan="2" style="vertical-align: middle; background-color: #f5f5f5;">Pakej/Kelas</th>
                     {% for cat in categories %}
                     <th colspan="2" class="text-center" style="background-color: #eef6fc;">{{ cat }}</th>
                     {% endfor %}
-                    <th rowspan="2" class="text-center" style="vertical-align: middle; background-color: #f5f5f5;">Jumlah Besar</th>
+                    <th colspan="2" class="text-center" style="background-color: #dff0d8;">Jumlah Jantina</th>
+                    <th rowspan="2" class="text-center" style="vertical-align: middle; background-color: #f5f5f5;">
+                        Jumlah Besar</th>
                 </tr>
                 <tr class="active">
                     {% for cat in categories %}
                     <th class="text-center text-primary">L</th>
                     <th class="text-center text-danger">P</th>
                     {% endfor %}
+                    <th class="text-center text-primary">L</th>
+                    <th class="text-center text-danger">P</th>
                 </tr>
             </thead>
             <tbody>
@@ -52,22 +69,33 @@
                 <tr>
                     <td><strong>{{ item.label }}</strong></td>
                     {% for cat in categories %}
-                    {# Use .get() to return 0 if the key is missing #}
                     <td class="text-center">{{ counts.get(item.id, {}).get(cat, {}).get('LELAKI', 0) }}</td>
                     <td class="text-center">{{ counts.get(item.id, {}).get(cat, {}).get('PEREMPUAN', 0) }}</td>
                     {% endfor %}
+
+                    {# New Gender Columns #}
+                    <td class="text-center text-primary"><strong>{{ row_gender_totals.get(item.id, {}).get('L', 0)
+                            }}</strong></td>
+                    <td class="text-center text-danger"><strong>{{ row_gender_totals.get(item.id, {}).get('P', 0)
+                            }}</strong></td>
+
                     <td class="text-center"><strong>{{ row_totals.get(item.id, 0) }}</strong></td>
                 </tr>
                 {% endfor %}
-            
+
                 <tr class="info" style="font-weight: bold;">
                     <td>JUMLAH</td>
                     {% for cat in categories %}
                     <td class="text-center">{{ col_totals.get(cat, {}).get('LELAKI', 0) }}</td>
                     <td class="text-center">{{ col_totals.get(cat, {}).get('PEREMPUAN', 0) }}</td>
                     {% endfor %}
-                    <td class="text-center">{{ grand_total or 0 }}</td>
-                </tr>    </tbody>
+                
+                    {# Add these two lines for the Gender Totals #}
+                    <td class="text-center text-primary">{{ grand_total_l or 0 }}</td>
+                    <td class="text-center text-danger">{{ grand_total_p or 0 }}</td>
+                
+                    <td class="text-center">{{ grand_total or 0 }}</td>           </tr>
+            </tbody>
         </table>
     </div>
 </div>

@@ -37,38 +37,48 @@
 <body>
 
     <!-- Navigation -->
-<nav class="navbar navbar-inverse navbar-fixed-top">
-    <div class="container">
-        <div class="navbar-header">
-            <a class="navbar-brand" href="{{ url_for('index') }}">SMIS Home</a>
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                    data-target="#navbar-collapse-1" aria-expanded="false">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="{{ url_for('index') }}">SMIS Home</a>
+            </div>
+    
+            <div class="collapse navbar-collapse" id="navbar-collapse-1">
+                <ul class="nav navbar-nav">
+                    <li><a href="{{ url_for('statistics') }}">Jadual Enrolmen</a></li>
+    
+                    {% if session.get('admin_logged') %}
+                    <li><a href="{{ url_for('view_students') }}">Senarai Pelajar</a></li>
+                    {% endif %}
+                </ul>
+    
+                <ul class="nav navbar-nav navbar-right">
+                    {% if session.get('admin_logged') %}
+                    <li>
+                        <p class="navbar-text">Admin Mode Enabled</p>
+                    </li>
+                    <li><a href="{{ url_for('logout') }}"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+    
+                    {% elif session.get('verified_kp') %}
+                    <li>
+                        <p class="navbar-text">KP: {{ session.get('verified_kp') }}</p>
+                    </li>
+                    <li><a href="{{ url_for('logout') }}"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+    
+                    {% else %}
+                    <li><a href="{{ url_for('gateway') }}"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
+                    {% endif %}
+                </ul>
+            </div>
         </div>
-
-        <ul class="nav navbar-nav">
-
-            {% if session.get('admin_logged') %}
-            <li><a href="{{ url_for('view_students') }}">Senarai Pelajar</a></li>
-            {% endif %}
-        </ul>
-
-        <ul class="nav navbar-nav navbar-right">
-            {% if session.get('admin_logged') %}
-            <li>
-                <p class="navbar-text">Admin Mode Enabled</p>
-            </li>
-            <li><a href="{{ url_for('logout') }}"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
-
-            {% elif session.get('verified_kp') %}
-            <li>
-                <p class="navbar-text">KP: {{ session.get('verified_kp') }}</p>
-            </li>
-            <li><a href="{{ url_for('logout') }}"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
-
-            {% else %}
-            <li><a href="{{ url_for('gateway') }}"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
-            {% endif %}
-        </ul>
-    </div>
-</nav>
+        </nav>
 
     <!-- Wrap your content in this new div -->
     <div class="content-wrapper">

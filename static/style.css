@@ -23,3 +23,20 @@ body {
     text-align: center;
     border-top: 1px solid #e7e7e7;
 }
+
+.navbar-brand.small-brand {
+    font-size: 1.1rem;
+    /* Shrinks the text slightly (default is usually 1.25rem) */
+    padding-top: 5px;
+    /* Shrinks the vertical space around the text */
+    padding-bottom: 5px;
+}
+
+.editable {
+    cursor: pointer;
+    border: 1px dashed #ccc;
+}
+
+.editable:hover {
+    background-color: #f9f9f9;
+}

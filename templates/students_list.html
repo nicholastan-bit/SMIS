@@ -100,8 +100,24 @@
             </tr>
             {% endfor %}
         </tbody>
+        
     </table>
-
+    <nav class="text-center">
+        <ul class="pagination">
+            {% if page > 1 %}
+            <li><a
+                    href="{{ url_for('admin_view_students_list', page=page-1, search=search, sort=sort, class_filter=class_filter) }}">&laquo;
+                    Previous</a></li>
+            {% endif %}
+    
+            <li class="active"><span>Page {{ page }} of {{ total_pages }}</span></li>
+    
+            {% if page < total_pages %} <li><a
+                    href="{{ url_for('admin_view_students_list', page=page+1, search=search, sort=sort, class_filter=class_filter) }}">Next
+                    &raquo;</a></li>
+                {% endif %}
+        </ul>
+        </nav>
     <div style="margin-bottom: 50px;">
         <a href="{{ url_for('index') }}" class="btn btn-default">
             <span class="glyphicon glyphicon-chevron-left"></span> Kembali ke Dashboard Utama

@@ -1,36 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="panel panel-info">
-    <div class="panel-heading">
-        <h3 class="panel-title"><span class="glyphicon glyphicon-wrench"></span> Admin Controls</h3>
-    </div>
-    <div class="panel-body">
-        <form action="{{ url_for('update_student_package', kp=student.no_kp_pelajar) }}" method="POST">
-            <div class="form-group">
-                <label>Tukar Pakej Pilihan:</label>
-                <select name="new_package" class="form-control" onchange="this.form.submit()">
-                    <option value="">NONE</option>
-                    {% for p in all_packages %}
-                    <option value="{{ p.id_pakej }}" {% if p.id_pakej==student.id_pakej %}selected{% endif %}>
-                        {{ p.kod_pakej }} - {{ p.aliran }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-        </form>
-
-        <form action="{{ url_for('update_student_status', kp=student.no_kp_pelajar) }}" method="POST">
-            <div class="form-group">
-                <label>Status Pengajian:</label>
-                <select name="status_study" class="form-control" onchange="this.form.submit()">
-                    <option value="1" {% if student.status_study==1 %}selected{% endif %}>AKTIF</option>
-                    <option value="0" {% if student.status_study==0 %}selected{% endif %}>TIDAK AKTIF</option>
-                </select>
-            </div>
-        </form>
-    </div>
-</div>
 
 <div class="row">
     <div class="col-md-12 text-center" style="margin-bottom: 40px;">
@@ -42,6 +12,11 @@
         <button type="button" onclick="window.print();" class="btn btn-success btn-lg"
             style="min-width: 150px; margin-left: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
             <span class="glyphicon glyphicon-print"></span> Cetak Dokumen Profil
+        </button>
+
+        <button type="button" onclick="confirmDelete('{{ student.bil_kemasukan }}')" class="btn btn-danger btn-lg"
+            style="margin-left: 10px;">
+            <span class="glyphicon glyphicon-trash"></span> Padam Rekod
         </button>
     </div>
 </div>
@@ -88,83 +63,160 @@
                         </tr>
                         <tr>
                             <th>E-mel Pelajar:</th>
-                            <td>{{ student.email if student.email else '<i>Tiada Data (NULL)</i>' | safe }}
+                            <td class="editable" data-field="email" data-id="{{ student.bil_kemasukan }}" contenteditable="true">
+                                {{ student.email if student.email else '...' }}
                             </td>
                         </tr>
                         <tr>
                             <th>Jantina:</th>
-                            <td>{{ student.jantina }}</td>
+                            <td>
+                                <select class="form-control editable-field" data-field="jantina" data-id="{{ student.bil_kemasukan }}">
+                                    <option value="LELAKI" {% if student.jantina=='LELAKI' %}selected{% endif %}>LELAKI</option>
+                                    <option value="PEREMPUAN" {% if student.jantina=='PEREMPUAN' %}selected{% endif %}>PEREMPUAN</option>
+                                </select>
+                            </td>
                         </tr>
+                        
                         <tr>
                             <th>Bangsa:</th>
-                            <td>{{ student.bangsa }}</td>
+                            <td>
+                                <select class="form-control editable-field" data-field="bangsa" data-id="{{ student.bil_kemasukan }}">
+                                    {% for b in ['MELAYU', 'CINA', 'INDIA', 'SABAH/SARAWAK', 'BUKAN WARGANEGARA'] %}
+                                    <option value="{{ b }}" {% if student.bangsa==b %}selected{% endif %}>{{ b }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>                   
                         </tr>
                         <tr>
                             <th>Agama:</th>
-                            <td>{{ student.agama }}</td>
+                            <td>
+                                <select class="form-control editable-field" data-field="agama" data-id="{{ student.bil_kemasukan }}">
+                                    {% for b in ['ISLAM', 'BUDDHA', 'HINDU', 'KRISTIAN', 'SIKH', 'LAIN-LAIN'] %}
+                                    <option value="{{ b }}" {% if student.agama==b %}selected{% endif %}>{{ b }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
                         </tr>
                         <tr>
                             <th>Tarikh Lahir:</th>
-                            <td>{{ student.tarikh_lahir }}</td>
+                            <td class="editable" data-field="tarikh_lahir" data-id="{{ student.bil_kemasukan }}" contenteditable="true">
+                                {{ student.tarikh_lahir }}
+                            </td>
                         </tr>
                         <tr>
                             <th>Tempat Lahir:</th>
-                            <td>{{ student.tempat_lahir if student.tempat_lahir else '<i>Tiada Data
-                                    (NULL)</i>' | safe }}</td>
+                            <td class="editable" data-field="tempat_lahir" data-id="{{ student.bil_kemasukan }}" contenteditable="true">
+                                {{ student.tempat_lahir if student.tempat_lahir else '' }}
+                            </td>
                         </tr>
                         <tr>
                             <th>No. Surat Beranak:</th>
-                            <td>{{ student.no_surat_beranak if student.no_surat_beranak else '<i>Tiada Data
-                                    (NULL)</i>' | safe }}</td>
+                            <td class="editable" data-field="no_surat_beranak" data-id="{{ student.bil_kemasukan }}" contenteditable="true">
+                                {{ student.no_surat_beranak if student.no_surat_beranak else '' }}
+                            </td>
                         </tr>
                         <tr>
                             <th>No. Telefon:</th>
-                            <td>{{ student.telefonNo if student.telefonNo else '<i>Tiada Data (NULL)</i>' |
-                                safe }}</td>
+                            <td class="editable" data-field="telefonNo" data-id="{{ student.bil_kemasukan }}" contenteditable="true">
+                                {{ student.telefonNo if student.telefonNo else '' }}
+                            </td>
                         </tr>
                         <tr>
                             <th>Alamat Rumah:</th>
-                            <td>{{ student.alamat_rumah if student.alamat_rumah else '<i>Tiada Data
-                                    (NULL)</i>' | safe }}</td>
+                            <td class="editable" data-field="alamat_rumah" data-id="{{ student.bil_kemasukan }}" contenteditable="true">
+                                {{ student.alamat_rumah if student.alamat_rumah else '' }}
+                            </td>
                         </tr>
                         <tr>
                             <th>Cara Datang Sekolah:</th>
-                            <td>{{ student.cara_datang_sekolah if student.cara_datang_sekolah else '<i>Tiada
-                                    Data (NULL)</i>' | safe }}</td>
+                            <td>
+                                <select class="form-control editable-field" data-field="cara_datang_sekolah" data-id="{{ student.bil_kemasukan }}">
+                                    {% for b in ['JALAN', 'KERETA', 'MOTOR', 'BASIKAL', 'BAS', 'LAIN-LAIN'] %}
+                                    <option value="{{ b }}" {% if student.cara_datang_sekolah==b %}selected{% endif %}>{{ b }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
                         </tr>
                         <tr>
-                            <th>Keadaan Mata / Penglihatan:</th>
-                            <td>{{ student.keadaan_mata if student.keadaan_mata else '<i>Tiada Data
-                                    (NULL)</i>' | safe }}</td>
+                            <th>Keadaan Mata:</th>
+                            <td>
+                                <select class="form-control editable-field" data-field="keadaan_mata" data-id="{{ student.bil_kemasukan }}">
+                                    <option value="BAIK" {% if student.keadaan_mata=='BAIK' %}selected{% endif %}>Baik</option>
+                                    <option value="KURANG BAIK" {% if student.keadaan_mata=='KURANG BAIK' %}selected{% endif %}>Kurang Baik</option>
+                                </select>
+                            </td>
                         </tr>
                         <tr>
                             <th>Masalah Kesihatan:</th>
-                            <td>{{ student.masalah_kesihatan if student.masalah_kesihatan else 'TIADA' }}
+                            <td class="editable" data-field="masalah_kesihatan" data-id="{{ student.bil_kemasukan }}" contenteditable="true">
+                                {{ student.masalah_kesihatan if student.masalah_kesihatan else 'TIADA' }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Status OKU:</th>
+                            <td>
+                                <select class="form-control editable-field" data-field="status_oku" data-id="{{ student.bil_kemasukan }}">
+                                    <option value="YA" {% if student.keadaan_mata=='YA' %}selected{% endif %}>YA</option>
+                                    <option value="TIDAK" {% if student.keadaan_mata=='TIDAK' %}selected{% endif %}>TIDAK
+                                    </option>
+                                </select>
                             </td>
                         </tr>
                         <tr>
                             <th>Kelas:</th>
-                            <td>{{ student.kelas if student.kelas else 'TIADA' }}
-                            </td>
+                            <td>
+                                <select class="form-control editable-field" data-field="kelas" data-id="{{ student.bil_kemasukan }}">
+                                    <option value="">TIADA</option>
+                        
+                                    {% for i in range(1, 9) %}
+                                    {% set class_name = 'A' ~ i %}
+                                    <option value="{{ class_name }}" {% if student.kelas==class_name %}selected{% endif %}>
+                                        {{ class_name }}
+                                    </option>
+                                    {% endfor %}
+                        
+                                    {% for i in range(1, 16) %}
+                                    {% set class_name = 'B' ~ i %}
+                                    <option value="{{ class_name }}" {% if student.kelas==class_name %}selected{% endif %}>
+                                        {{ class_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </td>                   
                         </tr>
+
                         <tr>
                             <th>Aliran ditawar:</th>
-                            <td>{{ student.aliran_ditawar if student.aliran_ditawar else 'TIADA' }}
+                            <td>
+                                <select class="form-control editable-field" data-field="aliran_ditawar" data-id="{{ student.bil_kemasukan }}">
+                                    <option value="SAINS" {% if student.keadaan_mata=='SAINS' %}selected{% endif %}>SAINS</option>
+                                    <option value="SAINS SOSIAL" {% if student.keadaan_mata=='SAINS SOSIAL' %}selected{% endif %}>SAINS SOSIAL
+                                    </option>
+                                </select>
                             </td>
                         </tr>
+
                         <tr>
                             <th>Pakej Aliran Dipilih:</th>
                             <td>
-                                {% if student.id_pakej %}
-                                <span class="label label-primary" style="font-size: 13px; padding: 4px 8px;">
-                                    {{ student.kod_pakej }}
-                                </span>
-                                <span class="text-muted" style="margin-left: 5px; font-size: 13px;">
-                                    Aliran: {{ student.aliran }}
-                                </span>
-                                {% else %}
-                                <span class="text-danger"><i>Belum memilih pakej aliran (NULL)</i></span>
-                                {% endif %}
+                                <select class="form-control editable-field" data-field="id_pakej" data-id="{{ student.bil_kemasukan }}">
+                                    <option value="">-- PILIH PAKEJ --</option>
+                                    {% for p in all_packages %}
+                                    <option value="{{ p.id_pakej }}" {% if student.id_pakej==p.id_pakej %}selected{% endif %}>
+                                        {{ p.kod_pakej }} - Aliran: {{ p.aliran }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </td>                   
+                        </tr>
+                        <tr>
+                            <th>Status pelajaran:</th>
+                            <td>
+                                <select class="form-control editable-field" data-field="status_study" data-id="{{ student.bil_kemasukan }}">
+                                    <option value=1 {% if student.status_study==1 %}selected{% endif %}>AKTIF</option>
+                                    <option value=0 {% if student.status_study==0 %}selected{% endif %}>TIDAK AKTIF
+                                    </option>
+                                </select>
                             </td>
                         </tr>
                     </tbody>
@@ -375,4 +427,71 @@
 </div>
 </div>
 </div>
+
+<style>
+    .editable {
+        cursor: pointer;
+        border-bottom: 1px dashed #337ab7;
+    }
+
+    .editable:hover {
+        background-color: #f0f8ff;
+    }
+</style>
+
+<script>
+    function confirmDelete(id) {
+            if (confirm("AMARAN: Adakah anda pasti mahu memadam rekod pelajar ini? Tindakan ini tidak boleh diubah.")) {
+                // Send request to delete
+                fetch('/admin/delete-student/' + id, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert("Rekod telah dipadam.");
+                            window.location.href = "{{ url_for('admin_view_students_list') }}";
+                        } else {
+                            alert("Ralat: " + data.message);
+                        }
+                    });
+            }
+        }
+    // Update this line to select both classes
+    document.querySelectorAll('.editable-field, .editable').forEach(element => {
+
+        // If it is a <td> with .editable, we need to get text. 
+        // If it is an <input>/<select> with .editable-field, we get value.
+        const eventType = (element.tagName === 'SELECT' || element.tagName === 'INPUT') ? 'change' : 'blur';
+
+        element.addEventListener(eventType, function () {
+            const field = this.getAttribute('data-field');
+            const id = this.getAttribute('data-id');
+
+            // Determine the value based on element type
+            const value = (this.tagName === 'SELECT' || this.tagName === 'INPUT')
+                ? this.value
+                : this.innerText.trim();
+
+            fetch('/admin/update-field', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ field: field, id: id, value: value })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        // Visual success indicator
+                        this.style.backgroundColor = '#dff0d8';
+                        setTimeout(() => this.style.backgroundColor = '', 1000);
+                    } else {
+                        alert('Gagal: ' + data.message);
+                        location.reload(); // Reload on failure to restore original data
+                    }
+                });
+        });
+    });
+</script>
+
 {% endblock %}

@@ -22,24 +22,23 @@ CREATE TABLE pelajar_eligibility (
 -- 1. MASTER TABLE: PAKEJ
 CREATE TABLE pakej (
     id_pakej INT AUTO_INCREMENT PRIMARY KEY,
-    kod_pakej VARCHAR(10) NOT NULL UNIQUE,                               -- e.g., 'BK1', 'CK1', 'AH1'
-    nama_pakej VARCHAR(100) NULL,                                       -- Optional descriptive name
-    aliran ENUM('SAINS', 'SAINS SOSIAL') NOT NULL,                       -- Stream for statistics
-    status_aktif TINYINT(1) DEFAULT 1                                    -- To soft-delete obsolete packages later
+    kod_pakej VARCHAR(20) NOT NULL UNIQUE, -- Increased length for the /1 suffix
+    nama_pakej VARCHAR(100) NULL,
+    aliran ENUM('SAINS', 'SAINS SOSIAL') NOT NULL,
+    status_aktif TINYINT(1) DEFAULT 1,
+    semester INT NOT NULL DEFAULT 1
 );
 
--- 2. MASTER TABLE: SUBJEK STPM
 CREATE TABLE subjek_stpm (
     id_subjek INT AUTO_INCREMENT PRIMARY KEY,
-    kod_subjek VARCHAR(10) NOT NULL UNIQUE,                             -- e.g., 'PA', 'MUET', 'KIM', 'EKO'
-    nama_subjek VARCHAR(100) NOT NULL                                   -- e.g., 'Pengajian Am', 'Ekonomi'
+    kod_pakej_subjek VARCHAR(10) NOT NULL UNIQUE, -- Renamed for clarity
+    nama_subjek VARCHAR(100) NOT NULL
 );
 
--- 3. JUNCTION TABLE: PAKEJ_SUBJEK (Many-to-Many Bridge)
 CREATE TABLE pakej_subjek (
     id_pakej INT NOT NULL,
     id_subjek INT NOT NULL,
-    PRIMARY KEY (id_pakej, id_subjek),                                  -- Prevents duplicate subjects within the same package
+    PRIMARY KEY (id_pakej, id_subjek),
     FOREIGN KEY (id_pakej) REFERENCES pakej(id_pakej) ON DELETE CASCADE,
     FOREIGN KEY (id_subjek) REFERENCES subjek_stpm(id_subjek) ON DELETE RESTRICT
 );

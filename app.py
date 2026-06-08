@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from db.db_config import db_config
 import mysql.connector
 import os
@@ -84,7 +84,7 @@ def login():
         username = request.form['username']
         password = request.form['password']
         
-        if username == "admin" and password == "12345": # (or whatever your admin check is)
+        if username == "admin" and password == "2pi8sndlo47HIjwne726p": # (or whatever your admin check is)
             session['role'] = 'admin'
             session['verified_kp'] = 'ADMIN' # Standardizes administrative privilege sessions
             flash("Selamat Datang Pentadbir Sistem!", "success")
@@ -219,13 +219,15 @@ def submit_registration():
             aliran_ditawar=VALUES(aliran_ditawar), status_oku=VALUES(status_oku), kelas=VALUES(kelas)
     """
 
-    sekolah_tamat = request.form.get('sekolah_tamat')
+    raw_nama = request.form.get('nama_pelajar', '')
+    nama_pelajar_upper = raw_nama.upper().strip() # .strip() removes accidental leading/trailing spaces
 
+    sekolah_tamat = request.form.get('sekolah_tamat')
     if not sekolah_tamat:
         sekolah_tamat = None
 
     data = (
-        request.form.get('nama_pelajar'), request.form.get('email'), kp,
+        nama_pelajar_upper, request.form.get('email'), kp,
         request.form.get('jantina'), request.form.get('bangsa'), request.form.get('agama'),
         request.form.get('tarikh_lahir'), request.form.get('alamat_rumah'), request.form.get('telefonNo'),
         sekolah_tamat, request.form.get('masalah_kesihatan'),
@@ -615,55 +617,62 @@ def package_page():
 
     # 3. Stream Filtering
     if student['aliran_ditawar'] == 'SAINS':
-        final_list = ['BK', 'CK', 'FK']
+        allowed_prefixes = ['BK', 'CK', 'FK']
     else:
-        final_list = ['AH', 'AP', 'BP', 'BS', 'BY', 'GB', 'GP', 'HT', 'HP', 'HY', 'CV', 'VB', 'VS']
+        allowed_prefixes = ['AH', 'AP', 'BP', 'BS', 'BY', 'GB', 'GP', 'HT', 'HP', 'HY', 'CV', 'VB', 'VS']
         if not (has_math_c and has_science_c):
-            final_list = [p for p in final_list if p not in ['BK', 'CK', 'FK','CV']]
+            allowed_prefixes = [p for p in allowed_prefixes if p not in ['BK', 'CK', 'FK', 'CV']]
         if not eyes_good:
-            final_list = [p for p in final_list if p not in ['CV', 'VB', 'VS']]
+            allowed_prefixes = [p for p in allowed_prefixes if p not in ['CV', 'VB', 'VS']]
         if not is_eligible_syariah:
-            final_list = [p for p in final_list if p not in ['BY', 'HY']]
+            allowed_prefixes = [p for p in allowed_prefixes if p not in ['BY', 'HY']]
         if not is_eligible_sukan:
-            final_list = [p for p in final_list if p not in ['BS', 'VS']]
+            allowed_prefixes = [p for p in allowed_prefixes if p not in ['BS', 'VS']]
 
     # Fetch packages
     format_strings = ','.join(['%s'] * len(DECOY_IDS))
-    query = f"""
-        SELECT p.id_pakej, p.kod_pakej, p.aliran, s.nama_subjek 
-        FROM pakej p
-        LEFT JOIN pakej_subjek ps ON p.id_pakej = ps.id_pakej
-        LEFT JOIN subjek_stpm s ON ps.id_subjek = s.id_subjek
-        WHERE p.id_pakej IN ({format_strings}) AND p.status_aktif = 1
-    """
-    cursor.execute(query, tuple(DECOY_IDS))
+    cursor.execute("""
+    SELECT p.id_pakej, p.kod_pakej, p.aliran, p.semester, s.nama_subjek 
+    FROM pakej p
+    LEFT JOIN pakej_subjek ps ON p.id_pakej = ps.id_pakej
+    LEFT JOIN subjek_stpm s ON ps.id_subjek = s.id_subjek
+    WHERE p.status_aktif = 1
+    """)
     all_rows = cursor.fetchall()
     cursor.close()
     conn.close()
 
+    # ... inside your package_page function, after cursor.fetchall() ...
+
     # Build response map
     packages_map = {}
     for row in all_rows:
-        prefix = ''.join([c for c in row['kod_pakej'] if c.isalpha()])
+        # 1. Filter: ONLY show decoy packages.
+        # If the code contains '/', it's a semester-specific class, so skip it.
+        if '/' in row['kod_pakej']:
+            continue
         
-        # Capacity logic
+        # 2. Eligibility logic
+        is_allowed = any(row['kod_pakej'].startswith(prefix) for prefix in allowed_prefixes)
+        
+        # 3. Capacity logic
         limit = PACKAGE_LIMITS.get(row['kod_pakej'], DEFAULT_LIMIT)
         current_count = enrollment_data.get(row['id_pakej'], 0)
-        
+
         # Only add if allowed by stream AND has space
-        if prefix in final_list and current_count < limit:
+        if is_allowed and current_count < limit:
             if row['kod_pakej'] not in packages_map:
-                    packages_map[row['kod_pakej']] = {
-                        'id_pakej': row['id_pakej'], 
-                        'kod_pakej': row['kod_pakej'], 
-                        'aliran': row['aliran'], 
-                        'subjek': [], 
-                        'kekosongan': limit - current_count,  # This matches {{ p.kekosongan }} in HTML
-                        'had_maksimum': limit                 # This matches {{ p.had_maksimum }} in HTML
-                    }
+                packages_map[row['kod_pakej']] = {
+                    'id_pakej': row['id_pakej'], 
+                    'kod_pakej': row['kod_pakej'], 
+                    'aliran': row['aliran'], 
+                    'subjek': [], 
+                    'kekosongan': limit - current_count,
+                    'had_maksimum': limit
+                }
             if row['nama_subjek']:
                 packages_map[row['kod_pakej']]['subjek'].append(row['nama_subjek'])
-
+    
     return render_template('package.html', 
                            packages=list(packages_map.values()), 
                            current_package_id=student['id_pakej'],
@@ -736,48 +745,59 @@ def submit_package():
 
 @app.route('/admin/students-list')
 def admin_view_students_list():
+    # 1. Pagination Setup
+    page = int(request.args.get('page', 1))
+    per_page = 20
+    offset = (page - 1) * per_page
+
     search = request.args.get('search', '')
     sort_filter = request.args.get('sort', '')
-    class_filter = request.args.get('class_filter', '') # This will now be 'A1', 'B5', etc.
+    class_filter = request.args.get('class_filter', '')
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True, buffered=True)
 
-    # 1. Base Query
-    query = """
-    SELECT p.*, pk.kod_pakej, 
-           (SELECT SUM(penjaga.pendapatan) 
-            FROM penjaga 
-            WHERE penjaga.bil_kemasukan = p.bil_kemasukan) as total_income
-    FROM pelajar p 
-    LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej 
-    WHERE 1=1 
-    """
+    # 2. Base Query (Used for filtering)
+    where_clause = "WHERE 1=1"
     params = []
-
-    # 2. Only add Search if there is text
+    
     if search:
-        query += " AND (p.nama_pelajar LIKE %s OR p.no_kp_pelajar LIKE %s)"
+        where_clause += " AND (nama_pelajar LIKE %s OR no_kp_pelajar LIKE %s)"
         params.extend([f"%{search}%", f"%{search}%"])
-
-    # 3. Sort Logic (keep your existing code)
     if sort_filter == 'unassigned':
-        query += " AND pk.kod_pakej IS NOT NULL AND pk.kod_pakej REGEXP '^[^0-9]+$'"
+        where_clause += " AND pk.kod_pakej IS NOT NULL AND pk.kod_pakej REGEXP '^[^0-9]+$'"
     elif sort_filter == 'assigned':
-        query += " AND pk.kod_pakej IS NOT NULL AND pk.kod_pakej REGEXP '[0-9]'"
-
-    # 4. Class Logic (using the safe LIKE + TRIM)
+        where_clause += " AND pk.kod_pakej IS NOT NULL AND pk.kod_pakej REGEXP '[0-9]'"
     if class_filter:
-        query += " AND TRIM(p.kelas) LIKE %s"
+        where_clause += " AND TRIM(kelas) LIKE %s"
         params.append(class_filter.strip())
 
-    cursor.execute(query, params)
+    # 3. Get total count for pagination
+    count_query = f"SELECT COUNT(*) as total FROM pelajar p LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej {where_clause}"
+    cursor.execute(count_query, params)
+    total_students = cursor.fetchone()['total']
+    total_pages = (total_students + per_page - 1) // per_page
+
+    # 4. Fetch Paginated Data
+    query = f"""
+        SELECT p.*, pk.kod_pakej, 
+               (SELECT SUM(penjaga.pendapatan) FROM penjaga WHERE penjaga.bil_kemasukan = p.bil_kemasukan) as total_income
+        FROM pelajar p 
+        LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej 
+        {where_clause}
+        LIMIT %s OFFSET %s
+    """
+    cursor.execute(query, params + [per_page, offset])
     students = cursor.fetchall()
     
     cursor.close()
     conn.close()
     
-    return render_template('students_list.html', students=students)
+    return render_template('students_list.html', 
+                           students=students, 
+                           page=page, 
+                           total_pages=total_pages,
+                           search=search, sort=sort_filter, class_filter=class_filter)
 
 
 @app.route('/admin/student-profile/<int:student_id>', methods=['GET'])
@@ -850,41 +870,68 @@ def admin_view_profile(student_id):
                            all_packages=all_packages)
 
 #------------------------
+@app.route('/admin/update-field', methods=['POST'])
+def update_field():
+    data = request.json
+    field = data.get('field')
+    try:
+        student_id = int(data.get('id'))
+    except (TypeError, ValueError):
+        return jsonify(success=False, message="ID Pelajar tidak sah"), 400
+        
+    value = data.get('value')
 
-@app.route('/admin/update_package/<kp>', methods=['POST'])
-def update_student_package(kp):
-    if session.get('role') != 'admin':
-        return {"error": "Unauthorized"}, 403
+    allowed_fields = [
+        'email', 'jantina', 'bangsa', 'agama', 'telefonNo', 
+        'alamat_rumah', 'cara_datang_sekolah', 'keadaan_mata', 
+        'masalah_kesihatan', 'status_oku', 'aliran_ditawar', 'kelas',
+        'tarikh_lahir', 'tempat_lahir', 'no_surat_beranak', 'id_pakej', 'status_study'
+    ]
+
+    if field not in allowed_fields:
+        return jsonify(success=False, message="Medan tidak sah"), 400
     
-    new_package_id = request.form.get('new_package')
+    # Convert status_study to integer
+    if field == 'status_study':
+        value = 1 if str(value).lower() in ['1', 'true', 'aktif'] else 0
 
-    if new_package_id == "":
-        new_package_id = None
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("UPDATE pelajar SET id_pakej = %s WHERE no_kp_pelajar = %s", (new_package_id, kp))
-    conn.commit()
-    flash("Pakej berjaya dikemaskini!")
-
-    return redirect(url_for('admin_view_profile', student_id=kp))
-
-@app.route('/admin/update_status/<kp>', methods=['POST'])
-def update_student_status(kp):
-    if session.get('role') != 'admin':
-        return {"error": "Unauthorized"}, 403
-    
-    new_status = request.form.get('status_study')
-    
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("UPDATE pelajar SET status_study = %s WHERE no_kp_pelajar = %s", (new_status, kp))
-    conn.commit()
-    cursor.close()
-    conn.close()
-    
-    flash("Status pengajian telah dikemaskini!")
-    return redirect(url_for('admin_view_profile', student_id=kp))
+    conn = None
+    cursor = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        query = f"UPDATE pelajar SET {field} = %s WHERE bil_kemasukan = %s"
+        cursor.execute(query, (value, student_id))
+        conn.commit()
+        
+        return jsonify(success=True)
+    except Exception as e:
+        print(f"Database Error: {e}") 
+        return jsonify(success=False, message=str(e)), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+        
+@app.route('/admin/delete-student/<int:student_id>', methods=['POST'])
+def delete_student(student_id):
+    conn = None
+    cursor = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Perform deletion
+        query = "DELETE FROM pelajar WHERE bil_kemasukan = %s"
+        cursor.execute(query, (student_id,))
+        conn.commit()
+        
+        return jsonify(success=True)
+    except Exception as e:
+        return jsonify(success=False, message=str(e)), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
 
 #------------------------
 
@@ -926,14 +973,13 @@ def admin_settings():
     conn.close()
     return render_template('admin_settings.html', settings=settings, form_labels=form_labels)
 
-@app.route('/admin/statistics')
-def admin_statistics():
-    if session.get('role') != 'admin':
-        return redirect(url_for('login'))
-    
-    # 1. Capture View Mode (Pakej vs Kelas)
-    mode = request.args.get('mode', 'pakej') # default to pakej
+@app.route('/statistics')
+def statistics():
+    # 1. Capture View Mode and Filters
+    mode = request.args.get('mode', 'pakej')
     category = request.args.get('type', 'bangsa')
+    filter_stream = request.args.get('filter_stream', 'semua')
+    filter_sem = request.args.get('filter_sem', 'semua') # Capture Semester[cite: 1]
     
     if category not in ['jantina', 'bangsa', 'agama', 'cara_datang_sekolah']: 
         category = 'bangsa'
@@ -941,27 +987,43 @@ def admin_statistics():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True, buffered=True)
 
-    # 2. Dynamic Source Fetching
+    # 2. Logic: Define Stream
+    def is_sains(kod):
+        return any(prefix in kod for prefix in ['BK', 'CK', 'FK'])
+
+    # 3. Fetch Items with filtering
     if mode == 'kelas':
         cursor.execute("SELECT DISTINCT kelas as id, kelas as label FROM pelajar WHERE kelas IS NOT NULL ORDER BY kelas")
         items = cursor.fetchall()
         group_col = "kelas"
     else:
-        cursor.execute("SELECT id_pakej as id, kod_pakej as label FROM pakej WHERE kod_pakej REGEXP '[0-9]' ORDER BY kod_pakej")
-        items = cursor.fetchall()
-        items.append({'id': 0, 'label': 'Belum Dipilih'})
-        group_col = "CASE WHEN pk.kod_pakej REGEXP '[0-9]' THEN p.id_pakej ELSE 0 END"
+        # Fetch packages and filter by semester[cite: 1]
+        sem_query = "" if filter_sem == 'semua' else f" AND semester = {filter_sem}"
+        cursor.execute(f"SELECT id_pakej as id, kod_pakej as label FROM pakej WHERE kod_pakej REGEXP '[0-9]'{sem_query}")
+        all_packages = cursor.fetchall()
+        
+        # Stream Filtering
+        if filter_stream == 'sains':
+            items = [p for p in all_packages if is_sains(p['label'])]
+        elif filter_stream == 'sosial':
+            items = [p for p in all_packages if not is_sains(p['label'])]
+        else:
+            items = all_packages
 
-    # 3. Get distinct categories
+        group_col = "p.id_pakej"
+
+    # 4. Get distinct categories
     cursor.execute(f"SELECT DISTINCT {category} as cat FROM pelajar WHERE {category} IS NOT NULL")
     categories = [row['cat'] for row in cursor.fetchall()]
     genders = ['LELAKI', 'PEREMPUAN']
 
-    # 4. Fetch counts
+    # 5. Fetch counts with semester filter applied to SQL query[cite: 1]
+    sem_filter_sql = "" if filter_sem == 'semua' else f" AND pk.semester = {filter_sem}"
     query = f"""
         SELECT {group_col} as group_id, p.{category} as cat, p.jantina, COUNT(*) as total
         FROM pelajar p
         LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej
+        WHERE p.id_pakej IS NOT NULL {sem_filter_sql}
         GROUP BY group_id, {category}, jantina
     """
     cursor.execute(query)
@@ -985,15 +1047,24 @@ def admin_statistics():
 
     row_totals = {item['id']: sum(sum(counts[item['id']][cat].values()) for cat in categories) for item in items}
     grand_total = sum(row_totals.values())
-
-    print(f"DEBUG: Mode is {mode}")
-    print(f"DEBUG: Items list has {len(items)} entries: {items}")
-    print(f"DEBUG: Categories list has {len(categories)} entries: {categories}")
+    
+    row_gender_totals = {}
+    for item in items:
+        iid = item['id']
+        row_gender_totals[iid] = {
+            'L': sum(counts[iid][cat]['LELAKI'] for cat in categories),
+            'P': sum(counts[iid][cat]['PEREMPUAN'] for cat in categories)
+        }
+    
+    grand_total_l = sum(row['L'] for row in row_gender_totals.values())
+    grand_total_p = sum(row['P'] for row in row_gender_totals.values())
 
     return render_template('statistics.html', 
                            categories=categories, items=items, counts=counts,
                            row_totals=row_totals, col_totals=col_totals, grand_total=grand_total,
-                           current_type=category, current_mode=mode)
+                           current_type=category, current_mode=mode, row_gender_totals=row_gender_totals,
+                           filter_stream=filter_stream, filter_sem=filter_sem, # Pass filter_sem to template[cite: 1]
+                           grand_total_l=grand_total_l, grand_total_p=grand_total_p)
 
 @app.route('/admin/toggle_status/<int:student_id>', methods=['POST'])
 def toggle_status(student_id):
