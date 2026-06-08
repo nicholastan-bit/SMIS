@@ -891,10 +891,13 @@ def update_field():
     if field not in allowed_fields:
         return jsonify(success=False, message="Medan tidak sah"), 400
     
+    if value == "":
+        value = None
+    
     # Convert status_study to integer
     if field == 'status_study':
         value = 1 if str(value).lower() in ['1', 'true', 'aktif'] else 0
-
+    
     conn = None
     cursor = None
     try:
