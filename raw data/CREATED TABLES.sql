@@ -69,8 +69,12 @@ CREATE TABLE pelajar (
     aliran_ditawar ENUM('SAINS', 'SAINS SOSIAL') DEFAULT NULL,
     status_oku ENUM('TIDAK', 'YA') DEFAULT 'TIDAK',
     kelas VARCHAR(10),
+    tarikh_pendaftaran DATE,
 	CONSTRAINT fk_pelajar_pakej FOREIGN KEY (id_pakej) REFERENCES pakej (id_pakej) ON DELETE SET NULL
 ) AUTO_INCREMENT = 19207 ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE pelajar
+ADD tarikh_pendaftaran DATE;
 
 -- 2. Jadual Penjaga
 CREATE TABLE penjaga (

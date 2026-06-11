@@ -54,6 +54,12 @@
                 <table class="table table-striped (NULL)-margin" style="font-size: 14px;">
                     <tbody>
                         <tr>
+                            <th>Nama Pelajar:</th>
+                            <td class="editable" data-field="nama_pelajar" data-id="{{ student.bil_kemasukan }}" contenteditable="true">
+                                {{ student.nama_pelajar if student.nama_pelajar else '...' }}
+                            </td>
+                        </tr>
+                        <tr>
                             <th style="width: 35%;">Bil. Kemasukan:</th>
                             <td><code>{{ student.bil_kemasukan }}</code></td>
                         </tr>
@@ -214,7 +220,7 @@
                             <td>
                                 <select class="form-control editable-field" data-field="status_study" data-id="{{ student.bil_kemasukan }}">
                                     <option value=1 {% if student.status_study==1 %}selected{% endif %}>AKTIF</option>
-                                    <option value=0 {% if student.status_study==0 %}selected{% endif %}>TIDAK AKTIF
+                                    <option value=0 {% if student.status_study==0 or not student.status_study %}selected{% endif %}>TIDAK AKTIF
                                     </option>
                                 </select>
                             </td>

@@ -39,7 +39,21 @@
                         {% endfor %}           
                         </select>         
                 </div>
-        
+
+                <div class="row">
+                    <div class="col-md-3 form-group">
+                        <label>Filter Pakej</label>
+                        <select name="pakej_filter" class="form-control">
+                            <option value="">Semua Pakej</option>
+                            {% for p in all_packages %}
+                            <option value="{{ p.id_pakej }}" {% if request.args.get('pakej_filter')==p.id_pakej|string %}selected{%
+                                endif %}>
+                                {{ p.kod_pakej }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                
                 <div class="col-md-2 form-group" style="padding-top: 25px;">
                     <button type="submit" class="btn btn-primary">Tapis</button>
                 </div>
@@ -47,25 +61,39 @@
         </form>
     </div>
 
+    <div class="alert alert-info">
+        <strong>Jumlah Pelajar:</strong> {{ total_students }}
+    </div>
+
     <table class="table table-striped table-bordered table-hover" style="background-color: white;">
         <thead>
             <tr class="bg-primary">
+                <th>Bil Kemasukan</th>
                 <th>Nama Pelajar</th>
                 <th>No. KP</th>
+                <th>Status Pelajaran</th>
                 <th>Jantina</th>
-                <th>Bangsa</th>
-                <th>Pendapatan Isi Rumah</th>
                 <th>Pakej Aliran</th>
+                <th>Pendapatan Rumah</th>
+                <th>Pakej dipilih</th>
                 <th>Kelas</th>
                 <th style="width: 130px;">Tindakan</th>
-            </tr>
-        </thead>
+            </tr></thead>
         <tbody>
             {% for s in students %}
             <tr>
+                <td>{{ s.bil_kemasukan }}</td>
                 <td>{{ s.nama_pelajar }}</td>
                 <td>{{ s.no_kp_pelajar }}</td>
+                <td>
+                    {% if s.status_study %}
+                    <span class="label label-success">Aktif</span>
+                    {% else %}
+                    <span class="label label-danger">Tidak Aktif</span>
+                    {% endif %}   
+                </td>
                 <td>{{ s.jantina }}</td>
+                
                 <td><span class="label label-default">{{ s.bangsa }}</span></td>
                 <td>
                     <strong>RM {{ "{:,.2f}".format(s.total_income or 0) }}</strong>           </td>
@@ -76,6 +104,7 @@
                     <span class="text-danger"><i>Belum Memilih</i></span>
                     {% endif %}
                 </td>
+                
                 <td>
                     {% if s.kelas %}
                     <span class="label label-info"

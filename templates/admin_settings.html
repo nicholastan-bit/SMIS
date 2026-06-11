@@ -1,22 +1,73 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container">
-    <h2>Konfigurasi Status Borang</h2>
-    <p class="text-info h4">"Toggle" butang checkmark untuk buka/tutup form</p>
-    <form method="POST">
-        <table class="table">
-            {% for item in settings %}
-            <tr>
-                <td>{{ form_labels.get(item.form_id, item.form_id) }}</td>
-        
-                <td>
-                    <input type="checkbox" name="enabled_forms" value="{{ item.form_id }}"
-                        style="transform: scale(1.5); cursor: pointer; margin-left: 10px;" {% if item.is_enabled %}checked{% endif %}>
-                </td>
-            </tr>
-            {% endfor %}
-        </table>
-        <button type="submit" class="btn btn-success">Simpan Tetapan</button>
-    </form>
+    <h2>Konfigurasi Sistem</h2>
+
+    <div class="row">
+        <div class="col-md-6">
+
+            <div class="card mb-4 p-3">
+                <h4>Konfigurasi Status Borang</h4>
+                <p class="text-info">"Toggle" butang checkmark untuk buka/tutup form</p>
+                <form method="POST">
+                    <table class="table table-bordered">
+                        {% for item in settings %}
+                        <tr>
+                            <td>{{ form_labels.get(item.form_id, item.form_id) }}</td>
+                            <td>
+                                <input type="checkbox" name="enabled_forms" value="{{ item.form_id }}"
+                                    style="transform: scale(1.5); cursor: pointer; margin-left: 10px;" {% if
+                                    item.is_enabled %}checked{% endif %}>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                    <button type="submit" class="btn btn-success">Simpan Tetapan Borang</button>
+                </form>
+            </div>
+
+            <div class="card p-3">
+                <h4>Kemaskini Had Kapasiti Pakej</h4>
+                <form method="POST" class="form-inline">
+                    <div class="form-group mb-2">
+                        <select name="package_select" class="form-control" required>
+                            <option value="">-- Pilih Pakej --</option>
+                            {% for p in all_packages %}
+                            <option value="{{ p.id_pakej }}">{{ p.kod_pakej }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group mx-sm-3 mb-2">
+                        <input type="number" name="limit_number" class="form-control" placeholder="Had Baru" required>
+                    </div>
+                    <button type="submit" name="update_limit" class="btn btn-primary mb-2">Simpan Had</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card p-3">
+                <h4>Statistik Pendaftaran Pakej</h4>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Kod Pakej</th>
+                            <th>Jumlah</th>
+                            <th>Had</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in package_summary %}
+                        <tr>
+                            <td><strong>{{ p.kod_pakej }}</strong></td>
+                            <td>{{ p.total_students }}</td>
+                            <td>{{ package_limits.get(p.kod_pakej, default_limit) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

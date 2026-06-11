@@ -2,17 +2,35 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from db.db_config import db_config
 import mysql.connector
 import os
+import json
 from werkzeug.utils import secure_filename
 
+LIMITS_FILE = 'limits.json'
+
 PACKAGE_LIMITS = {
-    'BK': 80, 'BK1': 20, 'BK2': 20, 'BK3': 20, 'BK4': 20,
+    'BK': 1, 'BK1': 15, 'BK2': 15, 'BK3': 15, 'BK4': 15,
     'FK': 60, 'FK1': 20, 'FK2': 20, 'FK3': 20,
     'CK': 20, 'CK1': 20,
     'CV': 30, 'CV1': 30,
-    'AP': 135
+    'AP': 120
     
 }
-DEFAULT_LIMIT = 45
+DEFAULT_LIMIT = 40
+
+def get_limits():
+    # If the file doesn't exist, create it with your default dictionary
+    if not os.path.exists(LIMITS_FILE):
+        default_limits = PACKAGE_LIMITS
+        with open(LIMITS_FILE, 'w') as f:
+            json.dump(default_limits, f)
+        return default_limits
+    
+    with open(LIMITS_FILE, 'r') as f:
+        return json.load(f)
+
+def save_limits(limits_dict):
+    with open(LIMITS_FILE, 'w') as f:
+        json.dump(limits_dict, f, indent=4)
 
 app = Flask(__name__)
 app.secret_key = 'smis_admin_secret_key'
@@ -552,7 +570,6 @@ def package_page():
         return redirect(url_for('gateway'))
 
     # 1. Define Capacity Limits
-    DEFAULT_LIMIT = 45
     DECOY_IDS = [1, 6, 8, 12, 14, 16, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38]
 
     conn = get_db_connection()
@@ -639,40 +656,54 @@ def package_page():
     WHERE p.status_aktif = 1
     """)
     all_rows = cursor.fetchall()
-    cursor.close()
-    conn.close()
 
     # ... inside your package_page function, after cursor.fetchall() ...
+    current_limits = get_limits()
+    cursor.execute("SELECT id_pakej, kod_pakej FROM pakej")
+    pakej_mapping = {row['id_pakej']: row['kod_pakej'] for row in cursor.fetchall()}
+
+    group_counts = {}
+    for pid, count in enrollment_data.items():
+        kod = pakej_mapping.get(pid, '')
+        prefix = ''.join([i for i in kod if not i.isdigit()])
+        group_counts[prefix] = group_counts.get(prefix, 0) + count
 
     # Build response map
     packages_map = {}
     for row in all_rows:
-        # 1. Filter: ONLY show decoy packages.
-        # If the code contains '/', it's a semester-specific class, so skip it.
-        if '/' in row['kod_pakej']:
-            continue
-        
-        # 2. Eligibility logic
-        is_allowed = any(row['kod_pakej'].startswith(prefix) for prefix in allowed_prefixes)
-        
-        # 3. Capacity logic
-        limit = PACKAGE_LIMITS.get(row['kod_pakej'], DEFAULT_LIMIT)
-        current_count = enrollment_data.get(row['id_pakej'], 0)
+        if '/' in row['kod_pakej']: continue
 
-        # Only add if allowed by stream AND has space
-        if is_allowed and current_count < limit:
-            if row['kod_pakej'] not in packages_map:
-                packages_map[row['kod_pakej']] = {
+        kod = row['kod_pakej']
+        prefix = ''.join([i for i in kod if not i.isdigit()])
+
+        # Get Limits
+        limit_class = current_limits.get(kod, DEFAULT_LIMIT)
+        limit_group = current_limits.get(prefix, 120) 
+
+        # Get Counts
+        count_class = enrollment_data.get(row['id_pakej'], 0)
+        count_group = group_counts.get(prefix, 0)
+
+        # Eligibility & Capacity logic
+        is_allowed = any(kod.startswith(p) for p in allowed_prefixes)
+    
+        # Check if either individual class OR group total is full
+        if is_allowed and count_class < limit_class and count_group < limit_group:
+            if kod not in packages_map:
+                packages_map[kod] = {
                     'id_pakej': row['id_pakej'], 
-                    'kod_pakej': row['kod_pakej'], 
+                    'kod_pakej': kod, 
                     'aliran': row['aliran'], 
                     'subjek': [], 
-                    'kekosongan': limit - current_count,
-                    'had_maksimum': limit
+                    'kekosongan': min(limit_class - count_class, limit_group - count_group),
+                    'had_maksimum': limit_class
                 }
             if row['nama_subjek']:
-                packages_map[row['kod_pakej']]['subjek'].append(row['nama_subjek'])
+                packages_map[kod]['subjek'].append(row['nama_subjek'])
     
+    cursor.close()
+    conn.close()
+
     return render_template('package.html', 
                            packages=list(packages_map.values()), 
                            current_package_id=student['id_pakej'],
@@ -694,7 +725,7 @@ def submit_package():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True, buffered=True)
 
-    # 1. Fetch package details to get the code and define the limit
+    # 1. Fetch package details
     cursor.execute("SELECT kod_pakej FROM pakej WHERE id_pakej = %s", (selected_package_id,))
     pkg = cursor.fetchone()
     
@@ -705,36 +736,50 @@ def submit_package():
         return redirect(url_for('package_page'))
 
     kod_pakej = pkg['kod_pakej']
-    limit = PACKAGE_LIMITS.get(kod_pakej, 45)
-
-    # 2. Re-verify the limit based on the actual kod_pakej
-    # Match the logic you defined in package_page()
-
-    # 3. Check current count
-    cursor.execute("SELECT COUNT(*) as count FROM pelajar WHERE id_pakej = %s", (selected_package_id,))
-    current_count = cursor.fetchone()['count']
+    current_limits = get_limits() 
     
-    if current_count >= limit:
-        cursor.close()
-        conn.close()
-        flash(f"Maaf, pakej {kod_pakej} telah penuh ({current_count}/{limit}).", "danger")
+    
+    # 2. Identify the Group Prefix (e.g., BK from BK1)
+    prefix = ''.join([i for i in kod_pakej if not i.isdigit()])
+    
+    # Define limits
+    limit_class = current_limits.get(kod_pakej, DEFAULT_LIMIT)
+    limit_group = current_limits.get(prefix, 120)
+
+    # 3. Check current counts
+    # Count for the specific class
+    cursor.execute("SELECT COUNT(*) as count FROM pelajar WHERE id_pakej = %s", (selected_package_id,))
+    count_class = cursor.fetchone()['count']
+    
+    # Count for the whole group (e.g., all BK classes)
+    cursor.execute("""
+        SELECT COUNT(*) as count FROM pelajar p
+        JOIN pakej pk ON p.id_pakej = pk.id_pakej
+        WHERE pk.kod_pakej LIKE %s
+    """, (f"{prefix}%",))
+    count_group = cursor.fetchone()['count']
+
+    # 4. Enforce Limits
+    if count_class >= limit_class:
+        flash(f"Maaf, kelas {kod_pakej} telah penuh ({count_class}/{limit_class}).", "danger")
+        cursor.close(); conn.close()
+        return redirect(url_for('package_page'))
+
+    if count_group >= limit_group:
+        flash(f"Maaf, kuota keseluruhan bagi kumpulan {prefix} telah penuh ({count_group}/{limit_group}).", "danger")
+        cursor.close(); conn.close()
         return redirect(url_for('package_page'))
     
+    # 5. Perform Update
     try:
-        cursor.execute("""
-            UPDATE pelajar 
-            SET id_pakej = %s 
-            WHERE no_kp_pelajar = %s
-        """, (selected_package_id, kp))
-        
+        cursor.execute("UPDATE pelajar SET id_pakej = %s WHERE no_kp_pelajar = %s", (selected_package_id, kp))
         conn.commit()
         flash("Pilihan pakej berjaya didaftarkan!", "success")
-    except mysql.connector.Error as err:
+    except Exception as err:
         conn.rollback()
         flash(f"Ralat Sistem: {err}", "danger")
     finally:
-        cursor.close()
-        conn.close()
+        cursor.close(); conn.close()
 
     return redirect(url_for('index'))
 
@@ -745,7 +790,6 @@ def submit_package():
 
 @app.route('/admin/students-list')
 def admin_view_students_list():
-    # 1. Pagination Setup
     page = int(request.args.get('page', 1))
     per_page = 20
     offset = (page - 1) * per_page
@@ -753,23 +797,39 @@ def admin_view_students_list():
     search = request.args.get('search', '')
     sort_filter = request.args.get('sort', '')
     class_filter = request.args.get('class_filter', '')
+    pakej_filter = request.args.get('pakej_filter', '') # New Filter
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True, buffered=True)
 
-    # 2. Base Query (Used for filtering)
+    # Fetch choices for dropdowns
+    cursor.execute("SELECT id_pakej, kod_pakej FROM pakej ORDER BY kod_pakej")
+    all_packages = cursor.fetchall()
+    
+    cursor.execute("SELECT DISTINCT kelas FROM pelajar WHERE kelas IS NOT NULL ORDER BY kelas")
+    all_classes = [r['kelas'] for r in cursor.fetchall()]
+
+    # Base Query
     where_clause = "WHERE 1=1"
     params = []
     
     if search:
         where_clause += " AND (nama_pelajar LIKE %s OR no_kp_pelajar LIKE %s)"
         params.extend([f"%{search}%", f"%{search}%"])
+    
+    # Updated sort_filter logic (Keep your original logic)
     if sort_filter == 'unassigned':
-        where_clause += " AND pk.kod_pakej IS NOT NULL AND pk.kod_pakej REGEXP '^[^0-9]+$'"
+        where_clause += " AND (p.id_pakej IS NULL OR pk.kod_pakej REGEXP '^[^0-9]+$')"
     elif sort_filter == 'assigned':
         where_clause += " AND pk.kod_pakej IS NOT NULL AND pk.kod_pakej REGEXP '[0-9]'"
+    
+    # Specific Package Filter
+    if pakej_filter:
+        where_clause += " AND p.id_pakej = %s"
+        params.append(pakej_filter)
+        
     if class_filter:
-        where_clause += " AND TRIM(kelas) LIKE %s"
+        where_clause += " AND kelas = %s"
         params.append(class_filter.strip())
 
     # 3. Get total count for pagination
@@ -777,6 +837,9 @@ def admin_view_students_list():
     cursor.execute(count_query, params)
     total_students = cursor.fetchone()['total']
     total_pages = (total_students + per_page - 1) // per_page
+
+    print(f"DEBUG: WHERE clause is: {where_clause}")
+    print(f"DEBUG: Params are: {params}")
 
     # 4. Fetch Paginated Data
     query = f"""
@@ -797,7 +860,13 @@ def admin_view_students_list():
                            students=students, 
                            page=page, 
                            total_pages=total_pages,
-                           search=search, sort=sort_filter, class_filter=class_filter)
+                           total_students=total_students,
+                           search=search, 
+                           sort=sort_filter, 
+                           class_filter=class_filter,
+                           pakej_filter=pakej_filter, # Pass to template
+                           all_packages=all_packages, # Pass to template
+                           all_classes=all_classes) # Pass to template
 
 
 @app.route('/admin/student-profile/<int:student_id>', methods=['GET'])
@@ -882,7 +951,7 @@ def update_field():
     value = data.get('value')
 
     allowed_fields = [
-        'email', 'jantina', 'bangsa', 'agama', 'telefonNo', 
+        'nama_pelajar','email', 'jantina', 'bangsa', 'agama', 'telefonNo', 
         'alamat_rumah', 'cara_datang_sekolah', 'keadaan_mata', 
         'masalah_kesihatan', 'status_oku', 'aliran_ditawar', 'kelas',
         'tarikh_lahir', 'tempat_lahir', 'no_surat_beranak', 'id_pakej', 'status_study'
@@ -947,20 +1016,55 @@ def admin_settings():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True, buffered=True)
 
+    # Handle POST requests
     if request.method == 'POST':
-        enabled_forms = request.form.getlist('enabled_forms')
+        # Action 1: Toggle form settings
+        if 'enabled_forms' in request.form or 'toggle_submit' in request.form:
+            enabled_forms = request.form.getlist('enabled_forms')
+            cursor.execute("UPDATE form_settings SET is_enabled = FALSE")
+            for form_id in request.form.getlist('enabled_forms'):
+                cursor.execute("UPDATE form_settings SET is_enabled = TRUE WHERE form_id = %s", (form_id,))
+            conn.commit()
+            flash("Tetapan borang dikemaskini.", "success")
         
-        # Disable all first
-        cursor.execute("UPDATE form_settings SET is_enabled = FALSE")
-        # Enable the checked ones
-        for form_id in enabled_forms:
-            cursor.execute("UPDATE form_settings SET is_enabled = TRUE WHERE form_id = %s", (form_id,))
-        conn.commit()
+        # Action 2: Update specific package limit
+        elif 'update_limit' in request.form:
+            package_id = request.form.get('package_select')
+            new_limit = request.form.get('limit_number')
+            
+            cursor.execute("SELECT kod_pakej FROM pakej WHERE id_pakej = %s", (package_id,))
+            pkg = cursor.fetchone()
+            
+            if pkg and new_limit:
+                limits = get_limits()
+                limits[pkg['kod_pakej']] = int(new_limit)
+                save_limits(limits)
+                flash(f"Had {pkg['kod_pakej']} dikemaskini kepada {new_limit}.", "success")
         
-        cursor.close()
-        conn.close()
+        cursor.close(); conn.close()
         return redirect(url_for('admin_settings'))
+
+    # Fetch Data for Display
+    cursor.execute("SELECT * FROM form_settings")
+    settings = cursor.fetchall()
+
+    cursor.execute("""
+        SELECT p.id_pakej, p.kod_pakej, COUNT(s.bil_kemasukan) as total_students
+        FROM pakej p
+        LEFT JOIN pelajar s ON p.id_pakej = s.id_pakej
+        WHERE p.status_aktif = 1
+        GROUP BY p.id_pakej
+        ORDER BY p.kod_pakej
+    """)
+    package_summary = cursor.fetchall()
     
+    # Fetch packages for the dropdown list
+    cursor.execute("SELECT id_pakej, kod_pakej FROM pakej ORDER BY kod_pakej")
+    all_packages = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
     form_labels = {
         'profil_form': 'Borang Maklumat Pelajar',
         'tambahan_form': 'Borang Dokumen Pelajar',
@@ -968,13 +1072,14 @@ def admin_settings():
         'spm_form': 'Borang Keputusan SPM',
         'pakej_form': 'Borang Pemilihan Pakej'
     }
-        
-    # Display settings
-    cursor.execute("SELECT * FROM form_settings")
-    settings = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return render_template('admin_settings.html', settings=settings, form_labels=form_labels)
+
+    return render_template('admin_settings.html', 
+                           settings=settings, 
+                           form_labels=form_labels,
+                           package_summary=package_summary,
+                           all_packages=all_packages,
+                           package_limits=get_limits(), # Load from JSON
+                           default_limit=DEFAULT_LIMIT)
 
 @app.route('/statistics')
 def statistics():
