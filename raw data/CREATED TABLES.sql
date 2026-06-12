@@ -59,7 +59,7 @@ CREATE TABLE pelajar (
 	cara_datang_sekolah ENUM('JALAN', 'KERETA', 'MOTOR', 'BASIKAL', 'BAS', 'LAIN-LAIN') DEFAULT NULL,
 	tempat_lahir VARCHAR(200) DEFAULT NULL,
 	no_surat_beranak VARCHAR(50) DEFAULT NULL,
-	keadaan_mata ENUM('BAIK', 'KURANG BAIK') DEFAULT NULL,
+	masalah_penglihatan ENUM('YA', 'TIDAK') DEFAULT NULL,
 	status_study TINYINT(1) DEFAULT NULL,
 	spm_slip_blob LONGBLOB,
 	spm_slip_filename VARCHAR(100) DEFAULT NULL,
@@ -72,9 +72,6 @@ CREATE TABLE pelajar (
     tarikh_pendaftaran DATE,
 	CONSTRAINT fk_pelajar_pakej FOREIGN KEY (id_pakej) REFERENCES pakej (id_pakej) ON DELETE SET NULL
 ) AUTO_INCREMENT = 19207 ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-ALTER TABLE pelajar
-ADD tarikh_pendaftaran DATE;
 
 -- 2. Jadual Penjaga
 CREATE TABLE penjaga (

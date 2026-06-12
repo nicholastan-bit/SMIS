@@ -1,14 +1,17 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, Response
 from db.db_config import db_config
 import mysql.connector
 import os
 import json
+import csv
+import io
 from werkzeug.utils import secure_filename
+from datetime import date
 
 LIMITS_FILE = 'limits.json'
 
 PACKAGE_LIMITS = {
-    'BK': 1, 'BK1': 15, 'BK2': 15, 'BK3': 15, 'BK4': 15,
+    'BK': 60, 'BK1': 15, 'BK2': 15, 'BK3': 15, 'BK4': 15,
     'FK': 60, 'FK1': 20, 'FK2': 20, 'FK3': 20,
     'CK': 20, 'CK1': 20,
     'CV': 30, 'CV1': 30,
@@ -192,7 +195,7 @@ def index():
 @app.route('/register')
 def register_page():
     if not is_form_enabled('profil_form'):
-        flash("Borang ini sedang ditutup oleh pentadbir.", "warning")
+        flash("Borang ini sedang ditutup oleh pentadbir.", "danger")
         return redirect(url_for('index'))
     
     kp = session.get('verified_kp')
@@ -224,18 +227,20 @@ def submit_registration():
         INSERT INTO pelajar (
             nama_pelajar, email, no_kp_pelajar, jantina, bangsa, agama, 
             tarikh_lahir, alamat_rumah, telefonNo, sekolah_tamat, masalah_kesihatan, 
-            cara_datang_sekolah, tempat_lahir, no_surat_beranak, keadaan_mata, 
-            aliran_ditawar, status_oku, kelas, status_study
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 1)
+            cara_datang_sekolah, tempat_lahir, no_surat_beranak, masalah_penglihatan, 
+            aliran_ditawar, status_oku, kelas, status_study, tarikh_pendaftaran
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 1, %s)
         ON DUPLICATE KEY UPDATE 
             nama_pelajar=VALUES(nama_pelajar), email=VALUES(email), jantina=VALUES(jantina),
             bangsa=VALUES(bangsa), agama=VALUES(agama), tarikh_lahir=VALUES(tarikh_lahir),
             alamat_rumah=VALUES(alamat_rumah), telefonNo=VALUES(telefonNo), 
             sekolah_tamat=VALUES(sekolah_tamat), masalah_kesihatan=VALUES(masalah_kesihatan),
             cara_datang_sekolah=VALUES(cara_datang_sekolah), tempat_lahir=VALUES(tempat_lahir),
-            no_surat_beranak=VALUES(no_surat_beranak), keadaan_mata=VALUES(keadaan_mata),
+            no_surat_beranak=VALUES(no_surat_beranak), masalah_penglihatan=VALUES(masalah_penglihatan),
             aliran_ditawar=VALUES(aliran_ditawar), status_oku=VALUES(status_oku), kelas=VALUES(kelas)
     """
+
+    today = date.today().strftime('%Y-%m-%d')
 
     raw_nama = request.form.get('nama_pelajar', '')
     nama_pelajar_upper = raw_nama.upper().strip() # .strip() removes accidental leading/trailing spaces
@@ -250,8 +255,9 @@ def submit_registration():
         request.form.get('tarikh_lahir'), request.form.get('alamat_rumah'), request.form.get('telefonNo'),
         sekolah_tamat, request.form.get('masalah_kesihatan'),
         request.form.get('cara_datang_sekolah'), request.form.get('tempat_lahir'),
-        request.form.get('no_surat_beranak'), request.form.get('keadaan_mata'),
-        request.form.get('aliran_ditawar'), request.form.get('status_oku'), request.form.get('kelas')
+        request.form.get('no_surat_beranak'), request.form.get('masalah_penglihatan'),
+        request.form.get('aliran_ditawar'), request.form.get('status_oku'), request.form.get('kelas'),
+        today 
     )
 
     try:
@@ -272,7 +278,7 @@ def submit_registration():
 @app.route('/additional', methods=['GET'])
 def additional_page():
     if not is_form_enabled('tambahan_form'):
-        flash("Borang ini sedang ditutup oleh pentadbir.", "warning")
+        flash("Borang ini sedang ditutup oleh pentadbir.", "danger")
         return redirect(url_for('index'))
     
     """Renders the additional details form ONLY if it hasn't been completed yet,
@@ -280,7 +286,7 @@ def additional_page():
     """
     kp = session.get('verified_kp')
     if not kp:
-        flash("Sila masukkan No. KP anda terlebih dahulu.", "warning")
+        flash("Sila masukkan No. KP anda terlebih dahulu.", "danger")
         return redirect(url_for('gateway'))
 
     conn = get_db_connection()
@@ -288,7 +294,7 @@ def additional_page():
     
     # Check if student exists and see if fields are already filled
     cursor.execute("""
-        SELECT bil_kemasukan, tempat_lahir, no_surat_beranak, keadaan_mata 
+        SELECT bil_kemasukan, tempat_lahir, no_surat_beranak, masalah_penglihatan 
         FROM pelajar WHERE no_kp_pelajar = %s
     """, (kp,))
     student = cursor.fetchone()
@@ -316,7 +322,7 @@ def submit_additional():
     if not student:
         cursor.close()
         conn.close()
-        flash("Sila lengkapkan Profil Pendaftaran utama terlebih dahulu.", "warning")
+        flash("Sila lengkapkan Profil Pendaftaran utama terlebih dahulu.", "danger")
         return redirect(url_for('index'))
 
     student_id = student['bil_kemasukan']
@@ -368,7 +374,7 @@ def submit_additional():
 @app.route('/register_guardian')
 def guardian_page():
     if not is_form_enabled('penjaga_form'):
-        flash("Borang ini sedang ditutup oleh pentadbir.", "warning")
+        flash("Borang ini sedang ditutup oleh pentadbir.", "danger")
         return redirect(url_for('index'))
     
     kp = session.get('verified_kp')
@@ -380,7 +386,7 @@ def guardian_page():
 
     # 1. Fetch student base details
     cursor.execute("""
-        SELECT bil_kemasukan, nama_pelajar, no_surat_beranak, keadaan_mata, id_pakej 
+        SELECT bil_kemasukan, nama_pelajar, no_surat_beranak, masalah_penglihatan, id_pakej 
         FROM pelajar WHERE no_kp_pelajar = %s
     """, (kp,))
     student = cursor.fetchone()
@@ -388,13 +394,13 @@ def guardian_page():
     if not student:
         cursor.close()
         conn.close()
-        flash("Sila lengkapkan Profil Pendaftaran utama terlebih dahulu.", "warning")
+        flash("Sila lengkapkan Profil Pendaftaran utama terlebih dahulu.", "danger")
         return redirect(url_for('index'))
     
-    if not student.get('nama_pelajar') or not student.get('no_surat_beranak') or not student.get('keadaan_mata'):
+    if not student.get('nama_pelajar') or not student.get('no_surat_beranak') or not student.get('masalah_penglihatan'):
         cursor.close()
         conn.close()
-        flash("Akses Disekat: Sila lengkapkan Profil dan Borang Dokumen Pelajar.", "warning")
+        flash("Akses Disekat: Sila lengkapkan Profil dan Borang Dokumen Pelajar.", "danger")
         return redirect(url_for('additional_page'))
 
     cursor.close()
@@ -457,7 +463,7 @@ def submit_guardians():
 @app.route('/register_spm')
 def spm_page():
     if not is_form_enabled('spm_form'):
-        flash("Borang ini sedang ditutup oleh pentadbir.", "warning")
+        flash("Borang ini sedang ditutup oleh pentadbir.", "danger")
         return redirect(url_for('index'))
 
     kp = session.get('verified_kp')
@@ -469,7 +475,7 @@ def spm_page():
 
     # 1. Fetch student base details
     cursor.execute("""
-        SELECT bil_kemasukan, tempat_lahir, no_surat_beranak, keadaan_mata, id_pakej 
+        SELECT bil_kemasukan, tempat_lahir, no_surat_beranak, masalah_penglihatan, id_pakej 
         FROM pelajar WHERE no_kp_pelajar = %s
     """, (kp,))
     student = cursor.fetchone()
@@ -477,7 +483,7 @@ def spm_page():
     if not student:
         cursor.close()
         conn.close()
-        flash("Sila lengkapkan Profil Pendaftaran utama terlebih dahulu.", "warning")
+        flash("Sila lengkapkan Profil Pendaftaran utama terlebih dahulu.", "danger")
         return redirect(url_for('index'))
     
     cursor.close()
@@ -501,7 +507,7 @@ def submit_spm():
     if not student_record:
         cursor.close()
         conn.close()
-        flash("Sila lengkapkan Profil Pelajar terlebih dahulu.", "warning")
+        flash("Sila lengkapkan Profil Pelajar terlebih dahulu.", "danger")
         return redirect(url_for('index'))
 
     student_id = student_record[0]
@@ -549,7 +555,7 @@ def submit_spm():
     except mysql.connector.Error as err:
         conn.rollback()
         print(f"Ralat Operasi Akademik: {err}")
-        flash("Gagal mengemaskini maklumat akademik.", "warning")
+        flash("Gagal mengemaskini maklumat akademik.", "danger")
     finally:
         cursor.close()
         conn.close()
@@ -561,12 +567,12 @@ def submit_spm():
 @app.route('/package', methods=['GET'])
 def package_page():
     if not is_form_enabled('pakej_form'):
-        flash("Borang ini sedang ditutup oleh pentadbir.", "warning")
+        flash("Borang ini sedang ditutup oleh pentadbir.", "danger")
         return redirect(url_for('index'))
 
     kp = session.get('verified_kp')
     if not kp:
-        flash("Sila masukkan No. KP anda terlebih dahulu.", "warning")
+        flash("Sila masukkan No. KP anda terlebih dahulu.", "danger")
         return redirect(url_for('gateway'))
 
     # 1. Define Capacity Limits
@@ -577,7 +583,7 @@ def package_page():
 
     # Fetch student details
     cursor.execute("""
-        SELECT bil_kemasukan, tempat_lahir, no_surat_beranak, keadaan_mata, id_pakej, aliran_ditawar 
+        SELECT bil_kemasukan, tempat_lahir, no_surat_beranak, masalah_penglihatan, id_pakej, aliran_ditawar 
         FROM pelajar WHERE no_kp_pelajar = %s
     """, (kp,))
     student = cursor.fetchone()
@@ -594,7 +600,7 @@ def package_page():
     if spm_check['count'] == 0:
         cursor.close()
         conn.close()
-        flash("Akses Disekat: Sila lengkapkan keputusan SPM anda terlebih dahulu.", "warning")
+        flash("Akses Disekat: Sila lengkapkan keputusan SPM anda terlebih dahulu.", "danger")
         return redirect(url_for('index'))
 
     # Fetch current enrollment counts for all packages to enforce limits
@@ -602,10 +608,10 @@ def package_page():
     enrollment_data = {row['id_pakej']: row['current_count'] for row in cursor.fetchall()}
 
     # Check for student existence and required docs
-    if not student.get('tempat_lahir') or not student.get('no_surat_beranak') or not student.get('keadaan_mata'):
+    if not student.get('tempat_lahir') or not student.get('no_surat_beranak') or not student.get('masalah_penglihatan'):
         cursor.close()
         conn.close()
-        flash("Akses Disekat: Sila lengkapkan Profil dan Borang Dokumen Pelajar.", "warning")
+        flash("Akses Disekat: Sila lengkapkan Profil dan Borang Dokumen Pelajar.", "danger")
         return redirect(url_for('additional_page'))
     
     if student.get('id_pakej') is not None and student.get('id_pakej') != 0:
@@ -630,7 +636,7 @@ def package_page():
 
     has_math_c = pass_c('MATEMATIK')
     has_science_c = pass_c('SAINS')
-    eyes_good = (str(student['keadaan_mata']).strip().upper() == 'BAIK')
+    eyes_good = (str(student['masalah_penglihatan']).strip().upper() == 'TIDAK')
 
     # 3. Stream Filtering
     if student['aliran_ditawar'] == 'SAINS':
@@ -797,7 +803,8 @@ def admin_view_students_list():
     search = request.args.get('search', '')
     sort_filter = request.args.get('sort', '')
     class_filter = request.args.get('class_filter', '')
-    pakej_filter = request.args.get('pakej_filter', '') # New Filter
+    pakej_filter = request.args.get('pakej_filter', '')
+    status_filter = request.args.get('status_filter', '')
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True, buffered=True)
@@ -832,6 +839,10 @@ def admin_view_students_list():
         where_clause += " AND kelas = %s"
         params.append(class_filter.strip())
 
+    if status_filter != '':
+        where_clause += " AND status_study = %s"
+        params.append(status_filter)
+
     # 3. Get total count for pagination
     count_query = f"SELECT COUNT(*) as total FROM pelajar p LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej {where_clause}"
     cursor.execute(count_query, params)
@@ -864,10 +875,112 @@ def admin_view_students_list():
                            search=search, 
                            sort=sort_filter, 
                            class_filter=class_filter,
-                           pakej_filter=pakej_filter, # Pass to template
-                           all_packages=all_packages, # Pass to template
-                           all_classes=all_classes) # Pass to template
+                           pakej_filter=pakej_filter,
+                           all_packages=all_packages,
+                           all_classes=all_classes, 
+                           status_filter=status_filter)
 
+@app.route('/admin/export-students')
+def admin_export_students():
+    # Reuse your existing filter logic
+    search = request.args.get('search', '')
+    sort_filter = request.args.get('sort', '')
+    class_filter = request.args.get('class_filter', '')
+    pakej_filter = request.args.get('pakej_filter', '')
+    status_filter = request.args.get('status_filter', '')
+
+    conn = None
+    cursor = None
+    # Base Query
+    where_clause = "WHERE 1=1"
+    params = []
+    
+    if search:
+        where_clause += " AND (nama_pelajar LIKE %s OR no_kp_pelajar LIKE %s)"
+        params.extend([f"%{search}%", f"%{search}%"])
+    
+    # Updated sort_filter logic (Keep your original logic)
+    if sort_filter == 'unassigned':
+        where_clause += " AND (p.id_pakej IS NULL OR pk.kod_pakej REGEXP '^[^0-9]+$')"
+    elif sort_filter == 'assigned':
+        where_clause += " AND pk.kod_pakej IS NOT NULL AND pk.kod_pakej REGEXP '[0-9]'"
+    
+    # Specific Package Filter
+    if pakej_filter:
+        where_clause += " AND p.id_pakej = %s"
+        params.append(pakej_filter)
+        
+    if class_filter:
+        where_clause += " AND kelas = %s"
+        params.append(class_filter.strip())
+
+    if status_filter != '':
+        where_clause += " AND status_study = %s"
+        params.append(status_filter)
+
+    # Query without LIMIT and OFFSET
+    query = f"""
+        SELECT p.*, pk.kod_pakej, 
+               (SELECT SUM(penjaga.pendapatan) FROM penjaga WHERE penjaga.bil_kemasukan = p.bil_kemasukan) as total_income
+        FROM pelajar p 
+        LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej 
+        {where_clause}
+    """
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(query, params)
+    students = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    # Generate CSV in memory
+    si = io.StringIO()
+    cw = csv.writer(si)
+    cw.writerow(['Bil Kemasukan', 'Nama Pelajar', 'No KP', 'Status', 'Kelas', 'Pakej', 'Pendapatan'])
+    
+    for s in students:
+        no_kp = f"'{s['no_kp_pelajar']}" if s['no_kp_pelajar'] else ""
+        
+        pendapatan = s['total_income'] if s['total_income'] is not None else 0
+        
+        cw.writerow([
+            s['bil_kemasukan'], 
+            s['nama_pelajar'], 
+            no_kp, # The KP with forced string formatting
+            'Aktif' if s['status_study'] else 'Tidak Aktif', 
+            s['kelas'] or 'TIADA', 
+            s['kod_pakej'] or 'TIADA', 
+            pendapatan # The numeric income
+        ])
+    
+    output = si.getvalue()
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment;filename=senarai_pelajar.csv"}
+    )
+
+@app.route('/admin/update-student-package', methods=['POST'])
+def admin_update_student_package():
+    student_id = request.form.get('student_id')
+    new_package_id = request.form.get('package_id')
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    # Update the student's package (set to NULL if empty string is passed)
+    if new_package_id == "":
+        cursor.execute("UPDATE pelajar SET id_pakej = NULL WHERE bil_kemasukan = %s", (student_id,))
+    else:
+        cursor.execute("UPDATE pelajar SET id_pakej = %s WHERE bil_kemasukan = %s", (new_package_id, student_id))
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    flash("Pakej pelajar telah dikemaskini.", "success")
+    # Redirect back to the same page with current filters
+    return redirect(request.referrer or url_for('admin_view_students_list'))
 
 @app.route('/admin/student-profile/<int:student_id>', methods=['GET'])
 def admin_view_profile(student_id):
@@ -876,14 +989,14 @@ def admin_view_profile(student_id):
     including profile information, guardians, and academic results.
     """
     if session.get('role') != 'admin':
-        flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "warning")
+        flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
         return redirect(url_for('gateway'))
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True, buffered=True)
     
     cursor.execute("""
-        SELECT bil_kemasukan, tempat_lahir, no_surat_beranak, keadaan_mata, id_pakej, aliran_ditawar 
+        SELECT bil_kemasukan, tempat_lahir, no_surat_beranak, masalah_penglihatan, id_pakej, aliran_ditawar 
         FROM pelajar WHERE no_kp_pelajar = %s
     """, (student_id,))
     
@@ -952,7 +1065,7 @@ def update_field():
 
     allowed_fields = [
         'nama_pelajar','email', 'jantina', 'bangsa', 'agama', 'telefonNo', 
-        'alamat_rumah', 'cara_datang_sekolah', 'keadaan_mata', 
+        'alamat_rumah', 'cara_datang_sekolah', 'masalah_penglihatan', 
         'masalah_kesihatan', 'status_oku', 'aliran_ditawar', 'kelas',
         'tarikh_lahir', 'tempat_lahir', 'no_surat_beranak', 'id_pakej', 'status_study'
     ]
@@ -1010,7 +1123,7 @@ def delete_student(student_id):
 @app.route('/admin/settings', methods=['GET', 'POST'])
 def admin_settings():
     if session.get('role') != 'admin':
-        flash("Akses Ditolak.", "warning")
+        flash("Akses Ditolak.", "danger")
         return redirect(url_for('gateway'))
 
     conn = get_db_connection()
@@ -1087,7 +1200,8 @@ def statistics():
     mode = request.args.get('mode', 'pakej')
     category = request.args.get('type', 'bangsa')
     filter_stream = request.args.get('filter_stream', 'semua')
-    filter_sem = request.args.get('filter_sem', 'semua') # Capture Semester[cite: 1]
+    filter_sem = request.args.get('filter_sem', 'semua')
+    status_study = request.args.get('status_study', 'all')
     
     if category not in ['jantina', 'bangsa', 'agama', 'cara_datang_sekolah']: 
         category = 'bangsa'
@@ -1112,32 +1226,31 @@ def statistics():
         items = cursor.fetchall()
         group_col = "kelas"
     else:
-        cursor.execute("SELECT id_pakej as id, kod_pakej as label FROM pakej") 
+        cursor.execute("SELECT id_pakej as id, kod_pakej as label, semester FROM pakej") 
         all_packages = cursor.fetchall()
-        
-        def is_tiada(p):
-            # If ID is None, or label has no numbers, it's a "TIADA" / Decoy
-            label = p.get('label', '') or ''
-            has_number = any(char.isdigit() for char in label)
-            return not has_number
+    
+        # 2. Filter by semester if a specific one is selected
+        if filter_sem != 'semua':
+            items = [p for p in all_packages if str(p['semester']) == str(filter_sem)]
+        else:
+            items = all_packages
 
-        # Sort all packages into regular and decoys
-        regular_packages = [p for p in all_packages if not is_tiada(p)]
-        decoy_packages = [p for p in all_packages if is_tiada(p)]
-        
-        # Merge all decoys into one "TIADA" item
-        tiada_item = {'id': 'TIADA', 'label': 'TIADA'}
-        
-        # Filter logic
+        # 3. Apply your existing decoy logic (modified for the filtered list)
+        def is_tiada(p):
+            label = p.get('label', '') or ''
+            return not any(char.isdigit() for char in label)
+
+        regular_packages = [p for p in items if not is_tiada(p)]
+
+        # Apply Stream filtering on the already semester-filtered list
         if filter_stream == 'sains':
             items = [p for p in regular_packages if is_sains(p['label'])]
         elif filter_stream == 'sosial':
             items = [p for p in regular_packages if not is_sains(p['label'])]
         else:
             items = regular_packages
-            
-        items.append(tiada_item)
 
+        items.append({'id': 'TIADA', 'label': 'TIADA'})
         group_col = "p.id_pakej"
 
     # 4. Get distinct categories
@@ -1147,6 +1260,7 @@ def statistics():
 
     # 5. Fetch counts
     sem_filter_sql = "" if filter_sem == 'semua' else f" AND pk.semester = {filter_sem}"
+    status_filter_sql = " AND p.status_study = 1" if status_study == 'active' else ""
     
     # Dynamically define the SQL group_id expression
     if mode == 'kelas':
@@ -1170,7 +1284,7 @@ def statistics():
             COUNT(*) as total
         FROM pelajar p
         LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej
-        WHERE 1=1 {sem_filter_sql}
+        WHERE 1=1 {sem_filter_sql} {status_filter_sql}
         GROUP BY group_id, {category}, jantina
     """
     cursor.execute(query)
@@ -1217,7 +1331,7 @@ def statistics():
                            categories=categories, items=items, counts=counts,
                            row_totals=row_totals, col_totals=col_totals, grand_total=grand_total,
                            current_type=category, current_mode=mode, row_gender_totals=row_gender_totals,
-                           filter_stream=filter_stream, filter_sem=filter_sem, # Pass filter_sem to template[cite: 1]
+                           status_study=status_study, filter_stream=filter_stream, filter_sem=filter_sem,
                            grand_total_l=grand_total_l, grand_total_p=grand_total_p,group_col=group_col)
 
 @app.route('/admin/toggle_status/<int:student_id>', methods=['POST'])

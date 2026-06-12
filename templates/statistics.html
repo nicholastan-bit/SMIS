@@ -40,6 +40,12 @@
                 <option value="cara_datang_sekolah" {% if current_type=='cara_datang_sekolah' %}selected{% endif %}>
                     Transport</option>
             </select>
+
+            <label style="margin-left: 15px;">Status Pelajar:</label>
+            <select name="status_study" class="form-control" onchange="this.form.submit()">
+                <option value="all" {% if status_study=='all' %}selected{% endif %}>Semua</option>
+                <option value="active" {% if status_study=='active' %}selected{% endif %}>Aktif Sahaja</option>
+            </select>
         </form>
     </div>
 

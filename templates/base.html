@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+<link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -47,7 +48,11 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="{{ url_for('index') }}">SMIS Home</a>
+                <a class="navbar-brand" href="{{ url_for('index') }}">
+                    <img src="{{ url_for('static', filename='ktesi_logo.png') }}" alt="Logo"
+                        style="height: 25px; margin-right: 10px; display: inline-block; vertical-align: middle;">
+                    SMIS Home            
+                </a>
             </div>
     
             <div class="collapse navbar-collapse" id="navbar-collapse-1">
@@ -84,12 +89,16 @@
     <div class="content-wrapper">
         <div class="container">
             <!-- Flash Messages -->
-            {% with messages = get_flashed_messages() %}
-              {% if messages %}
-                {% for message in messages %}
-                  <div class="alert alert-info">{{ message }}</div>
-                {% endfor %}
-              {% endif %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        {# If no category is provided, default to 'info' #}
+                            {% set alert_class = 'alert-' + (category if category and category != 'message' else 'info') %}
+                                <div class="alert {{ alert_class }}">
+                                    {{ message }}
+                                </div>
+                    {% endfor %}
+                {% endif %}
             {% endwith %}
 
             {% block content %}{% endblock %}

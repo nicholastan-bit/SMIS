@@ -4,8 +4,8 @@
     <h2>Konfigurasi Sistem</h2>
 
     <div class="row">
+        <!-- Column 1: Borang Configuration -->
         <div class="col-md-6">
-
             <div class="card mb-4 p-3">
                 <h4>Konfigurasi Status Borang</h4>
                 <p class="text-info">"Toggle" butang checkmark untuk buka/tutup form</p>
@@ -25,8 +25,11 @@
                     <button type="submit" class="btn btn-success">Simpan Tetapan Borang</button>
                 </form>
             </div>
+        </div>
 
-            <div class="card p-3">
+        <!-- Column 2: Package Limits and Statistics -->
+        <div class="col-md-6">
+            <div class="card mb-4 p-3">
                 <h4>Kemaskini Had Kapasiti Pakej</h4>
                 <form method="POST" class="form-inline">
                     <div class="form-group mb-2">
@@ -43,9 +46,7 @@
                     <button type="submit" name="update_limit" class="btn btn-primary mb-2">Simpan Had</button>
                 </form>
             </div>
-        </div>
 
-        <div class="col-md-6">
             <div class="card p-3">
                 <h4>Statistik Pendaftaran Pakej</h4>
                 <table class="table table-striped">

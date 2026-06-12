@@ -144,11 +144,11 @@
                             </td>
                         </tr>
                         <tr>
-                            <th>Keadaan Mata:</th>
+                            <th>Masalah penglihatan:</th>
                             <td>
-                                <select class="form-control editable-field" data-field="keadaan_mata" data-id="{{ student.bil_kemasukan }}">
-                                    <option value="BAIK" {% if student.keadaan_mata=='BAIK' %}selected{% endif %}>Baik</option>
-                                    <option value="KURANG BAIK" {% if student.keadaan_mata=='KURANG BAIK' %}selected{% endif %}>Kurang Baik</option>
+                                <select class="form-control editable-field" data-field="masalah_penglihatan" data-id="{{ student.bil_kemasukan }}">
+                                    <option value="YA" {% if student.masalah_penglihatan=='YA' %}selected{% endif %}>YA</option>
+                                    <option value="TIDAK BAIK" {% if student.masalah_penglihatan=='TIDAK' %}selected{% endif %}>TIDAK</option>
                                 </select>
                             </td>
                         </tr>
@@ -225,6 +225,12 @@
                                 </select>
                             </td>
                         </tr>
+                        
+                        <tr>
+                            <th>Tarikh Pendaftaran:</th>
+                            <td>{{ student.tarikh_pendaftaran }}</td>
+                        </tr>
+
                     </tbody>
                 </table>
             </div>

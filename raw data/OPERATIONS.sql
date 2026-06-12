@@ -37,8 +37,8 @@ SET FOREIGN_KEY_CHECKS = 1;
 ALTER TABLE pelajar AUTO_INCREMENT = 19207;
 
 UPDATE PELAJAR
-SET kelas = "B11"
-WHERE no_kp_pelajar = 1;
+SET status_study = NULL
+WHERE bil_kemasukan = 19207;
 
 SELECT * FROM PELAJAR;
 
@@ -55,3 +55,24 @@ DESCRIBE pelajar;
 --
 
 SELECT * FROM pakej WHERE semester = 2;
+SELECT * FROM pelajar WHERE bil_kemasukan = 19225;
+SELECT * FROM spm_hasil WHERE bil_kemasukan = 19225;
+
+-- rewriting keadaan mata to masalah_penglihatan
+
+ALTER TABLE pelajar
+MODIFY COLUMN keadaan_mata ENUM('BAIK', 'KURANG BAIK', 'YA', 'TIDAK');
+
+UPDATE pelajar
+SET keadaan_mata =
+    CASE
+        WHEN keadaan_mata = 'BAIK' THEN 'TIDAK'
+        WHEN keadaan_mata = 'KURANG BAIK' THEN 'YA'
+    END;
+    
+ALTER TABLE pelajar
+CHANGE COLUMN keadaan_mata masalah_penglihatan ENUM('YA', 'TIDAK') DEFAULT NULL;
+
+--
+UPDATE pelajar
+SET nama_pelajar = UPPER(nama_pelajar);
