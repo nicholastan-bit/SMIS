@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h2>Statistik Pendaftaran Subjek Mengikut Kelas</h2>
+
+    <form method="GET" class="mb-3">
+        <label>Semester:</label>
+        <select name="filter_sem" class="form-control d-inline-block w-auto" onchange="this.form.submit()">
+            <option value="all" {% if filter_sem=='all' %}selected{% endif %}>Semua</option>
+            <option value="1" {% if filter_sem=='1' %}selected{% endif %}>1</option>
+            <option value="2" {% if filter_sem=='2' %}selected{% endif %}>2</option>
+            <option value="3" {% if filter_sem=='3' %}selected{% endif %}>3</option>
+        </select>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead>
+                <tr class="active">
+                    <th>Subjek</th>
+                    {% for p in packages %}
+                    <th class="text-center">{{ p.kod_pakej }}</th>
+                    {% endfor %}
+                    <th>JUM</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in subjects %}
+                <tr>
+                    <td><strong>{{ sub.nama_subjek }}</strong></td>
+            
+                    {% set row_total = namespace(val=0) %}
+                    {% for p in packages %}
+                    {% set val = counts[sub.id_subjek][p.id_pakej] %}
+                    <td class="text-center">{{ val if val > 0 else '-' }}</td>
+                    {% set row_total.val = row_total.val + val %}
+                    {% endfor %}
+                    <td class="text-center"><strong>{{ row_total.val }}</strong></td>
+                </tr>
+                {% endfor %}
+            
+                <tr class="info">
+                    <td><strong>JUMLAH</strong></td>
+                    {% for p in packages %}
+                    {% set col_total = namespace(val=0) %}
+                    {% for sub in subjects %}
+                    {% set col_total.val = col_total.val + counts[sub.id_subjek][p.id_pakej] %}
+                    {% endfor %}
+                    <td class="text-center"><strong>{{ col_total.val }}</strong></td>
+                    {% endfor %}
+                    <td></td>
+                </tr>    </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

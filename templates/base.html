@@ -58,6 +58,8 @@
             <div class="collapse navbar-collapse" id="navbar-collapse-1">
                 <ul class="nav navbar-nav">
                     <li><a href="{{ url_for('statistics') }}">Jadual Enrolmen</a></li>
+
+                    <li><a href="{{ url_for('subjects_statistics') }}">Jadual Subjek</a></li>
     
                     {% if session.get('admin_logged') %}
                     <li><a href="{{ url_for('view_students') }}">Senarai Pelajar</a></li>

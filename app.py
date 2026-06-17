@@ -5,6 +5,7 @@ import os
 import json
 import csv
 import io
+import re
 from werkzeug.utils import secure_filename
 from datetime import date
 
@@ -1347,6 +1348,62 @@ def toggle_status(student_id):
     cursor.close()
     conn.close()
     return {"success": True}
+
+@app.route('/subjects-statistics')
+def subjects_statistics():
+    filter_sem = request.args.get('filter_sem', 'all')
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # 1. Define decoy filter helper
+    def is_regular_package(kod):
+        return bool(re.search(r'\d', kod))
+
+    # 2. Fetch Packages: Filter by semester AND exclude decoys
+    sem_filter_sql = f"WHERE semester = {filter_sem}" if filter_sem != 'all' else ""
+    cursor.execute(f"SELECT id_pakej, kod_pakej FROM pakej {sem_filter_sql} ORDER BY kod_pakej")
+    all_raw_packages = cursor.fetchall()
+    
+    # Filter out decoys in Python
+    packages = [p for p in all_raw_packages if is_regular_package(p['kod_pakej'])]
+    package_ids = [p['id_pakej'] for p in packages]
+    
+    if not package_ids:
+        return render_template('subjects_statistics.html', packages=[], subjects=[], counts={}, filter_sem=filter_sem)
+
+    # 3. Fetch all subjects
+    cursor.execute("SELECT id_subjek, kod_pakej_subjek, nama_subjek FROM subjek_stpm")
+    subjects = cursor.fetchall()
+    
+    # 4. Fetch counts: Filter by active students (status_study = 1) and specific packages
+    # Assuming 'status_study = 1' represents active students
+    placeholders = ','.join(['%s'] * len(package_ids))
+    query = f"""
+        SELECT ps.id_pakej, ps.id_subjek, COUNT(p.bil_kemasukan) as total
+        FROM pakej_subjek ps
+        JOIN pelajar p ON ps.id_pakej = p.id_pakej
+        WHERE p.status_study = 1
+        AND ps.id_pakej IN ({placeholders})
+        GROUP BY ps.id_pakej, ps.id_subjek
+    """
+    cursor.execute(query, package_ids)
+    data = cursor.fetchall()
+    
+    # Organize into a dictionary
+    counts = {s['id_subjek']: {p['id_pakej']: 0 for p in packages} for s in subjects}
+    for row in data:
+        # We check if row['id_pakej'] is in our filtered package list
+        sub_id = row['id_subjek']
+        pkg_id = row['id_pakej']
+        if sub_id in counts and pkg_id in counts[sub_id]:
+            counts[sub_id][pkg_id] = row['total']
+            
+    return render_template('subjects_statistics.html', 
+                           packages=packages, 
+                           subjects=subjects, 
+                           counts=counts,
+                           filter_sem=filter_sem)
 
 @app.route('/admin/eligible-subjects', methods=['GET'])
 def eligible_subject_page():
