@@ -3,15 +3,23 @@
 <div class="container">
     <h2>Statistik Pendaftaran Subjek Mengikut Kelas</h2>
 
-    <form method="GET" class="mb-3">
-        <label>Semester:</label>
-        <select name="filter_sem" class="form-control d-inline-block w-auto" onchange="this.form.submit()">
-            <option value="all" {% if filter_sem=='all' %}selected{% endif %}>Semua</option>
-            <option value="1" {% if filter_sem=='1' %}selected{% endif %}>1</option>
-            <option value="2" {% if filter_sem=='2' %}selected{% endif %}>2</option>
-            <option value="3" {% if filter_sem=='3' %}selected{% endif %}>3</option>
-        </select>
-    </form>
+    <div class="well well-sm">
+        <form method="GET" class="form-inline" style="display: flex; align-items: center; gap: 15px;">
+            <div class="form-group">
+                <label style="margin-right: 5px;">Semester:</label>
+                <select name="filter_sem" class="form-control" onchange="this.form.submit()">
+                    <option value="all" {% if filter_sem=='all' %}selected{% endif %}>Semua</option>
+                    <option value="1" {% if filter_sem=='1' %}selected{% endif %}>1</option>
+                    <option value="2" {% if filter_sem=='2' %}selected{% endif %}>2</option>
+                    <option value="3" {% if filter_sem=='3' %}selected{% endif %}>3</option>
+                </select>
+            </div>
+    
+            <a href="{{ url_for('admin_export_subjects_statistics', filter_sem=filter_sem) }}" class="btn btn-success">
+                <i class="glyphicon glyphicon-download-alt"></i> Eksport ke CSV
+            </a>
+        </form>
+    </div>
 
     <div class="table-responsive">
         <table class="table table-bordered table-hover">

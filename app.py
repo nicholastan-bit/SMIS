@@ -1195,128 +1195,58 @@ def admin_settings():
                            package_limits=get_limits(), # Load from JSON
                            default_limit=DEFAULT_LIMIT)
 
-@app.route('/statistics')
-def statistics():
-    # 1. Capture View Mode and Filters
-    mode = request.args.get('mode', 'pakej')
-    category = request.args.get('type', 'bangsa')
-    filter_stream = request.args.get('filter_stream', 'semua')
-    filter_sem = request.args.get('filter_sem', 'semua')
-    status_study = request.args.get('status_study', 'all')
-    
-    if category not in ['jantina', 'bangsa', 'agama', 'cara_datang_sekolah']: 
-        category = 'bangsa'
-
+def get_statistics_data(mode, category, filter_stream, filter_sem, status_study):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True, buffered=True)
 
-    # 2. Logic: Define Stream
+    # 1. Reuse existing logic to define items and group_col
     def is_sains(kod):
         return any(prefix in kod for prefix in ['BK', 'CK', 'FK'])
 
-    # 3. Fetch Items with filtering
     if mode == 'kelas':
-        # 1. Use COALESCE to turn NULLs into 'TIADA'
-        # 2. Remove the WHERE clause that filters out NULLs
-        cursor.execute("""
-            SELECT DISTINCT COALESCE(kelas, 'TIADA') as id, 
-                            COALESCE(kelas, 'TIADA') as label 
-            FROM pelajar 
-            ORDER BY id
-        """)
+        cursor.execute("SELECT DISTINCT COALESCE(kelas, 'TIADA') as id, COALESCE(kelas, 'TIADA') as label FROM pelajar ORDER BY id")
         items = cursor.fetchall()
         group_col = "kelas"
     else:
-        cursor.execute("SELECT id_pakej as id, kod_pakej as label, semester FROM pakej") 
+        cursor.execute("SELECT id_pakej as id, kod_pakej as label, semester FROM pakej")
         all_packages = cursor.fetchall()
-    
-        # 2. Filter by semester if a specific one is selected
-        if filter_sem != 'semua':
-            items = [p for p in all_packages if str(p['semester']) == str(filter_sem)]
-        else:
-            items = all_packages
-
-        # 3. Apply your existing decoy logic (modified for the filtered list)
+        items = [p for p in all_packages if str(p['semester']) == str(filter_sem)] if filter_sem != 'semua' else all_packages
+        
         def is_tiada(p):
             label = p.get('label', '') or ''
             return not any(char.isdigit() for char in label)
-
+        
         regular_packages = [p for p in items if not is_tiada(p)]
-
-        # Apply Stream filtering on the already semester-filtered list
-        if filter_stream == 'sains':
-            items = [p for p in regular_packages if is_sains(p['label'])]
-        elif filter_stream == 'sosial':
-            items = [p for p in regular_packages if not is_sains(p['label'])]
-        else:
-            items = regular_packages
-
+        if filter_stream == 'sains': items = [p for p in regular_packages if is_sains(p['label'])]
+        elif filter_stream == 'sosial': items = [p for p in regular_packages if not is_sains(p['label'])]
+        else: items = regular_packages
         items.append({'id': 'TIADA', 'label': 'TIADA'})
         group_col = "p.id_pakej"
 
-    # 4. Get distinct categories
+    # 2. Get distinct categories and counts
     cursor.execute(f"SELECT DISTINCT {category} as cat FROM pelajar WHERE {category} IS NOT NULL")
     categories = [row['cat'] for row in cursor.fetchall()]
     genders = ['LELAKI', 'PEREMPUAN']
 
-    # 5. Fetch counts
     sem_filter_sql = "" if filter_sem == 'semua' else f" AND pk.semester = {filter_sem}"
     status_filter_sql = " AND p.status_study = 1" if status_study == 'active' else ""
-    
-    # Dynamically define the SQL group_id expression
-    if mode == 'kelas':
-        # For 'kelas', use the column directly. Use COALESCE to handle NULLs if needed.
-        group_id_sql = "COALESCE(p.kelas, 'TIADA')"
-    else:
-        # For 'pakej', use your existing CASE logic
-        group_id_sql = """
-            CASE 
-                WHEN p.id_pakej IS NULL THEN 'TIADA'
-                WHEN pk.kod_pakej NOT REGEXP '[0-9]' THEN 'TIADA'
-                ELSE p.id_pakej 
-            END
-        """
+    group_id_sql = "COALESCE(p.kelas, 'TIADA')" if mode == 'kelas' else "CASE WHEN p.id_pakej IS NULL THEN 'TIADA' WHEN pk.kod_pakej NOT REGEXP '[0-9]' THEN 'TIADA' ELSE p.id_pakej END"
 
-    query = f"""
-        SELECT 
-            {group_id_sql} as group_id, 
-            p.{category} as cat, 
-            p.jantina, 
-            COUNT(*) as total
-        FROM pelajar p
-        LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej
-        WHERE 1=1 {sem_filter_sql} {status_filter_sql}
-        GROUP BY group_id, {category}, jantina
-    """
-    cursor.execute(query)
+    cursor.execute(f"SELECT {group_id_sql} as group_id, p.{category} as cat, p.jantina, COUNT(*) as total FROM pelajar p LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej WHERE 1=1 {sem_filter_sql} {status_filter_sql} GROUP BY group_id, {category}, jantina")
     results = cursor.fetchall()
 
-    # 1. Force the keys in your 'counts' dictionary to be strings
-    # 1. Initialize structure (Force all IDs to string)
+    # 3. Process calculations
     counts = {str(item['id']): {cat: {g: 0 for g in genders} for cat in categories} for item in items}
-    
-    # 2. Process results (Already fixed, ensure this is inside the route)
     for row in results:
         gid = str(row['group_id'])
-        cat_val = row['cat']
-        
-        if gid in counts and cat_val in counts[gid]:
-            counts[gid][cat_val][row['jantina']] = row['total']
+        if gid in counts and row['cat'] in counts[gid]:
+            counts[gid][row['cat']][row['jantina']] = row['total']
 
-    # 3. Totals logic (FIXED: Use str(item['id']) here)
-    # Ensure this part uses strings for keys
-    col_totals = {cat: {'LELAKI': 0, 'PEREMPUAN': 0} for cat in categories}
-    for item in items:
-        # FORCE TO STRING
-        iid = str(item['id']) 
-        for cat in categories:
-            col_totals[cat]['LELAKI'] += counts[iid][cat]['LELAKI']
-            col_totals[cat]['PEREMPUAN'] += counts[iid][cat]['PEREMPUAN']
-
-    # Ensure row_totals uses string keys
+    col_totals = {cat: {'LELAKI': sum(counts[str(i['id'])][cat]['LELAKI'] for i in items), 'PEREMPUAN': sum(counts[str(i['id'])][cat]['PEREMPUAN'] for i in items)} for cat in categories}
     row_totals = {str(item['id']): sum(sum(counts[str(item['id'])][cat].values()) for cat in categories) for item in items}
     grand_total = sum(row_totals.values())
-    # Ensure row_gender_totals uses string keys
+    
+    # FIX: Use local variables (counts, items, categories) instead of 'data'
     row_gender_totals = {}
     for item in items:
         iid = str(item['id'])
@@ -1326,14 +1256,81 @@ def statistics():
         }
     
     grand_total_l = sum(row['L'] for row in row_gender_totals.values())
-    grand_total_p = sum(row['P'] for row in row_gender_totals.values())
+    grand_total_p = sum(row['P'] for row in row_gender_totals.values())  
 
+    cursor.close(); conn.close()
+
+    # FIX: Include the new totals in the returned dictionary
+    return {
+        'items': items, 'categories': categories, 'counts': counts,
+        'col_totals': col_totals, 'row_totals': row_totals, 'grand_total': grand_total,
+        'group_col': group_col,
+        'row_gender_totals': row_gender_totals,
+        'grand_total_l': grand_total_l,
+        'grand_total_p': grand_total_p
+    }
+
+@app.route('/statistics')
+def statistics():
+    # 1. Capture Args
+    mode = request.args.get('mode', 'pakej')
+    category = request.args.get('type', 'bangsa')
+    filter_stream = request.args.get('filter_stream', 'semua')
+    filter_sem = request.args.get('filter_sem', 'semua')
+    status_study = request.args.get('status_study', 'all')
+    
+    # 2. Get data from helper
+    data = get_statistics_data(mode, category, filter_stream, filter_sem, status_study)
+
+    # 4. Render template
+    # We use **data to pass all helper variables, plus our new local variables
     return render_template('statistics.html', 
-                           categories=categories, items=items, counts=counts,
-                           row_totals=row_totals, col_totals=col_totals, grand_total=grand_total,
-                           current_type=category, current_mode=mode, row_gender_totals=row_gender_totals,
-                           status_study=status_study, filter_stream=filter_stream, filter_sem=filter_sem,
-                           grand_total_l=grand_total_l, grand_total_p=grand_total_p,group_col=group_col)
+                           **data,
+                           current_type=category,
+                           current_mode=mode,
+                           status_study=status_study,
+                           filter_stream=filter_stream,
+                           filter_sem=filter_sem)
+
+@app.route('/admin/export-statistics')
+def admin_export_statistics():
+    # 1. Capture filters (same as in statistics route)
+    mode = request.args.get('mode', 'pakej')
+    category = request.args.get('type', 'bangsa')
+    filter_stream = request.args.get('filter_stream', 'semua')
+    filter_sem = request.args.get('filter_sem', 'semua')
+    status_study = request.args.get('status_study', 'all')
+
+    # 2. Get the pre-calculated data using the helper
+    data = get_statistics_data(mode, category, filter_stream, filter_sem, status_study)
+    
+    # 3. Generate CSV in memory
+    si = io.StringIO()
+    cw = csv.writer(si)
+    
+    # Create Header
+    # Format: Group, Category/Gender (L/P), Total
+    header = [mode.capitalize(), 'Kategori', 'Lelaki', 'Perempuan', 'Jumlah']
+    cw.writerow(header)
+    
+    # Data rows
+    for item in data['items']:
+        iid = str(item['id'])
+        label = item['label']
+        for cat in data['categories']:
+            l = data['counts'][iid][cat]['LELAKI']
+            p = data['counts'][iid][cat]['PEREMPUAN']
+            cw.writerow([label, cat, l, p, l + p])
+    
+    # Add Totals row at the bottom
+    cw.writerow(['JUMLAH KESELURUHAN', '', data['grand_total_l'], data['grand_total_p'], data['grand_total']])
+    
+    output = si.getvalue()
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment;filename=statistik_{mode}.csv"}
+    )
 
 @app.route('/admin/toggle_status/<int:student_id>', methods=['POST'])
 def toggle_status(student_id):
@@ -1349,61 +1346,79 @@ def toggle_status(student_id):
     conn.close()
     return {"success": True}
 
-@app.route('/subjects-statistics')
-def subjects_statistics():
-    filter_sem = request.args.get('filter_sem', 'all')
-    
+def get_subject_statistics_data(filter_sem):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     
-    # 1. Define decoy filter helper
     def is_regular_package(kod):
         return bool(re.search(r'\d', kod))
 
-    # 2. Fetch Packages: Filter by semester AND exclude decoys
+    # Fetch Packages
     sem_filter_sql = f"WHERE semester = {filter_sem}" if filter_sem != 'all' else ""
     cursor.execute(f"SELECT id_pakej, kod_pakej FROM pakej {sem_filter_sql} ORDER BY kod_pakej")
-    all_raw_packages = cursor.fetchall()
-    
-    # Filter out decoys in Python
-    packages = [p for p in all_raw_packages if is_regular_package(p['kod_pakej'])]
+    packages = [p for p in cursor.fetchall() if is_regular_package(p['kod_pakej'])]
     package_ids = [p['id_pakej'] for p in packages]
     
-    if not package_ids:
-        return render_template('subjects_statistics.html', packages=[], subjects=[], counts={}, filter_sem=filter_sem)
-
-    # 3. Fetch all subjects
+    # Fetch all subjects
     cursor.execute("SELECT id_subjek, kod_pakej_subjek, nama_subjek FROM subjek_stpm")
     subjects = cursor.fetchall()
     
-    # 4. Fetch counts: Filter by active students (status_study = 1) and specific packages
-    # Assuming 'status_study = 1' represents active students
-    placeholders = ','.join(['%s'] * len(package_ids))
-    query = f"""
-        SELECT ps.id_pakej, ps.id_subjek, COUNT(p.bil_kemasukan) as total
-        FROM pakej_subjek ps
-        JOIN pelajar p ON ps.id_pakej = p.id_pakej
-        WHERE p.status_study = 1
-        AND ps.id_pakej IN ({placeholders})
-        GROUP BY ps.id_pakej, ps.id_subjek
-    """
-    cursor.execute(query, package_ids)
-    data = cursor.fetchall()
-    
-    # Organize into a dictionary
+    # Fetch Counts
     counts = {s['id_subjek']: {p['id_pakej']: 0 for p in packages} for s in subjects}
-    for row in data:
-        # We check if row['id_pakej'] is in our filtered package list
-        sub_id = row['id_subjek']
-        pkg_id = row['id_pakej']
-        if sub_id in counts and pkg_id in counts[sub_id]:
-            counts[sub_id][pkg_id] = row['total']
+    if package_ids:
+        placeholders = ','.join(['%s'] * len(package_ids))
+        query = f"SELECT ps.id_pakej, ps.id_subjek, COUNT(p.bil_kemasukan) as total FROM pakej_subjek ps JOIN pelajar p ON ps.id_pakej = p.id_pakej WHERE p.status_study = 1 AND ps.id_pakej IN ({placeholders}) GROUP BY ps.id_pakej, ps.id_subjek"
+        cursor.execute(query, package_ids)
+        for row in cursor.fetchall():
+            if row['id_subjek'] in counts and row['id_pakej'] in counts[row['id_subjek']]:
+                counts[row['id_subjek']][row['id_pakej']] = row['total']
+                
+    cursor.close(); conn.close()
+    return {'packages': packages, 'subjects': subjects, 'counts': counts}
+
+@app.route('/subjects-statistics')
+def subjects_statistics():
+    filter_sem = request.args.get('filter_sem', 'all')
+    data = get_subject_statistics_data(filter_sem)
+    return render_template('subjects_statistics.html', **data, filter_sem=filter_sem)
+
+@app.route('/admin/export-subjects-statistics')
+def admin_export_subjects_statistics():
+    filter_sem = request.args.get('filter_sem', 'all')
+    data = get_subject_statistics_data(filter_sem)
+    
+    si = io.StringIO()
+    cw = csv.writer(si)
+    
+    # 1. Header
+    header = ['Nama Subjek'] + [p['kod_pakej'] for p in data['packages']] + ['Jumlah']
+    cw.writerow(header)
+    
+    # 2. Track column totals (one for each package)
+    col_totals = [0] * len(data['packages'])
+    grand_total_all = 0
+    
+    # 3. Data Rows
+    for sub in data['subjects']:
+        row = [sub['nama_subjek']]
+        subject_row_total = 0
+        
+        for i, pkg in enumerate(data['packages']):
+            count = data['counts'][sub['id_subjek']][pkg['id_pakej']]
+            row.append(count)
+            subject_row_total += count
+            col_totals[i] += count # Add to column total tracker
             
-    return render_template('subjects_statistics.html', 
-                           packages=packages, 
-                           subjects=subjects, 
-                           counts=counts,
-                           filter_sem=filter_sem)
+        row.append(subject_row_total)
+        grand_total_all += subject_row_total
+        cw.writerow(row)
+    
+    # 4. Final Row: "JUMLAH KESELURUHAN"
+    footer_row = ['JUMLAH KESELURUHAN'] + col_totals + [grand_total_all]
+    cw.writerow(footer_row)
+    
+    return Response(si.getvalue(), mimetype="text/csv", 
+                    headers={"Content-Disposition": "attachment;filename=statistik_subjek.csv"})
 
 @app.route('/admin/eligible-subjects', methods=['GET'])
 def eligible_subject_page():
