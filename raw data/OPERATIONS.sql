@@ -85,3 +85,6 @@ ADD rumah_sukan VARCHAR(20);
 
 INSERT INTO form_settings (form_id, is_enabled) VALUES 
 ('kokurikulum_form', TRUE);
+
+ALTER TABLE UnitKokurikulum 
+RENAME COLUMN activity_name TO unit_name;

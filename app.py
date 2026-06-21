@@ -825,20 +825,21 @@ def kokurikulum_page():
     if not kp:
         return redirect(url_for('gateway'))
 
+    # Retrieve 'category' from URL, default to 'Kelab'
+    category = request.args.get('type', 'Kelab')
+    
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True, buffered=True)
 
     # 1. Get student basic info and check if they completed previous forms
-    # Adjust 'status_study' to the column that represents "Form Completed"
-    cursor.execute("SELECT bil_kemasukan, status_study FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
+    cursor.execute("SELECT bil_kemasukan, status_study, jantina FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
     student = cursor.fetchone()
     
-    # NEW PREVENTION: Redirect if previous form is not completed (e.g., status_study != 1)
     if not student or student['status_study'] != 1:
         cursor.close()
         conn.close()
         flash("Sila lengkapkan borang pendaftaran diri terlebih dahulu.", "warning")
-        return redirect(url_for('index')) # Redirect back to home or form page
+        return redirect(url_for('index'))
 
     bil_kemasukan = student['bil_kemasukan']
 
@@ -850,25 +851,17 @@ def kokurikulum_page():
         flash("Anda telah mendaftar kokurikulum. Hubungi pentadbir jika perlu membuat perubahan.", "info")
         return redirect(url_for('index'))
 
-    # ... (rest of your logic remains the same)
-
-    # 1. Get student gender and current units for restriction checks
-    cursor.execute("SELECT bil_kemasukan, jantina FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
-    student = cursor.fetchone()
-    
-    # 2. Fetch all units for this category
+    # 3. Fetch all units for this category
+    # Using 'unit_name' as per your established schema
     cursor.execute("SELECT unit_id, unit_name, unit_type FROM UnitKokurikulum WHERE unit_type = %s", (category,))
     units = cursor.fetchall()
 
-    # 3. Get current counts for all units to check capacity
+    # 4. Get current counts for all units to check capacity
     cursor.execute("SELECT unit_id, COUNT(*) as enrolled FROM KokurikulumPelajar GROUP BY unit_id")
     enrollment_counts = {row['unit_id']: row['enrolled'] for row in cursor.fetchall()}
     
-    # Load limits from your JSON
     limits = get_limits()
 
-    # 4. Filter units based on capacity and gender (Logic in template or here)
-    # Mapping for gender-restricted items (You can store this in a dictionary)
     gender_restrictions = {
         'PANDU PUTERI MALAYSIA': 'PEREMPUAN',
         'PERGERAKAN PUTERI ISLAM MALAYSIA': 'PEREMPUAN',
@@ -888,10 +881,8 @@ def kokurikulum_page():
         json_key = f"{prefix}{u['unit_name']}"
         limit = limits.get(json_key, 60)
         
-        # 2. Add 'enrolled' and 'limit' to the dictionary
         is_full = count >= limit
         
-        # Restriction Checks
         gender_match = True
         if u['unit_name'] in gender_restrictions:
             gender_match = (student['jantina'] == gender_restrictions[u['unit_name']])
@@ -909,10 +900,9 @@ def kokurikulum_page():
         FROM KokurikulumPelajar kp
         JOIN UnitKokurikulum uk ON kp.unit_id = uk.unit_id
         WHERE kp.bil_kemasukan = %s
-    """, (student['bil_kemasukan'],))
+    """, (bil_kemasukan,))
     my_units = cursor.fetchall()
     
-    # Check if all 3 categories are filled
     categories_filled = {u['unit_type'] for u in my_units}
     can_finish = len(categories_filled) == 3
 
