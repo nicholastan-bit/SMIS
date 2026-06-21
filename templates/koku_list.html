@@ -12,12 +12,12 @@
             </option>
         </select>
     
-        <select name="activity" id="actSelect" class="form-control">
-            <option value="">Semua Aktiviti</option>
+        <select name="unit" id="actSelect" class="form-control">
+            <option value="">Semua Unit</option>
             {% for u in all_units %}
-            <option value="{{ u.activity_name }}" data-type="{{ u.unit_type }}" {% if act==u.activity_name %}selected{%
+            <option value="{{ u.unit_name }}" data-type="{{ u.unit_type }}" {% if act==u.unit_name %}selected{%
                 endif %}>
-                {{ u.activity_name }}
+                {{ u.unit_name }}
             </option>
             {% endfor %}
         </select>
@@ -45,7 +45,7 @@
                 {% for s in students %}
                 <tr>
                     <td><strong>{{ s.nama_pelajar }}</strong></td>
-                    <td>{{ s.activity_name }} <br><small>{{ s.unit_type }}</small></td>
+                    <td>{{ s.unit_name }} <br><small>{{ s.unit_type }}</small></td>
                     <td>
                         <form action="{{ url_for('update_jawatan_ajax') }}" method="POST">
                             <input type="hidden" name="kkplr_id" value="{{ s.kkplr_id }}">

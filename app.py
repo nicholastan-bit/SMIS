@@ -857,7 +857,7 @@ def kokurikulum_page():
     student = cursor.fetchone()
     
     # 2. Fetch all units for this category
-    cursor.execute("SELECT unit_id, activity_name, unit_type FROM UnitKokurikulum WHERE unit_type = %s", (category,))
+    cursor.execute("SELECT unit_id, unit_name, unit_type FROM UnitKokurikulum WHERE unit_type = %s", (category,))
     units = cursor.fetchall()
 
     # 3. Get current counts for all units to check capacity
@@ -885,7 +885,7 @@ def kokurikulum_page():
         elif u['unit_type'] == 'Badan Beruniform': prefix = "UB_"
         elif u['unit_type'] == 'Sukan dan Permainan': prefix = "SK_"
 
-        json_key = f"{prefix}{u['activity_name']}"
+        json_key = f"{prefix}{u['unit_name']}"
         limit = limits.get(json_key, 60)
         
         # 2. Add 'enrolled' and 'limit' to the dictionary
@@ -893,8 +893,8 @@ def kokurikulum_page():
         
         # Restriction Checks
         gender_match = True
-        if u['activity_name'] in gender_restrictions:
-            gender_match = (student['jantina'] == gender_restrictions[u['activity_name']])
+        if u['unit_name'] in gender_restrictions:
+            gender_match = (student['jantina'] == gender_restrictions[u['unit_name']])
             
         processed_units.append({
             **u, 
@@ -905,7 +905,7 @@ def kokurikulum_page():
         })
 
     cursor.execute("""
-        SELECT uk.unit_id, uk.activity_name, uk.unit_type 
+        SELECT uk.unit_id, uk.unit_name, uk.unit_type 
         FROM KokurikulumPelajar kp
         JOIN UnitKokurikulum uk ON kp.unit_id = uk.unit_id
         WHERE kp.bil_kemasukan = %s
@@ -977,8 +977,8 @@ def final_submit_koku():
     # 1. FINAL SAFETY CHECK: Loop through to verify if any unit became full
     for unit in session.get('temp_units', []):
         unit_id = unit['unit_id']
-        cursor.execute("SELECT activity_name FROM UnitKokurikulum WHERE unit_id = %s", (unit_id,))
-        unit_name = cursor.fetchone()['activity_name']
+        cursor.execute("SELECT unit_name FROM UnitKokurikulum WHERE unit_id = %s", (unit_id,))
+        unit_name = cursor.fetchone()['unit_name']
         
         current_enrollment = enrollment_data.get(unit_id, 0)
         max_limit = limits.get(unit_name, 60)
@@ -1427,8 +1427,8 @@ def admin_settings():
             unit_id = request.form.get('koku_select')
             new_limit = request.form.get('koku_limit_number')
 
-            # 1. Fetch both activity_name AND unit_type to determine the prefix
-            cursor.execute("SELECT activity_name, unit_type FROM UnitKokurikulum WHERE unit_id = %s", (unit_id,))
+            # 1. Fetch both unit_name AND unit_type to determine the prefix
+            cursor.execute("SELECT unit_name, unit_type FROM UnitKokurikulum WHERE unit_id = %s", (unit_id,))
             unit = cursor.fetchone()
 
             if unit and new_limit:
@@ -1439,13 +1439,13 @@ def admin_settings():
                 elif unit['unit_type'] == 'Sukan dan Permainan': prefix = "SK_"
 
                 # 3. Create the exact same key used by the rest of your app
-                full_key = f"{prefix}{unit['activity_name']}"
+                full_key = f"{prefix}{unit['unit_name']}"
 
                 limits = get_limits()
 
                 # 4. Remove the old, incorrect key if it exists (Optional cleanup)
-                if unit['activity_name'] in limits:
-                    del limits[unit['activity_name']]
+                if unit['unit_name'] in limits:
+                    del limits[unit['unit_name']]
 
                 # 5. Save using the standardized key
                 limits[full_key] = int(new_limit)
@@ -1483,7 +1483,7 @@ def admin_settings():
     """)
     enrollment_data = {row['unit_id']: row['enrolled_count'] for row in cursor.fetchall()}
 
-    cursor.execute("SELECT unit_id, activity_name, unit_type FROM UnitKokurikulum ORDER BY activity_name")
+    cursor.execute("SELECT unit_id, unit_name, unit_type FROM UnitKokurikulum ORDER BY unit_name")
     all_units = cursor.fetchall()
 
     cursor.close(); conn.close()
@@ -1799,7 +1799,7 @@ def admin_koku_list():
     offset = (page - 1) * per_page
     
     cat_filter = request.args.get('category')
-    act_filter = request.args.get('activity')
+    act_filter = request.args.get('unit')
     rumah_filter = request.args.get('rumah')
 
     # 1. Establish database connection FIRST
@@ -1820,7 +1820,7 @@ def admin_koku_list():
         base_query += " AND uk.unit_type = %s"
         params.append(cat_filter)
     if act_filter:
-        base_query += " AND uk.activity_name = %s"
+        base_query += " AND uk.unit_name = %s"
         params.append(act_filter)
     if rumah_filter:
         base_query += " AND LOWER(p.rumah_sukan) = LOWER(%s)"
@@ -1833,12 +1833,12 @@ def admin_koku_list():
     total = result.get('total_count') or (list(result.values())[0] if result else 0)
     
     # 5. Fetch dropdown data
-    cursor.execute("SELECT unit_id, activity_name, unit_type FROM UnitKokurikulum ORDER BY unit_type, activity_name")
+    cursor.execute("SELECT unit_id, unit_name, unit_type FROM UnitKokurikulum ORDER BY unit_type, unit_name")
     all_units_dropdown = cursor.fetchall()
 
     # 6. Fetch main student list
     data_query = """
-        SELECT kp.kkplr_id, kp.bil_kemasukan, kp.jawatan, p.nama_pelajar, uk.activity_name, uk.unit_type
+        SELECT kp.kkplr_id, kp.bil_kemasukan, kp.jawatan, p.nama_pelajar, uk.unit_name, uk.unit_type
     """ + base_query + " LIMIT %s OFFSET %s"
     cursor.execute(data_query, params + [per_page, offset])
     students = cursor.fetchall()
@@ -1939,11 +1939,11 @@ def edit_student_koku(bil):
     cursor.execute("SELECT * FROM pelajar WHERE bil_kemasukan = %s", (bil,))
     student = cursor.fetchone()
     
-    cursor.execute("SELECT unit_id, activity_name FROM UnitKokurikulum")
+    cursor.execute("SELECT unit_id, unit_name FROM UnitKokurikulum")
     all_units = cursor.fetchall()
     
     cursor.execute("""
-        SELECT kp.*, uk.activity_name 
+        SELECT kp.*, uk.unit_name 
         FROM KokurikulumPelajar kp
         JOIN UnitKokurikulum uk ON kp.unit_id = uk.unit_id
         WHERE kp.bil_kemasukan = %s

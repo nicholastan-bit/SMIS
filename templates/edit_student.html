@@ -59,7 +59,7 @@
                             <select name="unit_id[]" class="form-control">
                                 {% for u in all_units %}
                                 <option value="{{ u.unit_id }}" {% if r.unit_id==u.unit_id %}selected{% endif %}>{{
-                                    u.activity_name }}</option>
+                                    u.unit_name }}</option>
                                 {% endfor %}
                             </select>
                         </td>
