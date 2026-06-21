@@ -70,6 +70,8 @@ CREATE TABLE pelajar (
     status_oku ENUM('TIDAK', 'YA') DEFAULT 'TIDAK',
     kelas VARCHAR(10),
     tarikh_pendaftaran DATE,
+    tugas_khas VARCHAR(50) DEFAULT NULL,
+	rumah_sukan VARCHAR(20) DEFAULT NULL,
 	CONSTRAINT fk_pelajar_pakej FOREIGN KEY (id_pakej) REFERENCES pakej (id_pakej) ON DELETE SET NULL
 ) AUTO_INCREMENT = 19207 ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

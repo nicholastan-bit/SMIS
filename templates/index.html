@@ -71,6 +71,13 @@
                 </span>
             </li>
             <li>
+                <span class="{{ 'text-success' if completion_status.koku else 'text-danger' }}" style="font-weight: 600;">
+                    <span
+                        class="glyphicon {{ 'glyphicon-ok-sign' if completion_status.koku else 'glyphicon-remove-sign' }}"></span>
+                    Kokurikulum
+                </span>
+            </li>
+            <li>
                 <span class="{{ 'text-success' if completion_status.penjaga else 'text-danger' }}" style="font-weight: 600;">
                     <span
                         class="glyphicon {{ 'glyphicon-ok-sign' if completion_status.penjaga else 'glyphicon-remove-sign' }}"></span>
@@ -133,6 +140,20 @@
                     </div>
                     <div class="col-md-3">
                         <a class="btn btn-primary btn-block" href="{{ url_for('package_page') }}">Pilih Pakej</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel panel-default" style="margin-bottom: 25px;">
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-9">
+                        <h4>5. Pemilihan Unit Kokurikulum</h4>
+                        <h5 class="text-muted">Masukkan Maklumat diatas dahulu</h5>
+                    </div>
+                    <div class="col-md-3">
+                        <a class="btn btn-primary btn-block" href="{{ url_for('kokurikulum_page') }}">Pilih Unit</a>
                     </div>
                 </div>
             </div>

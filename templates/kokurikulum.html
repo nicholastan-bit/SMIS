@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 col-md-offset-1">
+        <h2 class="text-center">Pendaftaran Kokurikulum</h2>
+        <p class="text-muted text-center">Sila pilih satu aktiviti bagi setiap kategori (Kelab, Badan Beruniform,
+            Sukan).</p>
+        <hr>
+
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title">Pilihan Sementara Anda ({{ session.get('temp_units', [])|length }} / 3)</h3>
+            </div>
+            <div class="panel-body">
+                {% if session.get('temp_units', []) %}
+                <ul>
+                    {% for item in session.get('temp_units', []) %}
+                    <li><strong>{{ item.unit_type }}:</strong> {{ item.name }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p>Tiada unit dipilih lagi.</p>
+                {% endif %}
+            </div>
+            <div class="panel-footer">
+                <form action="/final_submit_koku" method="POST"
+                    onsubmit="return confirm('Adakah anda pasti mahu menyimpan pilihan unit-unit ini? Tindakan ini memuktamadkan pendaftaran kokurikulum anda.');">
+            
+                    <button type="submit" class="btn btn-success btn-block" {% if session.get('temp_units', [])|length < 3
+                        %}disabled{% endif %}>
+                        {% if session.get('temp_units', [])|length < 3 %}Sila pilih 3 unit{% else %}Simpan Semua Pilihan{% endif %}
+                            </button>
+            
+                </form>      
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-body text-center">
+                <form method="GET" action="/kokurikulum" class="form-inline">
+                    <label style="margin-right: 15px;">Kategori:</label>
+                    <select name="type" class="form-control" onchange="this.form.submit()">
+                        <option value="Kelab" {% if selected_type=='Kelab' %}selected{% endif %}>Kelab dan Persatuan
+                        </option>
+                        <option value="Badan Beruniform" {% if selected_type=='Badan Beruniform' %}selected{% endif %}>
+                            Badan Beruniform</option>
+                        <option value="Sukan dan Permainan" {% if selected_type=='Sukan dan Permainan' %}selected{%
+                            endif %}>Sukan dan Permainan</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+
+        <div class="row">
+            {% for unit in units %}
+            <div class="col-md-6">
+                <div class="panel {% if unit.is_full %}panel-danger{% else %}panel-primary{% endif %}">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">{{ unit.activity_name }}</h3>
+                    </div>
+                    <div class="panel-body" style="min-height: 80px;">
+                        <p><strong>Kapasiti:</strong> {{ unit.enrolled }} / {{ unit.limit }} pelajar</p>
+                        <p class="text-{{ 'danger' if unit.is_full else 'success' }}">
+                            <strong>Status:</strong> {{ 'Telah Penuh' if unit.is_full else 'Tersedia' }}
+                        </p>
+                    </div>
+                    <div class="panel-footer">
+                        <form action="/temp_add_koku" method="POST">
+                            <input type="hidden" name="unit_id" value="{{ unit.unit_id }}">
+                            <input type="hidden" name="unit_name" value="{{ unit.activity_name }}">
+                            <input type="hidden" name="unit_type" value="{{ selected_type }}">
+                            <button type="submit" class="btn btn-block btn-primary" {% if unit.is_full or not
+                                unit.allowed %}disabled{% endif %}>
+                                Pilih
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

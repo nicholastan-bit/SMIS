@@ -36,6 +36,28 @@ def save_limits(limits_dict):
     with open(LIMITS_FILE, 'w') as f:
         json.dump(limits_dict, f, indent=4)
 
+def check_activity_limit(unit_id, unit_name, unit_type):
+    # Determine the prefix based on type
+    prefix = ""
+    if unit_type == 'Kelab': prefix = "KK_"
+    elif unit_type == 'Badan Beruniform': prefix = "UB_"
+    elif unit_type == 'Sukan dan Permainan': prefix = "SK_"
+    
+    full_key = f"{prefix}{unit_name}" # This now matches your generated key
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT COUNT(*) as count FROM KokurikulumPelajar WHERE unit_id = %s", (unit_id,))
+    current_count = cursor.fetchone()['count']
+    cursor.close()
+    conn.close()
+    
+    limits = get_limits()
+    # Use the full_key to look up the limit
+    limit = limits.get(full_key, 60) 
+    
+    return current_count < limit
+
 app = Flask(__name__)
 app.secret_key = 'smis_admin_secret_key'
 
@@ -141,7 +163,8 @@ def index():
         'spm': False,
         'tambahan': False,
         'pakej': False,
-        'penjaga': False # Added key
+        'penjaga': False, # Added key
+        'koku': False,
     }
     package_class = None
     className = None
@@ -177,7 +200,13 @@ def index():
             if student['surat_tawaran_path'] and student['ic_photo_path']:
                 completion_status['tambahan'] = True
                 
-            # 4. Step 4 (Pakej)
+            bil_kemasukan = student['bil_kemasukan']
+
+            # 2. PREVENTION CHECK: Has the student already registered?
+            cursor.execute("SELECT COUNT(*) as registered_count FROM KokurikulumPelajar WHERE bil_kemasukan = %s", (bil_kemasukan,))
+            if cursor.fetchone()['registered_count'] > 0:
+                completion_status['koku'] = True
+            
             if student['id_pakej'] is not None and student['id_pakej'] != 0:
                 completion_status['pakej'] = True
 
@@ -790,6 +819,236 @@ def submit_package():
 
     return redirect(url_for('index'))
 
+@app.route('/kokurikulum', methods=['GET'])
+def kokurikulum_page():
+    kp = session.get('verified_kp')
+    if not kp:
+        return redirect(url_for('gateway'))
+
+    # Get filter from URL (Default to 'Kelab')
+    category = request.args.get('type', 'Kelab')
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True, buffered=True)
+
+    # 1. Get student ID
+    cursor.execute("SELECT bil_kemasukan FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
+    student = cursor.fetchone()
+    bil_kemasukan = student['bil_kemasukan']
+
+    # 2. PREVENTION CHECK: Has the student already registered?
+    cursor.execute("SELECT COUNT(*) as registered_count FROM KokurikulumPelajar WHERE bil_kemasukan = %s", (bil_kemasukan,))
+    if cursor.fetchone()['registered_count'] > 0:
+        cursor.close()
+        conn.close()
+        flash("Anda telah mendaftar kokurikulum. Hubungi pentadbir jika perlu membuat perubahan.", "info")
+        return redirect(url_for('index'))
+
+    # 1. Get student gender and current units for restriction checks
+    cursor.execute("SELECT bil_kemasukan, jantina FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
+    student = cursor.fetchone()
+    
+    # 2. Fetch all units for this category
+    cursor.execute("SELECT unit_id, activity_name, unit_type FROM UnitKokurikulum WHERE unit_type = %s", (category,))
+    units = cursor.fetchall()
+
+    # 3. Get current counts for all units to check capacity
+    cursor.execute("SELECT unit_id, COUNT(*) as enrolled FROM KokurikulumPelajar GROUP BY unit_id")
+    enrollment_counts = {row['unit_id']: row['enrolled'] for row in cursor.fetchall()}
+    
+    # Load limits from your JSON
+    limits = get_limits()
+
+    # 4. Filter units based on capacity and gender (Logic in template or here)
+    # Mapping for gender-restricted items (You can store this in a dictionary)
+    gender_restrictions = {
+        'PANDU PUTERI MALAYSIA': 'PEREMPUAN',
+        'PERGERAKAN PUTERI ISLAM MALAYSIA': 'PEREMPUAN',
+        'BOLA JARING': 'PEREMPUAN',
+        'FUTSAL': 'LELAKI'
+    }
+
+    processed_units = []
+    for u in units:
+        count = enrollment_counts.get(u['unit_id'], 0)
+        
+        prefix = ""
+        if u['unit_type'] == 'Kelab': prefix = "KK_"
+        elif u['unit_type'] == 'Badan Beruniform': prefix = "UB_"
+        elif u['unit_type'] == 'Sukan dan Permainan': prefix = "SK_"
+
+        json_key = f"{prefix}{u['activity_name']}"
+        limit = limits.get(json_key, 60)
+        
+        # 2. Add 'enrolled' and 'limit' to the dictionary
+        is_full = count >= limit
+        
+        # Restriction Checks
+        gender_match = True
+        if u['activity_name'] in gender_restrictions:
+            gender_match = (student['jantina'] == gender_restrictions[u['activity_name']])
+            
+        processed_units.append({
+            **u, 
+            'is_full': is_full, 
+            'allowed': gender_match and not is_full,
+            'enrolled': count,
+            'limit': limit
+        })
+
+    cursor.execute("""
+        SELECT uk.unit_id, uk.activity_name, uk.unit_type 
+        FROM KokurikulumPelajar kp
+        JOIN UnitKokurikulum uk ON kp.unit_id = uk.unit_id
+        WHERE kp.bil_kemasukan = %s
+    """, (student['bil_kemasukan'],))
+    my_units = cursor.fetchall()
+    
+    # Check if all 3 categories are filled
+    categories_filled = {u['unit_type'] for u in my_units}
+    can_finish = len(categories_filled) == 3
+
+    cursor.close()
+    conn.close()
+
+    return render_template('kokurikulum.html', 
+                           units=processed_units, 
+                           my_units=my_units, 
+                           can_finish=can_finish,
+                           selected_type=category)
+
+@app.route('/temp_add_koku', methods=['POST'])
+def temp_add_koku():
+    if 'temp_units' not in session:
+        session['temp_units'] = []
+    
+    unit_id = int(request.form.get('unit_id'))
+    unit_name = request.form.get('unit_name')
+    unit_type = request.form.get('unit_type')
+    
+    # 1. Overwrite Logic:
+    # Filter the list to keep everything EXCEPT the category we are currently adding.
+    # This automatically removes the 'old' selection for this category.
+    session['temp_units'] = [u for u in session['temp_units'] if u['unit_type'] != unit_type]
+    
+    # 2. Add the new selection:
+    # Now that we've cleared any existing unit of this type, we can safely add the new one.
+    session['temp_units'].append({
+        'unit_id': unit_id, 
+        'name': unit_name, 
+        'unit_type': unit_type
+    })
+    
+    session.modified = True
+    flash(f"Pilihan untuk {unit_type} telah dikemaskini kepada {unit_name}.", "success")
+        
+    return redirect(url_for('kokurikulum_page'))
+
+@app.route('/final_submit_koku', methods=['POST'])
+def final_submit_koku():
+    kp = session.get('verified_kp')
+
+    # 2. Execute and safely fetch
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True) # Using dictionary=True makes access easier
+    cursor.execute("SELECT bil_kemasukan FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
+    result = cursor.fetchone()
+    
+    if result:
+        bil_kemasukan = result['bil_kemasukan']
+    else:
+        # Handle error: Student not found
+        flash("Sesi tamat atau pelajar tidak dijumpai.", "danger")
+        return redirect(url_for('gateway'))
+    
+    # Get current limits and enrollment counts
+    limits = get_limits() # Assuming this loads your JSON
+    cursor.execute("SELECT unit_id, COUNT(*) as enrolled FROM KokurikulumPelajar GROUP BY unit_id")
+    enrollment_data = {row['unit_id']: row['enrolled'] for row in cursor.fetchall()}
+
+    # 1. FINAL SAFETY CHECK: Loop through to verify if any unit became full
+    for unit in session.get('temp_units', []):
+        unit_id = unit['unit_id']
+        cursor.execute("SELECT activity_name FROM UnitKokurikulum WHERE unit_id = %s", (unit_id,))
+        unit_name = cursor.fetchone()['activity_name']
+        
+        current_enrollment = enrollment_data.get(unit_id, 0)
+        max_limit = limits.get(unit_name, 60)
+        
+        if current_enrollment >= max_limit:
+            flash(f"Maaf, {unit_name} sudah penuh. Sila pilih unit lain.", "danger")
+            conn.close()
+            return redirect(url_for('kokurikulum_page'))
+
+    # 2. If all pass, proceed to Insert
+    for unit in session.get('temp_units', []):
+        cursor.execute("INSERT INTO KokurikulumPelajar (bil_kemasukan, unit_id) VALUES (%s, %s)", 
+                       (bil_kemasukan, unit['unit_id']))
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    # Clear the session after saving
+    session.pop('temp_units', None)
+    flash("Pendaftaran berjaya disimpan!", "success")
+    return redirect(url_for('index'))
+
+@app.route('/submit_koku', methods=['POST'])
+def submit_koku():
+    kp = session.get('verified_kp')
+    if not kp:
+        return redirect(url_for('gateway'))
+
+    unit_id = request.form.get('unit_id')
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # 1. Get student's bil_kemasukan
+    cursor.execute("SELECT bil_kemasukan FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
+    pelajar = cursor.fetchone()
+    bil_kemasukan = pelajar['bil_kemasukan']
+    
+    # 2. Check: Does student already have 3 units?
+    cursor.execute("SELECT COUNT(*) as count FROM KokurikulumPelajar WHERE bil_kemasukan = %s", (bil_kemasukan,))
+    current_count = cursor.fetchone()['count']
+    
+    if current_count >= 3:
+        flash("Anda sudah mendaftar 3 unit. Sila batalkan satu jika ingin menukar.", "danger")
+        return redirect(url_for('kokurikulum_page'))
+    
+    cursor.execute("SELECT unit_type FROM UnitKokurikulum WHERE unit_id = %s", (unit_id,))
+    new_unit_type = cursor.fetchone()['unit_type']
+
+    # 2. Check if the student already has a unit in that specific category
+    cursor.execute("""
+        SELECT COUNT(*) as count 
+        FROM KokurikulumPelajar kp
+        JOIN UnitKokurikulum uk ON kp.unit_id = uk.unit_id
+        WHERE kp.bil_kemasukan = %s AND uk.unit_type = %s
+    """, (bil_kemasukan, new_unit_type))
+
+    already_has_category = cursor.fetchone()['count'] > 0
+
+    if already_has_category:
+        flash(f"Anda sudah mendaftar satu unit dalam kategori {new_unit_type}. Sila batalkan unit tersebut jika mahu menukar.", "danger")
+        return redirect(url_for('kokurikulum_page'))
+    
+    # 3. Final safety check: Is the unit already full or already taken?
+    try:
+        cursor.execute("""
+            INSERT INTO KokurikulumPelajar (bil_kemasukan, unit_id) 
+            VALUES (%s, %s)
+        """, (bil_kemasukan, unit_id))
+        conn.commit()
+        flash("Berjaya mendaftar aktiviti!", "success")
+    except mysql.connector.Error as err:
+        flash("Gagal mendaftar. Mungkin anda sudah mendaftar unit ini.", "danger")
+        
+    cursor.close()
+    conn.close()
+    return redirect(url_for('kokurikulum_page'))
 
 # =====================================================================
 # --- ADMINISTRATIVE CONTROL PANEL MODULES ---
@@ -1123,6 +1382,7 @@ def delete_student(student_id):
 
 @app.route('/admin/settings', methods=['GET', 'POST'])
 def admin_settings():
+    # 1. Access Control
     if session.get('role') != 'admin':
         flash("Akses Ditolak.", "danger")
         return redirect(url_for('gateway'))
@@ -1130,54 +1390,95 @@ def admin_settings():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True, buffered=True)
 
-    # Handle POST requests
+    # 2. Handle POST requests
     if request.method == 'POST':
-        # Action 1: Toggle form settings
-        if 'enabled_forms' in request.form or 'toggle_submit' in request.form:
-            enabled_forms = request.form.getlist('enabled_forms')
+        # Action A: Toggle form settings
+        if 'enabled_forms' in request.form:
             cursor.execute("UPDATE form_settings SET is_enabled = FALSE")
             for form_id in request.form.getlist('enabled_forms'):
                 cursor.execute("UPDATE form_settings SET is_enabled = TRUE WHERE form_id = %s", (form_id,))
             conn.commit()
             flash("Tetapan borang dikemaskini.", "success")
+            session['last_tab'] = 'forms'
         
-        # Action 2: Update specific package limit
+        # Action B: Update Package Limit
         elif 'update_limit' in request.form:
             package_id = request.form.get('package_select')
             new_limit = request.form.get('limit_number')
-            
             cursor.execute("SELECT kod_pakej FROM pakej WHERE id_pakej = %s", (package_id,))
             pkg = cursor.fetchone()
-            
             if pkg and new_limit:
                 limits = get_limits()
                 limits[pkg['kod_pakej']] = int(new_limit)
                 save_limits(limits)
-                flash(f"Had {pkg['kod_pakej']} dikemaskini kepada {new_limit}.", "success")
+                flash(f"Had {pkg['kod_pakej']} dikemaskini.", "success")
+                session['last_tab'] = 'package'
         
+        # Action C: Update Kokurikulum Unit Limit
+        elif 'update_koku_limit' in request.form:
+            unit_id = request.form.get('koku_select')
+            new_limit = request.form.get('koku_limit_number')
+
+            # 1. Fetch both activity_name AND unit_type to determine the prefix
+            cursor.execute("SELECT activity_name, unit_type FROM UnitKokurikulum WHERE unit_id = %s", (unit_id,))
+            unit = cursor.fetchone()
+
+            if unit and new_limit:
+                # 2.     Reconstruct the prefix logic
+                prefix = ""
+                if unit['unit_type'] == 'Kelab': prefix = "KK_"
+                elif unit['unit_type'] == 'Badan Beruniform': prefix = "UB_"
+                elif unit['unit_type'] == 'Sukan dan Permainan': prefix = "SK_"
+
+                # 3. Create the exact same key used by the rest of your app
+                full_key = f"{prefix}{unit['activity_name']}"
+
+                limits = get_limits()
+
+                # 4. Remove the old, incorrect key if it exists (Optional cleanup)
+                if unit['activity_name'] in limits:
+                    del limits[unit['activity_name']]
+
+                # 5. Save using the standardized key
+                limits[full_key] = int(new_limit)
+                save_limits(limits)
+
+                flash(f"Had {full_key} dikemaskini.", "success")
+                session['last_tab'] = 'koku'
+        
+
+        conn.commit()
         cursor.close(); conn.close()
         return redirect(url_for('admin_settings'))
 
-    # Fetch Data for Display
+    # 3. Fetch Data for Display
     cursor.execute("SELECT * FROM form_settings")
     settings = cursor.fetchall()
 
+    # Ensure this query is in your admin_settings route
     cursor.execute("""
-        SELECT p.id_pakej, p.kod_pakej, COUNT(s.bil_kemasukan) as total_students
+        SELECT p.id_pakej, p.kod_pakej, 
+                (SELECT COUNT(*) FROM pelajar WHERE pelajar.id_pakej = p.id_pakej) as total_students
         FROM pakej p
-        LEFT JOIN pelajar s ON p.id_pakej = s.id_pakej
         WHERE p.status_aktif = 1
-        GROUP BY p.id_pakej
         ORDER BY p.kod_pakej
     """)
     package_summary = cursor.fetchall()
     
-    # Fetch packages for the dropdown list
     cursor.execute("SELECT id_pakej, kod_pakej FROM pakej ORDER BY kod_pakej")
     all_packages = cursor.fetchall()
 
-    cursor.close()
-    conn.close()
+    cursor.execute("""
+        SELECT unit_id, COUNT(*) as enrolled_count 
+        FROM KokurikulumPelajar 
+        GROUP BY unit_id
+    """)
+    enrollment_data = {row['unit_id']: row['enrolled_count'] for row in cursor.fetchall()}
+
+    cursor.execute("SELECT unit_id, activity_name, unit_type FROM UnitKokurikulum ORDER BY activity_name")
+    all_units = cursor.fetchall()
+
+    cursor.close(); conn.close()
 
     form_labels = {
         'profil_form': 'Borang Maklumat Pelajar',
@@ -1185,14 +1486,21 @@ def admin_settings():
         'penjaga_form': 'Borang Maklumat Penjaga',
         'spm_form': 'Borang Keputusan SPM',
         'pakej_form': 'Borang Pemilihan Pakej'
+        # add new for koku
     }
+
+    # Retrieve last active tab to persist view after POST
+    active_tab = session.pop('last_tab', 'forms')
 
     return render_template('admin_settings.html', 
                            settings=settings, 
                            form_labels=form_labels,
+                           enrollment_data=enrollment_data,
                            package_summary=package_summary,
                            all_packages=all_packages,
-                           package_limits=get_limits(), # Load from JSON
+                           all_units=all_units,
+                           package_limits=get_limits(),
+                           active_tab=active_tab,
                            default_limit=DEFAULT_LIMIT)
 
 def get_statistics_data(mode, category, filter_stream, filter_sem, status_study):
@@ -1471,6 +1779,172 @@ def submit_eligibility():
         cursor.close()
         conn.close()
     return redirect(url_for('eligible_subject_page'))
+
+@app.route('/admin/koku-list', methods=['GET'])
+def admin_koku_list():
+    if session.get('role') != 'admin':
+        flash("Akses Ditolak.", "danger")
+        return redirect(url_for('gateway'))
+
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    offset = (page - 1) * per_page
+    
+    cat_filter = request.args.get('category')
+    act_filter = request.args.get('activity')
+    rumah_filter = request.args.get('rumah')
+
+    # 1. Establish database connection FIRST
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # 2. Build the base query structure
+    base_query = """
+        FROM KokurikulumPelajar kp
+        JOIN pelajar p ON kp.bil_kemasukan = p.bil_kemasukan
+        JOIN UnitKokurikulum uk ON kp.unit_id = uk.unit_id
+        WHERE 1=1
+    """
+    params = []
+    
+    # 3. Apply filters to the base query and parameters
+    if cat_filter:
+        base_query += " AND uk.unit_type = %s"
+        params.append(cat_filter)
+    if act_filter:
+        base_query += " AND uk.activity_name = %s"
+        params.append(act_filter)
+    if rumah_filter:
+        base_query += " AND LOWER(p.rumah_sukan) = LOWER(%s)"
+        params.append(rumah_filter)
+        
+    # 4. Count total
+    count_query = "SELECT COUNT(*) as total_count " + base_query
+    cursor.execute(count_query, params)
+    result = cursor.fetchone()
+    total = result.get('total_count') or (list(result.values())[0] if result else 0)
+    
+    # 5. Fetch dropdown data
+    cursor.execute("SELECT unit_id, activity_name, unit_type FROM UnitKokurikulum ORDER BY unit_type, activity_name")
+    all_units_dropdown = cursor.fetchall()
+
+    # 6. Fetch main student list
+    data_query = """
+        SELECT kp.kkplr_id, kp.bil_kemasukan, kp.jawatan, p.nama_pelajar, uk.activity_name, uk.unit_type
+    """ + base_query + " LIMIT %s OFFSET %s"
+    cursor.execute(data_query, params + [per_page, offset])
+    students = cursor.fetchall()
+    
+    # 7. Close resources
+    cursor.close()
+    conn.close()
+    
+    return render_template('koku_list.html', 
+                           students=students, 
+                           all_units=all_units_dropdown,
+                           total=total, 
+                           page=page, 
+                           per_page=per_page,
+                           cat=cat_filter,
+                           act=act_filter,
+                           rumah=rumah_filter)
+
+@app.route('/admin/update-jawatan', methods=['POST'])
+def update_jawatan_ajax():
+    # Debugging: Log what is received
+    print("DEBUG - Form Data:", request.form) 
+    
+    kkplr_id = request.form.get('kkplr_id')
+    new_jawatan = request.form.get('jawatan')
+    
+    if not kkplr_id or not new_jawatan:
+        # This will trigger your flash message
+        flash(f"Error: Missing data. ID={kkplr_id}, Jawatan={new_jawatan}", "danger")
+        return redirect(request.referrer or url_for('admin_koku_list'))
+    
+    if kkplr_id and new_jawatan:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        # Ensure column names match your DB schema (KokurikulumPelajar)
+        query = "UPDATE KokurikulumPelajar SET jawatan = %s WHERE kkplr_id = %s"
+        cursor.execute(query, (new_jawatan, kkplr_id))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        flash("Position updated successfully!", "success")
+    else:
+        flash("Failed to update: missing data.", "danger")
+        
+    return redirect(request.referrer or url_for('admin_koku_list'))
+
+@app.route('/admin/delete-koku-record/<int:kkplr_id>', methods=['POST'])
+def delete_koku_record(kkplr_id):
+    if session.get('role') != 'admin':
+        return redirect(url_for('gateway'))
+        
+    bil = request.args.get('bil') # Get student bil_kemasukan from URL
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM KokurikulumPelajar WHERE kkplr_id = %s", (kkplr_id,))
+    conn.commit()
+    cursor.close(); conn.close()
+    
+    flash("Rekod Kokurikulum telah dipadam.", "info")
+    return redirect(url_for('edit_student_koku', bil=bil))
+
+@app.route('/admin/edit-student/<bil>', methods=['GET', 'POST'])
+def edit_student_koku(bil):
+    if session.get('role') != 'admin':
+        return redirect(url_for('gateway'))
+        
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    if request.method == 'POST':
+        # 1. Update Student Personal Info (pelajar table)
+        tugas_khas = request.form.get('tugas_khas')
+        rumah_sukan = request.form.get('rumah_sukan')
+        cursor.execute("""
+            UPDATE pelajar SET tugas_khas = %s, rumah_sukan = %s 
+            WHERE bil_kemasukan = %s
+        """, (tugas_khas, rumah_sukan, bil))
+        
+        # 2. Update Koku Records (KokurikulumPelajar table)
+        kkplr_ids = request.form.getlist('kkplr_id[]')
+        new_unit_ids = request.form.getlist('unit_id[]')
+        jawatans = request.form.getlist('jawatan[]')
+        merits = request.form.getlist('merit[]')
+        
+        for i in range(len(kkplr_ids)):
+            cursor.execute("""
+                UPDATE KokurikulumPelajar 
+                SET unit_id = %s, jawatan = %s, merit = %s 
+                WHERE kkplr_id = %s AND bil_kemasukan = %s
+            """, (new_unit_ids[i], jawatans[i], merits[i], kkplr_ids[i], bil))
+        
+        conn.commit()
+        flash("Semua maklumat berjaya dikemaskini!", "success")
+        return redirect(url_for('admin_koku_list'))
+        
+    # Fetch Data
+    cursor.execute("SELECT * FROM pelajar WHERE bil_kemasukan = %s", (bil,))
+    student = cursor.fetchone()
+    
+    cursor.execute("SELECT unit_id, activity_name FROM UnitKokurikulum")
+    all_units = cursor.fetchall()
+    
+    cursor.execute("""
+        SELECT kp.*, uk.activity_name 
+        FROM KokurikulumPelajar kp
+        JOIN UnitKokurikulum uk ON kp.unit_id = uk.unit_id
+        WHERE kp.bil_kemasukan = %s
+    """, (bil,))
+    koku_records = cursor.fetchall()
+    
+    cursor.close(); conn.close()
+    return render_template('edit_student.html', student=student, records=koku_records, all_units=all_units)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

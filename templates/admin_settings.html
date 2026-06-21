@@ -3,72 +3,142 @@
 <div class="container">
     <h2>Konfigurasi Sistem</h2>
 
-    <div class="row">
-        <!-- Column 1: Borang Configuration -->
-        <div class="col-md-6">
-            <div class="card mb-4 p-3">
-                <h4>Konfigurasi Status Borang</h4>
-                <p class="text-info">"Toggle" butang checkmark untuk buka/tutup form</p>
-                <form method="POST">
-                    <table class="table table-bordered">
-                        {% for item in settings %}
-                        <tr>
-                            <td>{{ form_labels.get(item.form_id, item.form_id) }}</td>
-                            <td>
-                                <input type="checkbox" name="enabled_forms" value="{{ item.form_id }}"
-                                    style="transform: scale(1.5); cursor: pointer; margin-left: 10px;" {% if
-                                    item.is_enabled %}checked{% endif %}>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </table>
-                    <button type="submit" class="btn btn-success">Simpan Tetapan Borang</button>
-                </form>
-            </div>
+    <div class="card mb-4 p-3">
+        <label>Pilih Tetapan untuk Diubah:</label>
+        <select id="settingsSelector" class="form-control" onchange="showSection(this.value)">
+            <option value="forms">Konfigurasi Status Borang</option>
+            <option value="package">Had Kapasiti Pakej</option>
+            <option value="koku">Had Kapasiti Kokurikulum</option>
+        </select>
+    </div>
+
+    <div id="section-forms" class="settings-section">
+        <div class="card mb-4 p-3">
+            <h4>Konfigurasi Status Borang</h4>
+            <form method="POST">
+                <table class="table table-bordered">
+                    {% for item in settings %}
+                    <tr>
+                        <td>{{ form_labels.get(item.form_id, item.form_id) }}</td>
+                        <td>
+                            <input type="checkbox" name="enabled_forms" value="{{ item.form_id }}"
+                                style="transform: scale(1.5); cursor: pointer;" {% if item.is_enabled %}checked{% endif
+                                %}>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                <button type="submit" class="btn btn-success">Simpan Tetapan Borang</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="section-package" class="settings-section" style="display:none;">
+        <div class="card mb-4 p-3">
+            <h4>Kemaskini Had Kapasiti Pakej</h4>
+            <form method="POST" class="form-inline">
+                <select name="package_select" class="form-control" required>
+                    <option value="">-- Pilih Pakej --</option>
+                    {% for p in all_packages %}
+                    <option value="{{ p.id_pakej }}">{{ p.kod_pakej }}</option>
+                    {% endfor %}
+                </select>
+                <input type="number" name="limit_number" class="form-control mx-2" placeholder="Had Baru" required>
+                <button type="submit" name="update_limit" class="btn btn-primary">Simpan Had</button>
+            </form>
+        </div>
+    
+        <div class="card p-3">
+            <h4>Statistik Pendaftaran Pakej</h4>
+            <table class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>Kod Pakej</th>
+                        <th>Pendaftaran Semasa / Had</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in package_summary %}
+                    <tr>
+                        <td><strong>{{ p.kod_pakej }}</strong></td>
+                        <td>
+                            {# current total from DB / limit from JSON #}
+                            <strong>{{ p.total_students }}</strong> /
+                            {{ package_limits.get(p.kod_pakej, default_limit) }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
         </div>
 
-        <!-- Column 2: Package Limits and Statistics -->
-        <div class="col-md-6">
-            <div class="card mb-4 p-3">
-                <h4>Kemaskini Had Kapasiti Pakej</h4>
-                <form method="POST" class="form-inline">
-                    <div class="form-group mb-2">
-                        <select name="package_select" class="form-control" required>
-                            <option value="">-- Pilih Pakej --</option>
-                            {% for p in all_packages %}
-                            <option value="{{ p.id_pakej }}">{{ p.kod_pakej }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-group mx-sm-3 mb-2">
-                        <input type="number" name="limit_number" class="form-control" placeholder="Had Baru" required>
-                    </div>
-                    <button type="submit" name="update_limit" class="btn btn-primary mb-2">Simpan Had</button>
-                </form>
-            </div>
+    <div id="section-koku" class="settings-section" style="display:none;">
+        <div class="card mb-4 p-3">
+            <h4>Kemaskini Had Kapasiti Kokurikulum</h4>
+            <form method="POST" class="form-inline">
+                <select name="koku_select" class="form-control" required>
+                    <option value="">-- Pilih Unit Kokurikulum --</option>
+                    {% for u in all_units %}
+                    <option value="{{ u.unit_id }}">{{ u.activity_name }}</option>
+                    {% endfor %}
+                </select>
+                <input type="number" name="koku_limit_number" class="form-control mx-2" placeholder="Had Baru" required>
+                <button type="submit" name="update_koku_limit" class="btn btn-warning">Simpan Had</button>
+            </form>
+        </div>
 
-            <div class="card p-3">
-                <h4>Statistik Pendaftaran Pakej</h4>
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Kod Pakej</th>
-                            <th>Jumlah</th>
-                            <th>Had</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for p in package_summary %}
-                        <tr>
-                            <td><strong>{{ p.kod_pakej }}</strong></td>
-                            <td>{{ p.total_students }}</td>
-                            <td>{{ package_limits.get(p.kod_pakej, default_limit) }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        <div class="card p-3">
+            <h4>Senarai Had Kapasiti Kokurikulum</h4>
+            <table class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>Nama Unit</th>
+                        <th>Pendaftaran Semasa / Had</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in all_units %}
+                    {% set prefix = "" %}
+                    {% if u.unit_type == 'Kelab' %}{% set prefix = "KK_" %}
+                    {% elif u.unit_type == 'Badan Beruniform' %}{% set prefix = "UB_" %}
+                    {% elif u.unit_type == 'Sukan dan Permainan' %}{% set prefix = "SK_" %}{% endif %}
+
+                    {% set limit = package_limits.get(prefix ~ u.activity_name, 60) %}
+                    {% set current = enrollment_data.get(u.unit_id, 0) %}
+
+                    <tr>
+                        <td>{{ u.activity_name }}</td>
+                        <td><strong>{{ current }}</strong> / {{ limit }}</td>
+                        <td>
+                            {% if current >= limit %}
+                            <span class="text-danger font-weight-bold">PENUH</span>
+                            {% else %}
+                            <span class="text-success">Tersedia</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
+
+<script>
+    function showSection(value) {
+        document.querySelectorAll('.settings-section').forEach(s => s.style.display = 'none');
+        document.getElementById('section-' + value).style.display = 'block';
+    }
+
+    // Set active tab on load
+    window.onload = function () {
+        var active = "{{ active_tab }}";
+        if (active) {
+            document.getElementById('settingsSelector').value = active;
+            showSection(active);
+        }
+    };
+</script>
 {% endblock %}

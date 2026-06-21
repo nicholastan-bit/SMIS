@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h2>Kemaskini Pelajar: <span class="text-primary">{{ student.nama_pelajar }}</span></h2>
+        <p class="text-muted">ID Pelajar: {{ student.bil_kemasukan }} | No. KP: {{ student.no_kp_pelajar }}</p>
+    </div>
+
+    <form method="POST">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">Maklumat Peribadi</h4>
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-6 form-group">
+                        <label>Tugas Khas</label>
+                        <select name="tugas_khas" class="form-control">
+                            {% for option in ['TIADA', 'KOPERATOR', 'MAJLIS KETUA TINGKATAN', 'MAJLIS PELAJAR TINGKATAN
+                            ENAM', 'ORGANISASI KELAS', 'PENGHAYATAN NILAI MURNI', 'KELAB PENCEGAHAN JENAYAH', 'PUSAT
+                            SUMBER SEKOLAH', 'QUARTER MASTER', 'SIDANG REDAKSI BULETIN SEKOLAH', 'KEMAJUAN ISLAM SURAU
+                            AL-MUTTAQIN'] %}
+                            <option value="{{ option }}" {% if student.tugas_khas==option %}selected{% endif %}>{{
+                                option }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label>Rumah Sukan</label>
+                        <select name="rumah_sukan" class="form-control">
+                            {% for color in ['Merah', 'Biru', 'Kuning', 'Hijau', 'Ungu'] %}
+                            <option value="{{ color }}" {% if student.rumah_sukan==color %}selected{% endif %}>{{ color
+                                }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h4 class="panel-title">Pendaftaran Kokurikulum</h4>
+            </div>
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr class="active">
+                        <th style="width: 40%;">Unit</th>
+                        <th style="width: 25%;">Jawatan</th>
+                        <th style="width: 15%;">Merit</th>
+                        <th style="width: 10%;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in records %}
+                    <tr>
+                        <td class="align-middle">
+                            <input type="hidden" name="kkplr_id[]" value="{{ r.kkplr_id }}">
+                            <select name="unit_id[]" class="form-control">
+                                {% for u in all_units %}
+                                <option value="{{ u.unit_id }}" {% if r.unit_id==u.unit_id %}selected{% endif %}>{{
+                                    u.activity_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td class="align-middle">
+                            <select name="jawatan[]" class="form-control">
+                                {% for j in ['AHLI', 'PENGERUSI', 'NAIB PENGERUSI', 'SETIAUSAHA', 'NAIB SETIAUSAHA',
+                                'BENDAHARI', 'NAIB BENDAHARI', 'AHLI JAWATANKUASA', 'KETUA BIRO', 'KETUA KELAS',
+                                'PENOLONG KETUA KELAS'] %}
+                                <option value="{{ j }}" {% if r.jawatan==j %}selected{% endif %}>{{ j }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td class="align-middle">
+                            <input type="number" name="merit[]" class="form-control" value="{{ r.merit }}">
+                        </td>
+                        <td class="align-middle">
+                            <button type="button" class="btn btn-danger btn-sm"
+                                onclick="confirmDelete('{{ url_for('delete_koku_record', kkplr_id=r.kkplr_id, bil=student.bil_kemasukan) }}')">
+                                <span class="glyphicon glyphicon-trash"></span>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="text-right mt-4">
+            <a href="{{ url_for('admin_koku_list') }}" class="btn btn-default btn-lg">Batal</a>
+            <button type="submit" class="btn btn-success btn-lg">Simpan Perubahan</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    function confirmDelete(url) {
+        if (confirm("Adakah anda pasti mahu memadam rekod ini?")) {
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = url;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+</script>
+{% endblock %}

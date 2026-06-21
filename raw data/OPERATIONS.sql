@@ -76,3 +76,9 @@ CHANGE COLUMN keadaan_mata masalah_penglihatan ENUM('YA', 'TIDAK') DEFAULT NULL;
 --
 UPDATE pelajar
 SET nama_pelajar = UPPER(nama_pelajar);
+
+--
+
+ALTER TABLE pelajar 
+ADD tugas_khas VARCHAR(50),
+ADD rumah_sukan VARCHAR(20);
