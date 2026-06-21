@@ -47,18 +47,7 @@
                 </tr>
                 {% endfor %}
             
-                <tr class="info">
-                    <td><strong>JUMLAH</strong></td>
-                    {% for p in packages %}
-                    {% set col_total = namespace(val=0) %}
-                    {% for sub in subjects %}
-                    {% set col_total.val = col_total.val + counts[sub.id_subjek][p.id_pakej] %}
-                    {% endfor %}
-                    <td class="text-center"><strong>{{ col_total.val }}</strong></td>
-                    {% endfor %}
-                    <td></td>
-                </tr>    </tbody>
-        </table>
+                
     </div>
 </div>
 {% endblock %}

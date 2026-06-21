@@ -1485,8 +1485,8 @@ def admin_settings():
         'tambahan_form': 'Borang Dokumen Pelajar',
         'penjaga_form': 'Borang Maklumat Penjaga',
         'spm_form': 'Borang Keputusan SPM',
-        'pakej_form': 'Borang Pemilihan Pakej'
-        # add new for koku
+        'pakej_form': 'Borang Pemilihan Pakej',
+        'kokurikulum_form': 'Borang Pemilihan Unit Kokurikulum'
     }
 
     # Retrieve last active tab to persist view after POST

@@ -82,3 +82,6 @@ SET nama_pelajar = UPPER(nama_pelajar);
 ALTER TABLE pelajar 
 ADD tugas_khas VARCHAR(50),
 ADD rumah_sukan VARCHAR(20);
+
+INSERT INTO form_settings (form_id, is_enabled) VALUES 
+('kokurikulum_form', TRUE);

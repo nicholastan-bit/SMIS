@@ -9,7 +9,8 @@ INSERT INTO form_settings (form_id, is_enabled) VALUES
 ('spm_form', TRUE),
 ('tambahan_form', TRUE),
 ('pakej_form', TRUE),
-('penjaga_form', TRUE);
+('penjaga_form', TRUE),
+('kokurikulum_form', TRUE);
 
 CREATE TABLE pelajar_eligibility (
     no_kp_pelajar VARCHAR(20) NOT NULL,
