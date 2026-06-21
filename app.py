@@ -825,24 +825,32 @@ def kokurikulum_page():
     if not kp:
         return redirect(url_for('gateway'))
 
-    # Get filter from URL (Default to 'Kelab')
-    category = request.args.get('type', 'Kelab')
-    
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True, buffered=True)
 
-    # 1. Get student ID
-    cursor.execute("SELECT bil_kemasukan FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
+    # 1. Get student basic info and check if they completed previous forms
+    # Adjust 'status_study' to the column that represents "Form Completed"
+    cursor.execute("SELECT bil_kemasukan, status_study FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
     student = cursor.fetchone()
+    
+    # NEW PREVENTION: Redirect if previous form is not completed (e.g., status_study != 1)
+    if not student or student['status_study'] != 1:
+        cursor.close()
+        conn.close()
+        flash("Sila lengkapkan borang pendaftaran diri terlebih dahulu.", "warning")
+        return redirect(url_for('index')) # Redirect back to home or form page
+
     bil_kemasukan = student['bil_kemasukan']
 
-    # 2. PREVENTION CHECK: Has the student already registered?
+    # 2. PREVENTION: Has the student already registered for Koku?
     cursor.execute("SELECT COUNT(*) as registered_count FROM KokurikulumPelajar WHERE bil_kemasukan = %s", (bil_kemasukan,))
     if cursor.fetchone()['registered_count'] > 0:
         cursor.close()
         conn.close()
         flash("Anda telah mendaftar kokurikulum. Hubungi pentadbir jika perlu membuat perubahan.", "info")
         return redirect(url_for('index'))
+
+    # ... (rest of your logic remains the same)
 
     # 1. Get student gender and current units for restriction checks
     cursor.execute("SELECT bil_kemasukan, jantina FROM pelajar WHERE no_kp_pelajar = %s", (kp,))

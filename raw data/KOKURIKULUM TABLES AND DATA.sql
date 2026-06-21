@@ -1,10 +1,15 @@
 -- FILE FOR KOKURIKULUM
+CREATE TABLE UnitKokurikulum (
+    unit_id INT AUTO_INCREMENT PRIMARY KEY,
+    unit_type ENUM('Kelab', 'Badan Beruniform', 'Sukan dan Permainan') NOT NULL,
+    activity_name VARCHAR(100) NOT NULL
+);
+
 CREATE TABLE KokurikulumPelajar (
     kkplr_id INT AUTO_INCREMENT PRIMARY KEY,
     bil_kemasukan INT NOT NULL, -- Links to your pelajar table
     unit_id INT NOT NULL,       -- Links to UnitKokurikulum
     jawatan VARCHAR(30) DEFAULT 'AHLI',
-    tugas_khas VARCHAR(50) DEFAULT 'TIADA',
     merit INT DEFAULT 0,
     
 	-- Prevents the same student from being added to the same unit twice
@@ -14,13 +19,7 @@ CREATE TABLE KokurikulumPelajar (
     CONSTRAINT fk_kp_pelajar FOREIGN KEY (bil_kemasukan) REFERENCES pelajar(bil_kemasukan) ON DELETE CASCADE,
     CONSTRAINT fk_kp_unit FOREIGN KEY (unit_id) REFERENCES UnitKokurikulum(unit_id) ON DELETE CASCADE
 );
-
-CREATE TABLE UnitKokurikulum (
-    unit_id INT AUTO_INCREMENT PRIMARY KEY,
-    unit_type ENUM('Kelab', 'Badan Beruniform', 'Sukan dan Permainan') NOT NULL,
-    activity_name VARCHAR(100) NOT NULL
-);
-
+-- insert code
 
 
 INSERT INTO UnitKokurikulum (unit_type, activity_name) VALUES
