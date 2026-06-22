@@ -16,8 +16,33 @@ PACKAGE_LIMITS = {
     'FK': 60, 'FK1': 20, 'FK2': 20, 'FK3': 20,
     'CK': 20, 'CK1': 20,
     'CV': 30, 'CV1': 30,
-    'AP': 120
-    
+    'AP': 120,
+    # Add all your Koku units here:
+    'KK_PERSATUAN BAHASA DAN KESUSASTERAAN': 50,
+    'KK_KELAB ALAM SEKITAR TINGKATAN ENAM': 60,
+    'KK_KELAB FOTOGRAFI': 60,
+    'KK_KELAB INOVASI/REKACIPTA': 60,
+    'KK_KELAB PENGGUNA': 60,
+    'KK_KELAB KESENIAN DAN KEBUDAYAAN': 60,
+    'KK_KELAB KOPERASI SEKOLAH': 60,
+    'KK_KELAB RUKUN NEGARA': 60,
+    'KK_PERSATUAN SAINS TEKNOLOGI, KEJURUTERAAN DAN MATEMATIK': 60,
+    'KK_PERSATUAN SEJARAH DAN PATRIOTISME TINGKATAN ENAM': 50,
+    'KK_PERSATUAN SENI VISUAL': 60,
+    'UB_PANDU PUTERI MALAYSIA': 80,
+    'UB_PASUKAN KOR KADET POLIS': 120,
+    'UB_PERGERAKAN PUTERI ISLAM MALAYSIA': 80,
+    'UB_PERSEKUTUAN PENGAKAP MALAYSIA': 120,
+    'UB_PISPA': 120,
+    'UB_BULAN SABIT MERAH MALAYSIA': 120,
+    'SK_BADMINTON': 80,
+    'SK_BOLA KERANJANG': 80,
+    'SK_BOLA JARING': 80,
+    'SK_BOLA TAMPAR': 80,
+    'SK_CATUR': 80,
+    'SK_FUTSAL': 80,
+    'SK_PETANQUE': 80,
+    'SK_PING PONG': 80
 }
 DEFAULT_LIMIT = 40
 
@@ -33,8 +58,13 @@ def get_limits():
         return json.load(f)
 
 def save_limits(limits_dict):
-    with open(LIMITS_FILE, 'w') as f:
-        json.dump(limits_dict, f, indent=4)
+    try:
+        # Check if the dictionary is valid by trying to dump it
+        json_string = json.dumps(limits_dict, indent=4)
+        with open(LIMITS_FILE, 'w') as f:
+            f.write(json_string)
+    except (TypeError, ValueError) as e:
+        print(f"Error: Could not save JSON: {e}")
 
 def check_activity_limit(unit_id, unit_name, unit_type):
     # Determine the prefix based on type
@@ -861,6 +891,8 @@ def kokurikulum_page():
     enrollment_counts = {row['unit_id']: row['enrolled'] for row in cursor.fetchall()}
     
     limits = get_limits()
+    print(f"DEBUG: Successfully loaded {len(limits)} keys from JSON.")
+    print(f"DEBUG: Sample key in JSON: {list(limits.keys())[0]}")
 
     gender_restrictions = {
         'PANDU PUTERI MALAYSIA': 'PEREMPUAN',
@@ -871,16 +903,21 @@ def kokurikulum_page():
 
     processed_units = []
     for u in units:
+        # 1. Get count for this specific unit
         count = enrollment_counts.get(u['unit_id'], 0)
         
+        # 2. Determine prefix using the data already in 'u'
         prefix = ""
         if u['unit_type'] == 'Kelab': prefix = "KK_"
         elif u['unit_type'] == 'Badan Beruniform': prefix = "UB_"
         elif u['unit_type'] == 'Sukan dan Permainan': prefix = "SK_"
 
+        # 3. Use u['unit_name'] instead of the undefined 'unit_name'
         json_key = f"{prefix}{u['unit_name']}"
-        limit = limits.get(json_key, 60)
+        limit = limits.get(json_key, DEFAULT_LIMIT)
+        print(f"DEBUG: Found limit for {json_key}: {limit}")
         
+        # 4. Logic checks
         is_full = count >= limit
         
         gender_match = True
@@ -945,40 +982,47 @@ def temp_add_koku():
 @app.route('/final_submit_koku', methods=['POST'])
 def final_submit_koku():
     kp = session.get('verified_kp')
-
-    # 2. Execute and safely fetch
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True) # Using dictionary=True makes access easier
+    cursor = conn.cursor(dictionary=True)
+    
     cursor.execute("SELECT bil_kemasukan FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
     result = cursor.fetchone()
     
-    if result:
-        bil_kemasukan = result['bil_kemasukan']
-    else:
-        # Handle error: Student not found
+    if not result:
         flash("Sesi tamat atau pelajar tidak dijumpai.", "danger")
         return redirect(url_for('gateway'))
     
-    # Get current limits and enrollment counts
-    limits = get_limits() # Assuming this loads your JSON
+    bil_kemasukan = result['bil_kemasukan']
+    
+    limits = get_limits()
     cursor.execute("SELECT unit_id, COUNT(*) as enrolled FROM KokurikulumPelajar GROUP BY unit_id")
     enrollment_data = {row['unit_id']: row['enrolled'] for row in cursor.fetchall()}
 
-    # 1. FINAL SAFETY CHECK: Loop through to verify if any unit became full
     for unit in session.get('temp_units', []):
         unit_id = unit['unit_id']
-        cursor.execute("SELECT unit_name FROM UnitKokurikulum WHERE unit_id = %s", (unit_id,))
-        unit_name = cursor.fetchone()['unit_name']
+        # Fetch name AND type so we can build the correct key
+        cursor.execute("SELECT unit_name, unit_type FROM UnitKokurikulum WHERE unit_id = %s", (unit_id,))
+        unit_info = cursor.fetchone()
+        unit_name = unit_info['unit_name']
+        unit_type = unit_info['unit_type']
         
+        # Reconstruct the same prefix logic used in kokurikulum_page
+        prefix = ""
+        if unit_type == 'Kelab': prefix = "KK_"
+        elif unit_type == 'Badan Beruniform': prefix = "UB_"
+        elif unit_type == 'Sukan dan Permainan': prefix = "SK_"
+        
+        json_key = f"{prefix}{unit_name}"
         current_enrollment = enrollment_data.get(unit_id, 0)
-        max_limit = limits.get(unit_name, 60)
+        max_limit = limits.get(json_key, DEFAULT_LIMIT) # Using DEFAULT_LIMIT (40)
+        
+        print(f"DEBUG: FINAL CHECK - {json_key} (Enrolled: {current_enrollment} / Limit: {max_limit})")
         
         if current_enrollment >= max_limit:
             flash(f"Maaf, {unit_name} sudah penuh. Sila pilih unit lain.", "danger")
             conn.close()
             return redirect(url_for('kokurikulum_page'))
 
-    # 2. If all pass, proceed to Insert
     for unit in session.get('temp_units', []):
         cursor.execute("INSERT INTO KokurikulumPelajar (bil_kemasukan, unit_id) VALUES (%s, %s)", 
                        (bil_kemasukan, unit['unit_id']))
@@ -986,8 +1030,6 @@ def final_submit_koku():
     conn.commit()
     cursor.close()
     conn.close()
-    
-    # Clear the session after saving
     session.pop('temp_units', None)
     flash("Pendaftaran berjaya disimpan!", "success")
     return redirect(url_for('index'))
@@ -1788,15 +1830,17 @@ def admin_koku_list():
     per_page = 20
     offset = (page - 1) * per_page
     
+    search = request.args.get('search')
     cat_filter = request.args.get('category')
     act_filter = request.args.get('unit')
+    tugas_filter = request.args.get('tugas')
     rumah_filter = request.args.get('rumah')
+    # NEW: Get the sort parameter
+    sort_by = request.args.get('sort', 'nama') # default to sorting by name
 
-    # 1. Establish database connection FIRST
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # 2. Build the base query structure
     base_query = """
         FROM KokurikulumPelajar kp
         JOIN pelajar p ON kp.bil_kemasukan = p.bil_kemasukan
@@ -1805,7 +1849,7 @@ def admin_koku_list():
     """
     params = []
     
-    # 3. Apply filters to the base query and parameters
+    # Existing filters...
     if cat_filter:
         base_query += " AND uk.unit_type = %s"
         params.append(cat_filter)
@@ -1815,65 +1859,90 @@ def admin_koku_list():
     if rumah_filter:
         base_query += " AND LOWER(p.rumah_sukan) = LOWER(%s)"
         params.append(rumah_filter)
-        
-    # 4. Count total
+    if search:
+        base_query += " AND (p.nama_pelajar LIKE %s OR p.bil_kemasukan LIKE %s)"
+        params.extend([f"%{search}%", f"%{search}%"])
+    if tugas_filter:
+        base_query += " AND p.tugas_khas = %s"
+        params.append(tugas_filter)
+    
+    # NEW: Map sort parameter to SQL columns
+    sort_map = {
+        'nama': 'p.nama_pelajar',
+        'id': 'p.bil_kemasukan',
+        'rumah': 'p.rumah_sukan',
+        'tugas': 'p.tugas_khas'
+    }
+    order_column = sort_map.get(sort_by, 'p.nama_pelajar')
+    order_clause = f" ORDER BY {order_column} ASC"
+
+    # Count total (doesn't need ORDER BY)
     count_query = "SELECT COUNT(*) as total_count " + base_query
     cursor.execute(count_query, params)
-    result = cursor.fetchone()
-    total = result.get('total_count') or (list(result.values())[0] if result else 0)
+    total = cursor.fetchone()['total_count']
     
-    # 5. Fetch dropdown data
-    cursor.execute("SELECT unit_id, unit_name, unit_type FROM UnitKokurikulum ORDER BY unit_type, unit_name")
-    all_units_dropdown = cursor.fetchall()
-
-    # 6. Fetch main student list
+    # Fetch data (Apply order_clause)
     data_query = """
-        SELECT kp.kkplr_id, kp.bil_kemasukan, kp.jawatan, p.nama_pelajar, uk.unit_name, uk.unit_type
-    """ + base_query + " LIMIT %s OFFSET %s"
+        SELECT kp.kkplr_id, kp.bil_kemasukan, kp.jawatan, 
+               p.nama_pelajar, p.tugas_khas, p.rumah_sukan, 
+               uk.unit_name, uk.unit_type
+    """ + base_query + order_clause + " LIMIT %s OFFSET %s"
+    
     cursor.execute(data_query, params + [per_page, offset])
     students = cursor.fetchall()
     
-    # 7. Close resources
+# 5. Fetch dropdown data
+    cursor.execute("SELECT unit_id, unit_name, unit_type FROM UnitKokurikulum ORDER BY unit_type, unit_name")
+    all_units_dropdown = cursor.fetchall()
+    
+    # ADD THIS LINE TO DEBUG:
+    print(f"DEBUG: Found {len(all_units_dropdown)} units for dropdown.")
+
     cursor.close()
     conn.close()
     
     return render_template('koku_list.html', 
-                           students=students, 
-                           all_units=all_units_dropdown,
-                           total=total, 
-                           page=page, 
-                           per_page=per_page,
-                           cat=cat_filter,
-                           act=act_filter,
-                           rumah=rumah_filter)
+                       students=students, 
+                       all_units=all_units_dropdown, # Change from all_units to all_units_dropdown
+                       total=total, 
+                       page=page, 
+                       cat=cat_filter, 
+                       act=act_filter,
+                       search=search, 
+                       tugas=tugas_filter,
+                       rumah=rumah_filter,
+                       sort=sort_by)
 
+# A helper function to keep your routes clean
+def execute_db_update(query, params):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(query, params)
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+# Now your routes remain clean and simple:
 @app.route('/admin/update-jawatan', methods=['POST'])
 def update_jawatan_ajax():
-    # Debugging: Log what is received
-    print("DEBUG - Form Data:", request.form) 
-    
     kkplr_id = request.form.get('kkplr_id')
     new_jawatan = request.form.get('jawatan')
     
-    if not kkplr_id or not new_jawatan:
-        # This will trigger your flash message
-        flash(f"Error: Missing data. ID={kkplr_id}, Jawatan={new_jawatan}", "danger")
-        return redirect(request.referrer or url_for('admin_koku_list'))
-    
     if kkplr_id and new_jawatan:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        # Ensure column names match your DB schema (KokurikulumPelajar)
-        query = "UPDATE KokurikulumPelajar SET jawatan = %s WHERE kkplr_id = %s"
-        cursor.execute(query, (new_jawatan, kkplr_id))
-        conn.commit()
-        cursor.close()
-        conn.close()
+        execute_db_update("UPDATE KokurikulumPelajar SET jawatan = %s WHERE kkplr_id = %s", (new_jawatan, kkplr_id))
         flash("Position updated successfully!", "success")
-    else:
-        flash("Failed to update: missing data.", "danger")
-        
     return redirect(request.referrer or url_for('admin_koku_list'))
+
+@app.route('/update_student_info/<int:bil>', methods=['POST'])
+def update_student_info(bil):
+    # Logic for updating both tables
+    execute_db_update("UPDATE pelajar SET tugas_khas = %s, rumah_sukan = %s WHERE bil_kemasukan = %s", 
+                      (request.form.get('tugas_khas'), request.form.get('rumah_sukan'), bil))
+    execute_db_update("UPDATE KokurikulumPelajar SET jawatan = %s WHERE bil_kemasukan = %s", 
+                      (request.form.get('jawatan'), bil))
+    
+    flash("Maklumat berjaya dikemaskini!", "success")
+    return redirect(url_for('admin_koku_list'))
 
 @app.route('/admin/delete-koku-record/<int:kkplr_id>', methods=['POST'])
 def delete_koku_record(kkplr_id):
@@ -1943,6 +2012,61 @@ def edit_student_koku(bil):
     cursor.close(); conn.close()
     return render_template('edit_student.html', student=student, records=koku_records, all_units=all_units)
 
+@app.route('/admin/koku-statistics')
+def koku_statistics():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # Fetch all units and their enrollment counts
+    query = """
+        SELECT u.unit_name, u.unit_type, COUNT(kp.bil_kemasukan) as student_count
+        FROM UnitKokurikulum u
+        LEFT JOIN KokurikulumPelajar kp ON u.unit_id = kp.unit_id
+        GROUP BY u.unit_id
+        ORDER BY u.unit_type, u.unit_name
+    """
+    cursor.execute(query)
+    data = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+    
+    return render_template('koku_statistics.html', units=data)
+
+@app.route('/admin/export-koku-stats')
+def admin_export_koku_stats():
+    # 1. Fetch data from your DB
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    query = """
+        SELECT u.unit_name, u.unit_type, COUNT(kp.bil_kemasukan) as student_count
+        FROM UnitKokurikulum u
+        LEFT JOIN KokurikulumPelajar kp ON u.unit_id = kp.unit_id
+        GROUP BY u.unit_id
+        ORDER BY u.unit_type, u.unit_name
+    """
+    cursor.execute(query)
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    # 2. Setup CSV structure
+    si = io.StringIO()
+    cw = csv.writer(si)
+    cw.writerow(['Nama Unit', 'Kategori', 'Bilangan Pelajar'])
+    
+    # 3. Data Rows & Running Total
+    grand_total = 0
+    for row in data:
+        cw.writerow([row['unit_name'], row['unit_type'], row['student_count']])
+        grand_total += row['student_count']
+    
+    # 4. Final Summary Row
+    cw.writerow(['JUMLAH KESELURUHAN', '', grand_total])
+    
+    # 5. Return Response
+    return Response(si.getvalue(), mimetype="text/csv", 
+                    headers={"Content-Disposition": "attachment;filename=statistik_koku.csv"})
 
 if __name__ == '__main__':
     app.run(debug=True)

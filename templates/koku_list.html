@@ -3,76 +3,131 @@
 <div class="container">
     <h2>Senarai Pelajar Kokurikulum</h2>
 
-    <form method="GET" class="form-inline mb-4">
-        <select name="category" id="catSelect" class="form-control" onchange="filterActivities()">
-            <option value="">Semua Kategori</option>
-            <option value="Kelab" {% if cat=='Kelab' %}selected{% endif %}>Kelab</option>
-            <option value="Badan Beruniform" {% if cat=='Badan Beruniform' %}selected{% endif %}>Badan Beruniform</option>
-            <option value="Sukan dan Permainan" {% if cat=='Sukan dan Permainan' %}selected{% endif %}>Sukan dan Permainan
-            </option>
-        </select>
+    <form method="GET" class="mb-4">
+        <div class="row g-2">
+            <div class="col-md-3">
+                <input type="text" name="search" class="form-control" placeholder="Isi nama atau kp" value="{{ search or '' }}">
+            </div>
+            <div class="col-md-3">
+                <select name="category" id="catSelect" class="form-control" onchange="filterActivities()">
+                    <option value="">Semua Kategori</option>
+                    <option value="Kelab" {% if cat=='Kelab' %}selected{% endif %}>Kelab</option>
+                    <option value="Badan Beruniform" {% if cat=='Badan Beruniform' %}selected{% endif %}>Badan Beruniform
+                    </option>
+                    <option value="Sukan dan Permainan" {% if cat=='Sukan dan Permainan' %}selected{% endif %}>Sukan dan
+                        Permainan</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="unit" id="actSelect" class="form-control">
+                    <option value="">Semua Unit</option>
+                    {% for u in all_units %}
+                    <option value="{{ u.unit_name }}" data-type="{{ u.unit_type }}" {% if act==u.unit_name %}selected{%
+                        endif %}>{{ u.unit_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="rumah" class="form-control">
+                    <option value="">Semua Rumah Sukan</option>
+                    <option value="MERAH" {% if rumah=='MERAH' %}selected{% endif %}>Merah</option>
+                    <option value="BIRU" {% if rumah=='BIRU' %}selected{% endif %}>Biru</option>
+                    <option value="KUNING" {% if rumah=='KUNING' %}selected{% endif %}>Kuning</option>
+                    <option value="HIJAU" {% if rumah=='HIJAU' %}selected{% endif %}>Hijau</option>
+                    <option value="UNGU" {% if rumah=='UNGU' %}selected{% endif %}>Ungu</option>
+                </select>
+            </div>
+        </div>
     
-        <select name="unit" id="actSelect" class="form-control">
-            <option value="">Semua Unit</option>
-            {% for u in all_units %}
-            <option value="{{ u.unit_name }}" data-type="{{ u.unit_type }}" {% if act==u.unit_name %}selected{%
-                endif %}>
-                {{ u.unit_name }}
-            </option>
-            {% endfor %}
-        </select>
-        <select name="rumah" class="form-control">
-            <option value="">Semua Rumah Sukan</option>
-            <option value="Merah" {% if rumah=='Merah' %}selected{% endif %}>Merah</option>
-            <option value="Biru" {% if rumah=='Biru' %}selected{% endif %}>Biru</option>
-            <option value="Kuning" {% if rumah=='Kuning' %}selected{% endif %}>Kuning</option>
-            <option value="Hijau" {% if rumah=='Hijau' %}selected{% endif %}>Hijau</option>
-        </select>
-        
-        <button type="submit" class="btn btn-primary">Tapis</button>
+        <div class="row g-2 mt-2">
+            <div class="col-md-9">
+                <select name="tugas" class="form-control">
+                    <option value="">Semua Tugas Khas</option>
+                    {% for t in ['KOPERATOR', 'MAJLIS KETUA TINGKATAN', 'MAJLIS PELAJAR TINGKATAN ENAM', 'ORGANISASI KELAS',
+                    'PENGHAYATAN NILAI MURNI', 'KELAB PENCEGAHAN JENAYAH', 'PUSAT SUMBER SEKOLAH', 'QUARTER MASTER', 'SIDANG
+                    REDAKSI BULETIN SEKOLAH', 'KEMAJUAN ISLAM SURAU AL-MUTTAQIN'] %}
+                    <option value="{{ t }}" {% if tugas==t %}selected{% endif %}>{{ t }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">Tapis Data</button>
+            </div>
+        </div>
         </form>
 
         <table class="table table-striped table-hover">
             <thead>
-                <tr class="active">
+                <tr>
                     <th>Nama</th>
                     <th>Unit</th>
                     <th>Jawatan</th>
-                    <th>Tindakan</th>
+                    <th>Tugas Khas</th>
+                    <th>Rumah Sukan</th>
+                    <th>Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 {% for s in students %}
                 <tr>
-                    <td><strong>{{ s.nama_pelajar }}</strong></td>
-                    <td>{{ s.unit_name }} <br><small>{{ s.unit_type }}</small></td>
-                    <td>
-                        <form action="{{ url_for('update_jawatan_ajax') }}" method="POST">
-                            <input type="hidden" name="kkplr_id" value="{{ s.kkplr_id }}">
-                    
+                    <td>{{ s.nama_pelajar }}</td>
+                    <td>{{ s.unit_name }}</td>
+                    <form method="POST" action="{{ url_for('update_student_info', bil=s.bil_kemasukan) }}">
+                        <td>
                             <select name="jawatan" class="form-control input-sm" onchange="this.form.submit()">
-                                {% for j in ['AHLI', 'PENGERUSI', 'NAIB PENGERUSI', 'SETIAUSAHA', 'NAIB SETIAUSAHA',
-                                'BENDAHARI', 'NAIB BENDAHARI', 'AHLI JAWATANKUASA', 'KETUA BIRO',
-                                'KETUA KELAS', 'PENOLONG KETUA KELAS'] %}
+                                {% for j in ['AHLI', 'PENGERUSI', 'NAIB PENGERUSI', 'SETIAUSAHA', 'NAIB SETIAUSAHA', 'BENDAHARI', 'NAIB
+                                BENDAHARI', 'AHLI JAWATANKUASA', 'KETUA BIRO', 'KETUA KELAS', 'PENOLONG KETUA KELAS'] %}
                                 <option value="{{ j }}" {% if s.jawatan==j %}selected{% endif %}>{{ j }}</option>
                                 {% endfor %}
                             </select>
-                        </form>               </td>
-                    <td>
-                        <a href="{{ url_for('edit_student_koku', bil=s.bil_kemasukan) }}" class="btn btn-sm btn-warning">Edit</a>
-                    </td>
+                        </td>
+                        <td>
+                            <select name="tugas_khas" class="form-control" onchange="this.form.submit()">
+                                {% for option in ['TIADA', 'KOPERATOR', 'MAJLIS KETUA TINGKATAN', 'MAJLIS PELAJAR TINGKATAN ENAM',
+                                'ORGANISASI KELAS', 'PENGHAYATAN NILAI MURNI', 'KELAB PENCEGAHAN JENAYAH', 'PUSAT SUMBER SEKOLAH',
+                                'QUARTER MASTER', 'SIDANG REDAKSI BULETIN SEKOLAH', 'KEMAJUAN ISLAM SURAU AL-MUTTAQIN'] %}
+                                <option value="{{ option }}" {% if s.tugas_khas==option %}selected{% endif %}>{{ option }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <select name="rumah_sukan" class="form-control" onchange="this.form.submit()">
+                                {% for r in ['TIADA', 'MERAH', 'BIRU', 'HIJAU', 'KUNING', 'UNGU'] %}
+                                <option value="{{ r }}" {% if s.rumah_sukan==r %}selected{% endif %}>{{ r }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('edit_student_koku', bil=s.bil_kemasukan) }}" class="btn btn-sm btn-warning">Edit</a>
+                        </td>
+                    </form>
                 </tr>
-                {% endfor %}    
+                {% endfor %}
             </tbody>
         </table>
         </div>
 
-    <nav>
-        <ul class="pagination">
-            <li class="page-item"><a class="page-link" href="?page={{ page - 1 }}">Sebelum</a></li>
-            <li class="page-item"><a class="page-link" href="?page={{ page + 1 }}">Selepas</a></li>
-        </ul>
-    </nav>
+        <nav class="d-flex justify-content-center mt-4">
+            <ul class="pagination">
+                {% set args = request.args.to_dict() %}
+        
+                <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+                    {% set prev_args = args.copy() %}
+                    {% set _ = prev_args.update({'page': page - 1}) %}
+                    <a class="page-link" href="{{ url_for('admin_koku_list', **prev_args) }}">Sebelum</a>
+                </li>
+        
+                <li class="page-item active">
+                    <span class="page-link">{{ page }}</span>
+                </li>
+        
+                <li class="page-item">
+                    {% set next_args = args.copy() %}
+                    {% set _ = next_args.update({'page': page + 1}) %}
+                    <a class="page-link" href="{{ url_for('admin_koku_list', **next_args) }}">Selepas</a>
+                </li>
+            </ul>  
+        </nav>
 </div>
 
 <script>
@@ -81,16 +136,26 @@
         var actSelect = document.getElementById('actSelect');
         var options = actSelect.options;
 
+        // Start from 1 to skip the first "Semua Unit" option
         for (var i = 1; i < options.length; i++) {
-            if (cat === "" || options[i].getAttribute('data-type') === cat) {
+            var unitType = options[i].getAttribute('data-type');
+
+            // If cat is empty (All), show all. Otherwise, match the data-type.
+            if (cat === "" || unitType === cat) {
                 options[i].style.display = "block";
             } else {
                 options[i].style.display = "none";
             }
         }
+
+        // Reset selection if the current selection is now hidden
+        if (actSelect.options[actSelect.selectedIndex].style.display === "none") {
+            actSelect.value = "";
+        }
     }
-    // Run on load to set correct visibility
-    filterActivities();
+
+    // Run once on load to ensure the view matches the selected filter
+    document.addEventListener("DOMContentLoaded", filterActivities);
 </script>
 
 {% endblock %}

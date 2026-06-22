@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h2>Statistik Pendaftaran Kokurikulum</h2>
+
+    <div class="well well-sm">
+        <form method="GET" class="form-inline" style="display: flex; align-items: center; gap: 15px;">
+            <div class="form-group">
+                <label>Kategori:</label>
+                <select name="cat" class="form-control" onchange="this.form.submit()">
+                    <option value="all">Semua Kategori</option>
+                    <option value="Kelab" {% if request.args.get('cat')=='Kelab' %}selected{% endif %}>Kelab</option>
+                    <option value="Badan Beruniform" {% if request.args.get('cat')=='Badan Beruniform' %}selected{%
+                        endif %}>Badan Beruniform</option>
+                    <option value="Sukan dan Permainan" {% if request.args.get('cat')=='Sukan dan Permainan'
+                        %}selected{% endif %}>Sukan dan Permainan</option>
+                </select>
+            </div>
+            <a href="{{ url_for('admin_export_koku_stats') }}" class="btn btn-success">
+                <i class="glyphicon glyphicon-download-alt"></i> Eksport ke CSV        
+            </a>
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead>
+                <tr class="active">
+                    <th>Nama Unit</th>
+                    <th>Kategori</th>
+                    <th class="text-center">Bilangan Pelajar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in units %}
+                {% if request.args.get('cat', 'all') == 'all' or request.args.get('cat') == u.unit_type %}
+                <tr>
+                    <td>{{ u.unit_name }}</td>
+                    <td>{{ u.unit_type }}</td>
+                    <td class="text-center"><strong>{{ u.student_count }}</strong></td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
