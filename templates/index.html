@@ -86,6 +86,20 @@
             </li>
         </ul>
     </div>
+    {% if selected_units %}
+    <div style="text-align: left; max-width: 500px; margin: 0 auto;">
+        <div style="font-weight: 600; margin-bottom: 8px;">
+            Unit Kokurikulum
+        </div>
+    
+        {% for unit in selected_units %}
+        <div style="margin-bottom: 4px;">
+            <span class="label label-default">{{ unit.type }}</span>
+            <span style="margin-left: 8px;">{{ unit.name }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
     {% endif %}
 </div>
 

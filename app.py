@@ -198,6 +198,7 @@ def index():
     }
     package_class = None
     className = None
+    selected_units = []
     
     if kp:
         conn = get_db_connection()
@@ -231,7 +232,7 @@ def index():
                 completion_status['tambahan'] = True
                 
             bil_kemasukan = student['bil_kemasukan']
-
+            
             # 2. PREVENTION CHECK: Has the student already registered?
             cursor.execute("SELECT COUNT(*) as registered_count FROM KokurikulumPelajar WHERE bil_kemasukan = %s", (bil_kemasukan,))
             if cursor.fetchone()['registered_count'] > 0:
@@ -243,14 +244,27 @@ def index():
             if student['kelas'] is not None:
                 className = student['kelas']
 
+            cursor.execute("""
+                SELECT uk.unit_name, uk.unit_type 
+                FROM KokurikulumPelajar kp
+                JOIN UnitKokurikulum uk ON kp.unit_id = uk.unit_id
+                WHERE kp.bil_kemasukan = %s
+            """, (student['bil_kemasukan'],))
+            results = cursor.fetchall()
+            selected_units = [{'name': r['unit_name'], 'type': r['unit_type']} for r in results]
+
             cursor.execute("SELECT kod_pakej as name FROM pakej WHERE id_pakej = %s", (student['id_pakej'],))
             pakej_name = cursor.fetchone()
             package_class = pakej_name
-            
+
         cursor.close()
         conn.close()
         
-    return render_template('index.html', completion_status=completion_status, pkg_cls=package_class, clsName=className)
+    return render_template('index.html', 
+                           completion_status=completion_status, 
+                           pkg_cls=package_class, 
+                           clsName=className,
+                           selected_units=selected_units)
 
 @app.route('/register')
 def register_page():
@@ -1237,21 +1251,22 @@ def admin_export_students():
     # Generate CSV in memory
     si = io.StringIO()
     cw = csv.writer(si)
-    cw.writerow(['Bil Kemasukan', 'Nama Pelajar', 'No KP', 'Status', 'Kelas', 'Pakej', 'Pendapatan'])
+    cw.writerow(['Bil Kemasukan', 'Nama Pelajar', 'No KP', 'Jantina', 'Status', 'Kelas', 'Pakej', 'Pendapatan'])
     
     for s in students:
         no_kp = f"'{s['no_kp_pelajar']}" if s['no_kp_pelajar'] else ""
-        
         pendapatan = s['total_income'] if s['total_income'] is not None else 0
         
+        # 2. ADDED s['agama'] TO THE ROW DATA
         cw.writerow([
             s['bil_kemasukan'], 
             s['nama_pelajar'], 
-            no_kp, # The KP with forced string formatting
-            'Aktif' if s['status_study'] else 'Tidak Aktif', 
+            no_kp,
+            s['jantina'],
+            'Aktif' if s.get('status_study') else 'Tidak Aktif', 
             s['kelas'] or 'TIADA', 
             s['kod_pakej'] or 'TIADA', 
-            pendapatan # The numeric income
+            pendapatan
         ])
     
     output = si.getvalue()
@@ -1835,7 +1850,7 @@ def admin_koku_list():
     act_filter = request.args.get('unit')
     tugas_filter = request.args.get('tugas')
     rumah_filter = request.args.get('rumah')
-    # NEW: Get the sort parameter
+    pakej_filter = request.args.get('pakej_filter')
     sort_by = request.args.get('sort', 'nama') # default to sorting by name
 
     conn = get_db_connection()
@@ -1845,6 +1860,7 @@ def admin_koku_list():
         FROM KokurikulumPelajar kp
         JOIN pelajar p ON kp.bil_kemasukan = p.bil_kemasukan
         JOIN UnitKokurikulum uk ON kp.unit_id = uk.unit_id
+        LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej
         WHERE 1=1
     """
     params = []
@@ -1865,13 +1881,17 @@ def admin_koku_list():
     if tugas_filter:
         base_query += " AND p.tugas_khas = %s"
         params.append(tugas_filter)
+    if pakej_filter:
+        base_query += " AND pk.id_pakej = %s"
+        params.append(pakej_filter)
     
     # NEW: Map sort parameter to SQL columns
     sort_map = {
         'nama': 'p.nama_pelajar',
         'id': 'p.bil_kemasukan',
         'rumah': 'p.rumah_sukan',
-        'tugas': 'p.tugas_khas'
+        'tugas': 'p.tugas_khas',
+        'kelas': 'p.kelas'
     }
     order_column = sort_map.get(sort_by, 'p.nama_pelajar')
     order_clause = f" ORDER BY {order_column} ASC"
@@ -1884,19 +1904,24 @@ def admin_koku_list():
     # Fetch data (Apply order_clause)
     data_query = """
         SELECT kp.kkplr_id, kp.bil_kemasukan, kp.jawatan, 
-               p.nama_pelajar, p.tugas_khas, p.rumah_sukan, 
-               uk.unit_name, uk.unit_type
+            p.nama_pelajar, p.tugas_khas, p.rumah_sukan, p.kelas, 
+            uk.unit_name, uk.unit_type
     """ + base_query + order_clause + " LIMIT %s OFFSET %s"
     
     cursor.execute(data_query, params + [per_page, offset])
     students = cursor.fetchall()
     
-# 5. Fetch dropdown data
+    query_packages = """
+        SELECT id_pakej, kod_pakej 
+        FROM pakej 
+        WHERE kod_pakej REGEXP '[0-9]/[0-9]' 
+        ORDER BY kod_pakej ASC
+    """
+    cursor.execute(query_packages)
+    all_packages = cursor.fetchall()
+    
     cursor.execute("SELECT unit_id, unit_name, unit_type FROM UnitKokurikulum ORDER BY unit_type, unit_name")
     all_units_dropdown = cursor.fetchall()
-    
-    # ADD THIS LINE TO DEBUG:
-    print(f"DEBUG: Found {len(all_units_dropdown)} units for dropdown.")
 
     cursor.close()
     conn.close()
@@ -1911,6 +1936,8 @@ def admin_koku_list():
                        search=search, 
                        tugas=tugas_filter,
                        rumah=rumah_filter,
+                       all_packages=all_packages,
+                       pakej_filter=pakej_filter,
                        sort=sort_by)
 
 # A helper function to keep your routes clean
@@ -2067,6 +2094,87 @@ def admin_export_koku_stats():
     # 5. Return Response
     return Response(si.getvalue(), mimetype="text/csv", 
                     headers={"Content-Disposition": "attachment;filename=statistik_koku.csv"})
+
+@app.route('/admin/export-koku')
+def admin_export_koku():
+    if session.get('role') != 'admin':
+        flash("Akses Ditolak.", "danger")
+        return redirect(url_for('gateway'))
+
+    # Extract filter parameters
+    search = request.args.get('search')
+    cat_filter = request.args.get('category')
+    act_filter = request.args.get('unit')
+    tugas_filter = request.args.get('tugas')
+    rumah_filter = request.args.get('rumah')
+    class_filter = request.args.get('class_filter')
+
+    # Reuse filter logic
+    where_clause = "WHERE 1=1"
+    params = []
+    
+    if cat_filter:
+        where_clause += " AND uk.unit_type = %s"
+        params.append(cat_filter)
+    if act_filter:
+        where_clause += " AND uk.unit_name = %s"
+        params.append(act_filter)
+    if rumah_filter:
+        where_clause += " AND LOWER(p.rumah_sukan) = LOWER(%s)"
+        params.append(rumah_filter)
+    if search:
+        where_clause += " AND (p.nama_pelajar LIKE %s OR p.bil_kemasukan LIKE %s)"
+        params.extend([f"%{search}%", f"%{search}%"])
+    if tugas_filter:
+        where_clause += " AND p.tugas_khas = %s"
+        params.append(tugas_filter)
+    if class_filter:
+        where_clause += " AND p.kelas = %s"
+        params.append(class_filter)
+
+    # Query without LIMIT and OFFSET
+    query = f"""
+        SELECT p.nama_pelajar, p.rumah_sukan, 
+               p.tugas_khas, uk.unit_name, uk.unit_type, kp.jawatan,
+               pk.kod_pakej
+        FROM KokurikulumPelajar kp
+        JOIN pelajar p ON kp.bil_kemasukan = p.bil_kemasukan
+        JOIN UnitKokurikulum uk ON kp.unit_id = uk.unit_id
+        LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej
+        {where_clause}
+        ORDER BY p.nama_pelajar ASC
+    """
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(query, params)
+    students = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    # Generate CSV in memory
+    si = io.StringIO()
+    cw = csv.writer(si)
+    cw.writerow(['Nama Pelajar', 'Kod Pakej', 'Unit', 'Kategori', 'Jawatan', 'Tugas Khas', 'Rumah Sukan',])
+    
+    # 3. Update the loop to include the new field
+    for s in students:
+        cw.writerow([
+            s['nama_pelajar'],
+            s['kod_pakej'],
+            s['unit_name'],
+            s['unit_type'],
+            s['jawatan'],
+            s['tugas_khas'],
+            s['rumah_sukan'],
+        ])
+    
+    output = si.getvalue()
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment;filename=senarai_nama_kokurikulum.csv"}
+    )
 
 if __name__ == '__main__':
     app.run(debug=True)
