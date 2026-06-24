@@ -1841,21 +1841,24 @@ def admin_koku_list():
         flash("Akses Ditolak.", "danger")
         return redirect(url_for('gateway'))
 
+    # Pagination setup
     page = request.args.get('page', 1, type=int)
     per_page = 20
     offset = (page - 1) * per_page
     
+    # Filter extraction
     search = request.args.get('search')
     cat_filter = request.args.get('category')
     act_filter = request.args.get('unit')
     tugas_filter = request.args.get('tugas')
     rumah_filter = request.args.get('rumah')
     pakej_filter = request.args.get('pakej_filter')
-    sort_by = request.args.get('sort', 'nama') # default to sorting by name
+    sort_by = request.args.get('sort', 'nama')
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
+    # Base query components
     base_query = """
         FROM KokurikulumPelajar kp
         JOIN pelajar p ON kp.bil_kemasukan = p.bil_kemasukan
@@ -1865,7 +1868,7 @@ def admin_koku_list():
     """
     params = []
     
-    # Existing filters...
+    # Filtering logic
     if cat_filter:
         base_query += " AND uk.unit_type = %s"
         params.append(cat_filter)
@@ -1885,7 +1888,10 @@ def admin_koku_list():
         base_query += " AND pk.id_pakej = %s"
         params.append(pakej_filter)
     
-    # NEW: Map sort parameter to SQL columns
+    # Grouping to prevent duplicates
+    group_by_clause = " GROUP BY p.bil_kemasukan"
+    
+    # Sorting logic
     sort_map = {
         'nama': 'p.nama_pelajar',
         'id': 'p.bil_kemasukan',
@@ -1896,28 +1902,25 @@ def admin_koku_list():
     order_column = sort_map.get(sort_by, 'p.nama_pelajar')
     order_clause = f" ORDER BY {order_column} ASC"
 
-    # Count total (doesn't need ORDER BY)
-    count_query = "SELECT COUNT(*) as total_count " + base_query
+    # Count total (Corrected for grouping)
+    count_query = f"SELECT COUNT(*) as total_count FROM (SELECT p.bil_kemasukan {base_query} {group_by_clause}) as sub"
     cursor.execute(count_query, params)
     total = cursor.fetchone()['total_count']
     
-    # Fetch data (Apply order_clause)
-    data_query = """
-        SELECT kp.kkplr_id, kp.bil_kemasukan, kp.jawatan, 
-            p.nama_pelajar, p.tugas_khas, p.rumah_sukan, p.kelas, 
-            uk.unit_name, uk.unit_type
-    """ + base_query + order_clause + " LIMIT %s OFFSET %s"
-    
+    # Fetch data (Aggregate units with GROUP_CONCAT)
+    data_query = f"""
+        SELECT p.nama_pelajar, p.bil_kemasukan, p.tugas_khas, p.rumah_sukan, p.kelas,
+               GROUP_CONCAT(uk.unit_name SEPARATOR ', ') as unit_names
+        {base_query} 
+        {group_by_clause} 
+        {order_clause} 
+        LIMIT %s OFFSET %s
+    """
     cursor.execute(data_query, params + [per_page, offset])
     students = cursor.fetchall()
     
-    query_packages = """
-        SELECT id_pakej, kod_pakej 
-        FROM pakej 
-        WHERE kod_pakej REGEXP '[0-9]/[0-9]' 
-        ORDER BY kod_pakej ASC
-    """
-    cursor.execute(query_packages)
+    # Dropdown data
+    cursor.execute("SELECT id_pakej, kod_pakej FROM pakej WHERE kod_pakej REGEXP '[0-9]/[0-9]' ORDER BY kod_pakej ASC")
     all_packages = cursor.fetchall()
     
     cursor.execute("SELECT unit_id, unit_name, unit_type FROM UnitKokurikulum ORDER BY unit_type, unit_name")
@@ -1927,18 +1930,18 @@ def admin_koku_list():
     conn.close()
     
     return render_template('koku_list.html', 
-                       students=students, 
-                       all_units=all_units_dropdown, # Change from all_units to all_units_dropdown
-                       total=total, 
-                       page=page, 
-                       cat=cat_filter, 
-                       act=act_filter,
-                       search=search, 
-                       tugas=tugas_filter,
-                       rumah=rumah_filter,
-                       all_packages=all_packages,
-                       pakej_filter=pakej_filter,
-                       sort=sort_by)
+                           students=students, 
+                           all_units=all_units_dropdown,
+                           all_packages=all_packages,
+                           total=total, 
+                           page=page, 
+                           cat=cat_filter, 
+                           act=act_filter,
+                           search=search, 
+                           tugas=tugas_filter,
+                           rumah=rumah_filter,
+                           pakej_filter=pakej_filter,
+                           sort=sort_by)
 
 # A helper function to keep your routes clean
 def execute_db_update(query, params):

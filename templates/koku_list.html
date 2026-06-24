@@ -99,7 +99,7 @@
                 {% for s in students %}
                 <tr>
                     <td>{{ s.nama_pelajar }}</td>
-                    <td>{{ s.unit_name }}</td>
+                    <td>{{ s.unit_names }}</td>
                     <form method="POST" action="{{ url_for('update_student_info', bil=s.bil_kemasukan) }}">
                         <td>
                             <select name="jawatan" class="form-control input-sm" onchange="this.form.submit()">
