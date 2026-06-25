@@ -39,8 +39,12 @@
         </div>
 
         <div class="panel panel-primary">
-            <div class="panel-heading">
+            <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center;">
                 <h4 class="panel-title">Pendaftaran Kokurikulum</h4>
+                <button type="button" class="btn btn-danger btn-xs"
+                    onclick="confirmDeleteAll('{{ url_for('delete_all_koku_records', bil_kemasukan=student.bil_kemasukan) }}')">
+                    <span class="glyphicon glyphicon-trash"></span> Padam Semua Rekod
+                </button>
             </div>
             <table class="table table-hover mb-0">
                 <thead>
@@ -95,8 +99,20 @@
 </div>
 
 <script>
+    // Delete single record
     function confirmDelete(url) {
         if (confirm("Adakah anda pasti mahu memadam rekod ini?")) {
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = url;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+
+    // Delete all records for student
+    function confirmDeleteAll(url) {
+        if (confirm("AMARAN: Adakah anda pasti mahu memadam SEMUA rekod kokurikulum pelajar ini? Tindakan ini tidak boleh diubah.")) {
             var form = document.createElement('form');
             form.method = 'POST';
             form.action = url;

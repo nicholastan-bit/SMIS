@@ -53,7 +53,7 @@ ALTER TABLE pelajar AUTO_INCREMENT = 19207;
 DESCRIBE pelajar;
 
 --
-
+SELECT * FROM pakej;
 SELECT * FROM pakej WHERE semester = 2;
 SELECT * FROM pelajar WHERE bil_kemasukan = 19225;
 SELECT * FROM spm_hasil WHERE bil_kemasukan = 19225;
@@ -88,3 +88,5 @@ INSERT INTO form_settings (form_id, is_enabled) VALUES
 
 ALTER TABLE UnitKokurikulum 
 RENAME COLUMN activity_name TO unit_name;
+
+SELECT * FROM kokurikulumpelajar;

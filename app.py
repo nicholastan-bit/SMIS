@@ -901,8 +901,16 @@ def kokurikulum_page():
     units = cursor.fetchall()
 
     # 4. Get current counts for all units to check capacity
-    cursor.execute("SELECT unit_id, COUNT(*) as enrolled FROM KokurikulumPelajar GROUP BY unit_id")
+    # Only count students from Semester 1
+    cursor.execute("""
+        SELECT kp.unit_id, COUNT(*) as enrolled 
+        FROM KokurikulumPelajar kp
+        JOIN pelajar p ON kp.bil_kemasukan = p.bil_kemasukan
+        WHERE p.semester = 1
+        GROUP BY kp.unit_id
+    """)
     enrollment_counts = {row['unit_id']: row['enrolled'] for row in cursor.fetchall()}
+        
     
     limits = get_limits()
     print(f"DEBUG: Successfully loaded {len(limits)} keys from JSON.")
@@ -1009,7 +1017,13 @@ def final_submit_koku():
     bil_kemasukan = result['bil_kemasukan']
     
     limits = get_limits()
-    cursor.execute("SELECT unit_id, COUNT(*) as enrolled FROM KokurikulumPelajar GROUP BY unit_id")
+    cursor.execute("""
+        SELECT kp.unit_id, COUNT(*) as enrolled 
+        FROM KokurikulumPelajar kp
+        JOIN pelajar p ON kp.bil_kemasukan = p.bil_kemasukan
+        WHERE p.semester = 1
+        GROUP BY kp.unit_id
+    """)
     enrollment_data = {row['unit_id']: row['enrolled'] for row in cursor.fetchall()}
 
     for unit in session.get('temp_units', []):
@@ -1119,6 +1133,7 @@ def admin_view_students_list():
     class_filter = request.args.get('class_filter', '')
     pakej_filter = request.args.get('pakej_filter', '')
     status_filter = request.args.get('status_filter', '')
+    semester_filter = request.args.get('semester_filter', '')
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True, buffered=True)
@@ -1157,14 +1172,17 @@ def admin_view_students_list():
         where_clause += " AND status_study = %s"
         params.append(status_filter)
 
+    if semester_filter:
+        where_clause += " AND p.semester = %s"
+        params.append(semester_filter)
+
     # 3. Get total count for pagination
     count_query = f"SELECT COUNT(*) as total FROM pelajar p LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej {where_clause}"
     cursor.execute(count_query, params)
     total_students = cursor.fetchone()['total']
     total_pages = (total_students + per_page - 1) // per_page
 
-    print(f"DEBUG: WHERE clause is: {where_clause}")
-    print(f"DEBUG: Params are: {params}")
+
 
     # 4. Fetch Paginated Data
     query = f"""
@@ -1190,49 +1208,52 @@ def admin_view_students_list():
                            sort=sort_filter, 
                            class_filter=class_filter,
                            pakej_filter=pakej_filter,
+                           semester_filter=semester_filter,
                            all_packages=all_packages,
                            all_classes=all_classes, 
                            status_filter=status_filter)
 
 @app.route('/admin/export-students')
 def admin_export_students():
-    # Reuse your existing filter logic
+    # 1. Capture filters, including the new semester_filter
     search = request.args.get('search', '')
     sort_filter = request.args.get('sort', '')
     class_filter = request.args.get('class_filter', '')
     pakej_filter = request.args.get('pakej_filter', '')
     status_filter = request.args.get('status_filter', '')
+    semester_filter = request.args.get('semester_filter', '') # Added this
 
-    conn = None
-    cursor = None
-    # Base Query
+    # 2. Base Query
     where_clause = "WHERE 1=1"
     params = []
     
     if search:
-        where_clause += " AND (nama_pelajar LIKE %s OR no_kp_pelajar LIKE %s)"
+        where_clause += " AND (p.nama_pelajar LIKE %s OR p.no_kp_pelajar LIKE %s)"
         params.extend([f"%{search}%", f"%{search}%"])
     
-    # Updated sort_filter logic (Keep your original logic)
     if sort_filter == 'unassigned':
         where_clause += " AND (p.id_pakej IS NULL OR pk.kod_pakej REGEXP '^[^0-9]+$')"
     elif sort_filter == 'assigned':
         where_clause += " AND pk.kod_pakej IS NOT NULL AND pk.kod_pakej REGEXP '[0-9]'"
     
-    # Specific Package Filter
     if pakej_filter:
         where_clause += " AND p.id_pakej = %s"
         params.append(pakej_filter)
         
     if class_filter:
-        where_clause += " AND kelas = %s"
+        where_clause += " AND p.kelas = %s"
         params.append(class_filter.strip())
 
     if status_filter != '':
-        where_clause += " AND status_study = %s"
+        where_clause += " AND p.status_study = %s"
         params.append(status_filter)
 
-    # Query without LIMIT and OFFSET
+    # 3. ADDED SEMESTER FILTER LOGIC
+    if semester_filter:
+        where_clause += " AND p.semester = %s"
+        params.append(semester_filter)
+
+    # 4. Query
     query = f"""
         SELECT p.*, pk.kod_pakej, 
                (SELECT SUM(penjaga.pendapatan) FROM penjaga WHERE penjaga.bil_kemasukan = p.bil_kemasukan) as total_income
@@ -1248,7 +1269,7 @@ def admin_export_students():
     cursor.close()
     conn.close()
 
-    # Generate CSV in memory
+    # 5. Generate CSV
     si = io.StringIO()
     cw = csv.writer(si)
     cw.writerow(['Bil Kemasukan', 'Nama Pelajar', 'No KP', 'Jantina', 'Status', 'Kelas', 'Pakej', 'Pendapatan'])
@@ -1257,7 +1278,6 @@ def admin_export_students():
         no_kp = f"'{s['no_kp_pelajar']}" if s['no_kp_pelajar'] else ""
         pendapatan = s['total_income'] if s['total_income'] is not None else 0
         
-        # 2. ADDED s['agama'] TO THE ROW DATA
         cw.writerow([
             s['bil_kemasukan'], 
             s['nama_pelajar'], 
@@ -1269,9 +1289,8 @@ def admin_export_students():
             pendapatan
         ])
     
-    output = si.getvalue()
     return Response(
-        output,
+        si.getvalue(),
         mimetype="text/csv",
         headers={"Content-Disposition": "attachment;filename=senarai_pelajar.csv"}
     )
@@ -1282,18 +1301,49 @@ def admin_update_student_package():
     new_package_id = request.form.get('package_id')
     
     conn = get_db_connection()
-    cursor = conn.cursor()
-    # Update the student's package (set to NULL if empty string is passed)
-    if new_package_id == "":
-        cursor.execute("UPDATE pelajar SET id_pakej = NULL WHERE bil_kemasukan = %s", (student_id,))
-    else:
-        cursor.execute("UPDATE pelajar SET id_pakej = %s WHERE bil_kemasukan = %s", (new_package_id, student_id))
+    cursor = conn.cursor(dictionary=True)
     
+    # 1. Update the student's package (set to NULL if empty string is passed)
+    if new_package_id == "":
+        cursor.execute("UPDATE pelajar SET id_pakej = NULL, semester = NULL WHERE bil_kemasukan = %s", (student_id,))
+    else:
+        # Fetch the kod_pakej from the pakej table to read its suffix
+        cursor.execute("SELECT kod_pakej FROM pakej WHERE id_pakej = %s", (new_package_id,))
+        pakej_data = cursor.fetchone()
+        
+        # Determine semester from suffix if it exists
+        semester_val = None
+        if pakej_data and pakej_data['kod_pakej']:
+            kod_pakej = pakej_data['kod_pakej']
+            # Check if there is a '/' followed by a number in the string
+            if '/' in kod_pakej:
+                try:
+                    # Extract the character/digit immediately after the '/'
+                    suffix = kod_pakej.split('/')[-1]
+                    semester_val = int(suffix)
+                except ValueError:
+                    pass # Not a valid integer suffix, leave semester as None/no change
+
+        # 2. Update the student record with both package and semester (if suffix found)
+        if semester_val is not None:
+            cursor.execute("""
+                UPDATE pelajar 
+                SET id_pakej = %s, semester = %s 
+                WHERE bil_kemasukan = %s
+            """, (new_package_id, semester_val, student_id))
+        else:
+            # If no suffix or invalid suffix, only update the package without altering semester
+            cursor.execute("""
+                UPDATE pelajar 
+                SET id_pakej = %s 
+                WHERE bil_kemasukan = %s
+            """, (new_package_id, student_id))
+        
     conn.commit()
     cursor.close()
     conn.close()
     
-    flash("Pakej pelajar telah dikemaskini.", "success")
+    flash("Pakej pelajar dan semester telah dikemaskini.", "success")
     # Redirect back to the same page with current filters
     return redirect(request.referrer or url_for('admin_view_students_list'))
 
@@ -1372,7 +1422,8 @@ def update_field():
     data = request.json
     field = data.get('field')
     try:
-        student_id = int(data.get('id'))
+        # Assuming bil_kemasukan is numeric based on your int() conversion
+        student_id = data.get('id') 
     except (TypeError, ValueError):
         return jsonify(success=False, message="ID Pelajar tidak sah"), 400
         
@@ -1382,7 +1433,7 @@ def update_field():
         'nama_pelajar','email', 'jantina', 'bangsa', 'agama', 'telefonNo', 
         'alamat_rumah', 'cara_datang_sekolah', 'masalah_penglihatan', 
         'masalah_kesihatan', 'status_oku', 'aliran_ditawar', 'kelas',
-        'tarikh_lahir', 'tempat_lahir', 'no_surat_beranak', 'id_pakej', 'status_study'
+        'tarikh_lahir', 'tempat_lahir', 'no_surat_beranak', 'id_pakej', 'status_study', 'semester'
     ]
 
     if field not in allowed_fields:
@@ -1399,15 +1450,35 @@ def update_field():
     cursor = None
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True)
         
+        # 1. Perform the primary update
         query = f"UPDATE pelajar SET {field} = %s WHERE bil_kemasukan = %s"
         cursor.execute(query, (value, student_id))
-        conn.commit()
         
+        # 2. If the field was id_pakej, auto-update the semester
+        if field == 'id_pakej' and value is not None:
+            cursor.execute("SELECT kod_pakej FROM pakej WHERE id_pakej = %s", (value,))
+            pkg = cursor.fetchone()
+            
+            if pkg and '/' in pkg['kod_pakej']:
+                try:
+                    # Extract suffix and update semester
+                    suffix = pkg['kod_pakej'].split('/')[-1]
+                    semester_val = int(suffix)
+                    cursor.execute("UPDATE pelajar SET semester = %s WHERE bil_kemasukan = %s", (semester_val, student_id))
+                except (ValueError, IndexError):
+                    pass # Keep existing semester if suffix is invalid
+        
+        # If user cleared the package, you might optionally want to clear the semester too:
+        elif field == 'id_pakej' and value is None:
+            cursor.execute("UPDATE pelajar SET semester = NULL WHERE bil_kemasukan = %s", (student_id,))
+
+        conn.commit()
         return jsonify(success=True)
+        
     except Exception as e:
-        print(f"Database Error: {e}") 
+        if conn: conn.rollback()
         return jsonify(success=False, message=str(e)), 500
     finally:
         if cursor: cursor.close()
@@ -1472,34 +1543,49 @@ def admin_settings():
         # Action C: Update Kokurikulum Unit Limit
         elif 'update_koku_limit' in request.form:
             unit_id = request.form.get('koku_select')
-            new_limit = request.form.get('koku_limit_number')
+            new_limit = int(request.form.get('koku_limit_number')) # Cast to int immediately
 
-            # 1. Fetch both unit_name AND unit_type to determine the prefix
+            # 1. Fetch unit info
             cursor.execute("SELECT unit_name, unit_type FROM UnitKokurikulum WHERE unit_id = %s", (unit_id,))
             unit = cursor.fetchone()
 
             if unit and new_limit:
-                # 2.     Reconstruct the prefix logic
+                # 2. Reconstruct key (Prefix logic)
                 prefix = ""
                 if unit['unit_type'] == 'Kelab': prefix = "KK_"
                 elif unit['unit_type'] == 'Badan Beruniform': prefix = "UB_"
                 elif unit['unit_type'] == 'Sukan dan Permainan': prefix = "SK_"
-
-                # 3. Create the exact same key used by the rest of your app
                 full_key = f"{prefix}{unit['unit_name']}"
 
-                limits = get_limits()
+                # 3. CHECK: Count existing Semester 1 students in this unit
+                cursor.execute("""
+                    SELECT COUNT(*) as sem1_count 
+                    FROM KokurikulumPelajar kp
+                    INNER JOIN pelajar p ON kp.bil_kemasukan = p.bil_kemasukan
+                    WHERE kp.unit_id = %s 
+                    AND p.semester = 1
+                """, (unit_id,))
 
-                # 4. Remove the old, incorrect key if it exists (Optional cleanup)
-                if unit['unit_name'] in limits:
-                    del limits[unit['unit_name']]
+                row = cursor.fetchone()
+                sem1_count = row['sem1_count'] if row else 0
 
-                # 5. Save using the standardized key
-                limits[full_key] = int(new_limit)
-                save_limits(limits)
+                # 4. Debug: If you still see the wrong count, print this!
+                print(f"DEBUG: Found {sem1_count} students with semester=1 for unit {unit_id}")
 
-                flash(f"Had {full_key} dikemaskini.", "success")
-                session['last_tab'] = 'koku'
+                # 4. Validation: Prevent setting a limit smaller than current Semester 1 enrollment
+                if new_limit < sem1_count:
+                    flash(f"Had gagal dikemaskini. Terdapat {sem1_count} pelajar Semester 1 yang telah mendaftar dalam unit ini. Had mestilah sekurang-kurangnya {sem1_count}.", "danger")
+                else:
+                    # 5. Save the limit
+                    limits = get_limits()
+                    if unit['unit_name'] in limits:
+                        del limits[unit['unit_name']]
+
+                    limits[full_key] = new_limit
+                    save_limits(limits)
+                    flash(f"Had {full_key} dikemaskini kepada {new_limit}.", "success")
+
+            session['last_tab'] = 'koku'
         
 
         conn.commit()
@@ -1524,9 +1610,11 @@ def admin_settings():
     all_packages = cursor.fetchall()
 
     cursor.execute("""
-        SELECT unit_id, COUNT(*) as enrolled_count 
-        FROM KokurikulumPelajar 
-        GROUP BY unit_id
+        SELECT kp.unit_id, COUNT(*) as enrolled_count 
+        FROM KokurikulumPelajar kp
+        JOIN pelajar p ON kp.bil_kemasukan = p.bil_kemasukan
+        WHERE p.semester = 1
+        GROUP BY kp.unit_id
     """)
     enrollment_data = {row['unit_id']: row['enrolled_count'] for row in cursor.fetchall()}
 
@@ -1854,6 +1942,7 @@ def admin_koku_list():
     rumah_filter = request.args.get('rumah')
     pakej_filter = request.args.get('pakej_filter')
     sort_by = request.args.get('sort', 'nama')
+    semester_filter = request.args.get('semester')
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -1887,6 +1976,9 @@ def admin_koku_list():
     if pakej_filter:
         base_query += " AND pk.id_pakej = %s"
         params.append(pakej_filter)
+    if semester_filter:
+        base_query += " AND p.semester = %s"
+        params.append(int(semester_filter))
     
     # Grouping to prevent duplicates
     group_by_clause = " GROUP BY p.bil_kemasukan"
@@ -1941,6 +2033,7 @@ def admin_koku_list():
                            tugas=tugas_filter,
                            rumah=rumah_filter,
                            pakej_filter=pakej_filter,
+                           semester=semester_filter,
                            sort=sort_by)
 
 # A helper function to keep your routes clean
@@ -1989,6 +2082,24 @@ def delete_koku_record(kkplr_id):
     
     flash("Rekod Kokurikulum telah dipadam.", "info")
     return redirect(url_for('edit_student_koku', bil=bil))
+
+@app.route('/admin/delete-all-koku-records/<bil_kemasukan>', methods=['POST'])
+def delete_all_koku_records(bil_kemasukan):
+    if session.get('role') != 'admin':
+        return redirect(url_for('gateway'))
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # This deletes all records in the table associated with this specific student ID
+    cursor.execute("DELETE FROM KokurikulumPelajar WHERE bil_kemasukan = %s", (bil_kemasukan,))
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    flash("Semua rekod Kokurikulum pelajar telah dipadam.", "info")
+    return redirect(url_for('edit_student_koku', bil=bil_kemasukan))
 
 @app.route('/admin/edit-student/<bil>', methods=['GET', 'POST'])
 def edit_student_koku(bil):
@@ -2042,62 +2153,6 @@ def edit_student_koku(bil):
     cursor.close(); conn.close()
     return render_template('edit_student.html', student=student, records=koku_records, all_units=all_units)
 
-@app.route('/admin/koku-statistics')
-def koku_statistics():
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-
-    # Fetch all units and their enrollment counts
-    query = """
-        SELECT u.unit_name, u.unit_type, COUNT(kp.bil_kemasukan) as student_count
-        FROM UnitKokurikulum u
-        LEFT JOIN KokurikulumPelajar kp ON u.unit_id = kp.unit_id
-        GROUP BY u.unit_id
-        ORDER BY u.unit_type, u.unit_name
-    """
-    cursor.execute(query)
-    data = cursor.fetchall()
-
-    cursor.close()
-    conn.close()
-    
-    return render_template('koku_statistics.html', units=data)
-
-@app.route('/admin/export-koku-stats')
-def admin_export_koku_stats():
-    # 1. Fetch data from your DB
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    query = """
-        SELECT u.unit_name, u.unit_type, COUNT(kp.bil_kemasukan) as student_count
-        FROM UnitKokurikulum u
-        LEFT JOIN KokurikulumPelajar kp ON u.unit_id = kp.unit_id
-        GROUP BY u.unit_id
-        ORDER BY u.unit_type, u.unit_name
-    """
-    cursor.execute(query)
-    data = cursor.fetchall()
-    cursor.close()
-    conn.close()
-
-    # 2. Setup CSV structure
-    si = io.StringIO()
-    cw = csv.writer(si)
-    cw.writerow(['Nama Unit', 'Kategori', 'Bilangan Pelajar'])
-    
-    # 3. Data Rows & Running Total
-    grand_total = 0
-    for row in data:
-        cw.writerow([row['unit_name'], row['unit_type'], row['student_count']])
-        grand_total += row['student_count']
-    
-    # 4. Final Summary Row
-    cw.writerow(['JUMLAH KESELURUHAN', '', grand_total])
-    
-    # 5. Return Response
-    return Response(si.getvalue(), mimetype="text/csv", 
-                    headers={"Content-Disposition": "attachment;filename=statistik_koku.csv"})
-
 @app.route('/admin/export-koku')
 def admin_export_koku():
     if session.get('role') != 'admin':
@@ -2111,6 +2166,7 @@ def admin_export_koku():
     tugas_filter = request.args.get('tugas')
     rumah_filter = request.args.get('rumah')
     class_filter = request.args.get('class_filter')
+    semester_filter = request.args.get('semester')
 
     # Reuse filter logic
     where_clause = "WHERE 1=1"
@@ -2134,6 +2190,9 @@ def admin_export_koku():
     if class_filter:
         where_clause += " AND p.kelas = %s"
         params.append(class_filter)
+    if semester_filter:
+        where_clause += " AND p.semester = %s"
+        params.append(int(semester_filter))
 
     # Query without LIMIT and OFFSET
     query = f"""
@@ -2177,6 +2236,126 @@ def admin_export_koku():
         output,
         mimetype="text/csv",
         headers={"Content-Disposition": "attachment;filename=senarai_nama_kokurikulum.csv"}
+    )
+
+@app.route('/admin/koku-statistics')
+def koku_statistics():
+    semester_filter = request.args.get('semester', 'all')
+    cat_filter = request.args.get('cat', 'all')
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    query = """
+        SELECT
+            u.unit_name,
+            u.unit_type,
+            (
+                SELECT COUNT(*)
+                FROM KokurikulumPelajar kp
+                JOIN pelajar p
+                    ON kp.bil_kemasukan = p.bil_kemasukan
+                WHERE kp.unit_id = u.unit_id
+    """
+
+    params = []
+
+    if semester_filter != 'all':
+        query += " AND p.semester = %s"
+        params.append(int(semester_filter))
+
+    query += """
+            ) AS student_count
+        FROM UnitKokurikulum u
+        WHERE 1=1
+    """
+
+    if cat_filter != 'all':
+        query += " AND u.unit_type = %s"
+        params.append(cat_filter)
+
+    query += """
+        ORDER BY u.unit_type, u.unit_name
+    """
+
+    cursor.execute(query, params)
+    data = cursor.fetchall()
+
+    print("\nReturned rows:", len(data))
+
+    for row in data[:5]:
+        print(row)
+
+    cursor.close()
+    conn.close()
+
+    return render_template(
+        'koku_statistics.html',
+        units=data
+    )
+
+@app.route('/admin/export-koku-stats')
+def export_koku_stats():
+    semester_filter = request.args.get('semester', 'all')
+    cat_filter = request.args.get('cat', 'all')
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    query = """
+        SELECT
+            u.unit_name,
+            u.unit_type,
+            (
+                SELECT COUNT(*)
+                FROM KokurikulumPelajar kp
+                JOIN pelajar p ON kp.bil_kemasukan = p.bil_kemasukan
+                WHERE kp.unit_id = u.unit_id 
+                AND 1=1
+    """
+
+    params = []
+    if semester_filter != 'all':
+        query += " AND p.semester = %s"
+        params.append(int(semester_filter))
+
+    query += """
+            ) AS student_count
+        FROM UnitKokurikulum u
+        WHERE 1=1
+    """
+
+    # Add category filter if active
+    if cat_filter != 'all':
+        query += " AND u.unit_type = %s"
+        params.append(cat_filter)
+
+    query += " ORDER BY u.unit_type, u.unit_name"
+    
+    cursor.execute(query, params)
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    # Setup CSV structure
+    si = io.StringIO()
+    cw = csv.writer(si)
+    cw.writerow(['Nama Unit', 'Kategori', 'Bilangan Pelajar'])
+    
+    grand_total = 0
+    for row in data:
+        # Use row.get to safely handle the count
+        count = row.get('student_count', 0) or 0
+        cw.writerow([row['unit_name'], row['unit_type'], count])
+        grand_total += count
+    
+    # Final Summary Row
+    cw.writerow(['JUMLAH KESELURUHAN', '', grand_total])
+    
+    return Response(
+        si.getvalue(), 
+        mimetype="text/csv", 
+        headers={"Content-Disposition": "attachment;filename=statistik_koku.csv"}
     )
 
 if __name__ == '__main__':

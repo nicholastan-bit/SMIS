@@ -73,6 +73,7 @@ CREATE TABLE pelajar (
     tarikh_pendaftaran DATE,
     tugas_khas VARCHAR(50) DEFAULT NULL,
 	rumah_sukan VARCHAR(20) DEFAULT NULL,
+    semester TINYINT(1) DEFAULT NULL,
 	CONSTRAINT fk_pelajar_pakej FOREIGN KEY (id_pakej) REFERENCES pakej (id_pakej) ON DELETE SET NULL
 ) AUTO_INCREMENT = 19207 ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -100,3 +101,6 @@ CREATE TABLE spm_hasil (
     UNIQUE KEY student_subject (bil_kemasukan, subjek)
 ) ENGINE=InnoDB;
 
+-- new changes 25/6/2026: SEMESTER ATTR REPLACEMENT
+ALTER TABLE pelajar
+ADD COLUMN semester TINYINT;

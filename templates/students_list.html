@@ -58,6 +58,18 @@
                     </select>
                 </div>
     
+                <div class="col-md-4 form-group">
+                    <label>Filter Semester</label>
+                    <select name="semester_filter" class="form-control">
+                        <option value="">Semua Semester</option>
+                        {% for s in [1, 2, 3] %}
+                        <option value="{{ s }}" {% if request.args.get('semester_filter')==s|string %}selected{% endif %}>
+                            {{ s }}
+                        </option>
+                        {% endfor %}
+                    </select>          
+                </div>
+
                 <div class="col-md-4 form-group" style="padding-top: 25px;">
                     <button type="submit" class="btn btn-primary btn-block">Tapis</button>
                 </div>
@@ -78,8 +90,9 @@
                         sort=request.args.get('sort', ''), 
                         class_filter=request.args.get('class_filter', ''),
                         pakej_filter=request.args.get('pakej_filter', ''),
-                        status_filter=request.args.get('status_filter', '')) }}" class="btn btn-success">
-                <span class="glyphicon glyphicon-download-alt"></span> Muat Turun ke Excel (CSV)
+                        status_filter=request.args.get('status_filter', ''),
+                        semester_filter=request.args.get('semester_filter', '')) }}" class="btn btn-success">
+                Muat Turun ke Excel (CSV)
             </a>
         </div>
         </div>

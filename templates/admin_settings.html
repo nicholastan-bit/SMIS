@@ -75,7 +75,7 @@
 
     <div id="section-koku" class="settings-section" style="display:none;">
         <div class="card mb-4 p-3">
-            <h4>Kemaskini Had Kapasiti Kokurikulum</h4>
+            <h4>Kemaskini Had Kapasiti Kokurikulum (PAPARAN SEMESTER 1 SAHAJA)</h4>
             <form method="POST" class="form-inline">
                 <select name="koku_select" class="form-control" required>
                     <option value="">-- Pilih Unit Kokurikulum --</option>
@@ -107,7 +107,6 @@
 
                     {% set limit = package_limits.get(prefix ~ u.unit_name, 60) %}
                     {% set current = enrollment_data.get(u.unit_id, 0) %}
-
                     <tr>
                         <td>{{ u.unit_name }}</td>
                         <td><strong>{{ current }}</strong> / {{ limit }}</td>

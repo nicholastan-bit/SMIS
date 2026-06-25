@@ -216,6 +216,17 @@
                             </td>                   
                         </tr>
                         <tr>
+                            <th>Semester:</th>
+                            <td>
+                                <select class="form-control editable-field" data-field="semester" data-id="{{ student.bil_kemasukan }}">
+                                    <option value=0 {% if student.semester==0 %}selected{% endif %}>0 </option>
+                                    <option value=1 {% if student.semester==1 %}selected{% endif %}>1</option>
+                                    <option value=2 {% if student.semester==2 %}selected{% endif %}>2 </option>
+                                    <option value=3 {% if student.semester==3 %}selected{% endif %}>3 </option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
                             <th>Status pelajaran:</th>
                             <td>
                                 <select class="form-control editable-field" data-field="status_study" data-id="{{ student.bil_kemasukan }}">

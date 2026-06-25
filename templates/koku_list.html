@@ -71,7 +71,18 @@
                 <a href="{{ url_for('admin_koku_list') }}" class="btn btn-outline-secondary w-50">Reset</a>
                 <button type="submit" class="btn btn-primary w-50">Tapis</button>
             </div>
+            <div class="col-md-2">
+                <select name="semester" class="form-control">
+                    <option value="">Semua Semester</option>
+                    {% for s in [1, 2, 3] %}
+                    <option value="{{ s }}" {% if semester|int==s %}selected{% endif %}>
+                        Semester {{ s }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
         </div>
+
         </form>
 
         <a href="{{ url_for('admin_export_koku', 
@@ -80,7 +91,8 @@
             unit=act, 
             tugas=tugas, 
             rumah=rumah, 
-            class_filter=class_filter) }}" class="btn btn-success">
+            class_filter=class_filter,
+            semester=semester) }}" class="btn btn-success">
             Eksport ke CSV
         </a>
 

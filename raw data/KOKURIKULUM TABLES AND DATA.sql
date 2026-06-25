@@ -2,7 +2,7 @@
 CREATE TABLE UnitKokurikulum (
     unit_id INT AUTO_INCREMENT PRIMARY KEY,
     unit_type ENUM('Kelab', 'Badan Beruniform', 'Sukan dan Permainan') NOT NULL,
-    activity_name VARCHAR(100) NOT NULL
+    unit_name VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE KokurikulumPelajar (
@@ -21,8 +21,7 @@ CREATE TABLE KokurikulumPelajar (
 );
 -- insert code
 
-
-INSERT INTO UnitKokurikulum (unit_type, activity_name) VALUES
+INSERT INTO UnitKokurikulum (unit_type, unit_name) VALUES
 -- Kelab
 ('Kelab', 'PERSATUAN BAHASA DAN KESUSASTERAAN'),
 ('Kelab', 'KELAB ALAM SEKITAR TINGKATAN ENAM'),
