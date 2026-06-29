@@ -198,6 +198,7 @@ def index():
     }
     package_class = None
     className = None
+    rumahSukan = None
     selected_units = []
     
     if kp:
@@ -206,7 +207,7 @@ def index():
         
         # Fetch student details (includes joining for ID lookup efficiency)
         cursor.execute("""
-            SELECT bil_kemasukan, nama_pelajar, surat_tawaran_path, ic_photo_path, id_pakej, kelas 
+            SELECT bil_kemasukan, nama_pelajar, surat_tawaran_path, ic_photo_path, id_pakej, kelas, rumah_sukan
             FROM pelajar WHERE no_kp_pelajar = %s
         """, (kp,))
         student = cursor.fetchone()
@@ -243,6 +244,9 @@ def index():
 
             if student['kelas'] is not None:
                 className = student['kelas']
+            
+            if student['rumah_sukan'] is not None:
+                rumahSukan = student['rumah_sukan']
 
             cursor.execute("""
                 SELECT uk.unit_name, uk.unit_type 
@@ -259,11 +263,12 @@ def index():
 
         cursor.close()
         conn.close()
-        
+        print(rumahSukan)
     return render_template('index.html', 
                            completion_status=completion_status, 
                            pkg_cls=package_class, 
                            clsName=className,
+                           rumahSukan=rumahSukan,
                            selected_units=selected_units)
 
 @app.route('/register')
@@ -2112,7 +2117,9 @@ def edit_student_koku(bil):
     if request.method == 'POST':
         # 1. Update Student Personal Info (pelajar table)
         tugas_khas = request.form.get('tugas_khas')
-        rumah_sukan = request.form.get('rumah_sukan')
+        raw_rumah_sukan = request.form.get('rumah_sukan')
+        rumah_sukan = raw_rumah_sukan if raw_rumah_sukan != "" else None
+
         cursor.execute("""
             UPDATE pelajar SET tugas_khas = %s, rumah_sukan = %s 
             WHERE bil_kemasukan = %s

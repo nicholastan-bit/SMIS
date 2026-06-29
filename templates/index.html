@@ -32,6 +32,17 @@
         <span class="label label-default" style="...">Tiada</span>
         {% endif %}</p>
 
+        <span>Rumah Sukan:</span>
+        {% if rumahSukan %}
+        {% set colors = {'Merah': 'label-danger', 'Biru': 'label-primary', 'Kuning': 'label-warning', 'Hijau': 'label-success',
+        'Ungu': 'label-info'} %}
+        <span class="label {{ colors.get(rumahSukan, 'label-default') }}">
+            {{ rumahSukan }}
+        </span>
+        {% else %}
+        <span class="label label-default">Tiada</span>
+        {% endif %}
+
     {% if session.get('verified_kp') %}
     <div class="well well-sm"
         style="background-color: #ffffff; margin-top: 20px; margin-bottom: 5px; border-color: #e3e3e3;">

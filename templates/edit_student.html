@@ -28,12 +28,14 @@
                     <div class="col-md-6 form-group">
                         <label>Rumah Sukan</label>
                         <select name="rumah_sukan" class="form-control">
+                            <option value="" {% if not student.rumah_sukan %}selected{% endif %}>Tiada</option>
+                    
                             {% for color in ['Merah', 'Biru', 'Kuning', 'Hijau', 'Ungu'] %}
-                            <option value="{{ color }}" {% if student.rumah_sukan==color %}selected{% endif %}>{{ color
-                                }}</option>
+                            <option value="{{ color }}" {% if student.rumah_sukan==color %}selected{% endif %}>
+                                {{ color }}
+                            </option>
                             {% endfor %}
-                        </select>
-                    </div>
+                        </select>              </div>
                 </div>
             </div>
         </div>
