@@ -6,8 +6,13 @@
     <h1>
         <img src="{{ url_for('static', filename='ktesi_logo.png') }}" alt="Logo"
             style="height: 50px; vertical-align: middle; margin-right: 15px;">
+    
+        {% if studentName and studentName|lower != 'null' and studentName|trim != '' %}
+        Selamat Datang, {{ studentName }}
+        {% else %}
         Selamat Datang
-    </h1>
+        {% endif %}
+        </h1>
     <p style="font-size: 18px; color: #666;">KTESI School Management Information System (SMIS)</p>
     <p style="font-size: 16px;">
         Status Semasa:

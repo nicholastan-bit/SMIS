@@ -196,6 +196,7 @@ def index():
         'penjaga': False, # Added key
         'koku': False,
     }
+    studentName = None
     package_class = None
     className = None
     rumahSukan = None
@@ -248,6 +249,9 @@ def index():
             if student['rumah_sukan'] is not None:
                 rumahSukan = student['rumah_sukan']
 
+            if student['nama_pelajar'] is not None:
+                studentName = student['nama_pelajar']
+
             cursor.execute("""
                 SELECT uk.unit_name, uk.unit_type 
                 FROM KokurikulumPelajar kp
@@ -264,7 +268,8 @@ def index():
         cursor.close()
         conn.close()
         print(rumahSukan)
-    return render_template('index.html', 
+    return render_template('index.html',
+                           studentName=studentName,
                            completion_status=completion_status, 
                            pkg_cls=package_class, 
                            clsName=className,
