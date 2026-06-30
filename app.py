@@ -2254,6 +2254,7 @@ def admin_export_koku():
 def koku_statistics():
     semester_filter = request.args.get('semester', 'all')
     cat_filter = request.args.get('cat', 'all')
+    rumah_filter = request.args.get('rumah', 'all') # New filter
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -2265,16 +2266,19 @@ def koku_statistics():
             (
                 SELECT COUNT(*)
                 FROM KokurikulumPelajar kp
-                JOIN pelajar p
-                    ON kp.bil_kemasukan = p.bil_kemasukan
+                JOIN pelajar p ON kp.bil_kemasukan = p.bil_kemasukan
                 WHERE kp.unit_id = u.unit_id
     """
-
     params = []
 
+    # Filter within the subquery
     if semester_filter != 'all':
         query += " AND p.semester = %s"
         params.append(int(semester_filter))
+        
+    if rumah_filter != 'all':
+        query += " AND p.rumah_sukan = %s"
+        params.append(rumah_filter)
 
     query += """
             ) AS student_count
@@ -2282,29 +2286,20 @@ def koku_statistics():
         WHERE 1=1
     """
 
+    # Filter on the unit table
     if cat_filter != 'all':
         query += " AND u.unit_type = %s"
         params.append(cat_filter)
 
-    query += """
-        ORDER BY u.unit_type, u.unit_name
-    """
+    query += " ORDER BY u.unit_type, u.unit_name"
 
     cursor.execute(query, params)
     data = cursor.fetchall()
-
-    print("\nReturned rows:", len(data))
-
-    for row in data[:5]:
-        print(row)
-
+    
     cursor.close()
     conn.close()
 
-    return render_template(
-        'koku_statistics.html',
-        units=data
-    )
+    return render_template('koku_statistics.html', units=data)
 
 @app.route('/admin/export-koku-stats')
 def export_koku_stats():

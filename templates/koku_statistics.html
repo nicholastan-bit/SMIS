@@ -24,6 +24,15 @@
                     </option>
                     {% endfor %}
                 </select>
+                <label>Rumah Sukan:</label>
+                <select name="rumah" class="form-control" onchange="this.form.submit()">
+                    <option value="all">Semua Rumah</option>
+                    {% for rumah in ['Merah', 'Biru', 'Kuning', 'Hijau', 'Ungu'] %}
+                    <option value="{{ rumah }}" {% if request.args.get('rumah')==rumah %}selected{% endif %}>
+                        {{ rumah }}
+                    </option>
+                    {% endfor %}
+                </select>
             </div>
             <a href="{{ url_for('export_koku_stats', semester=request.args.get('semester', 'all'), cat=request.args.get('cat', 'all')) }}"
                 class="btn btn-success">

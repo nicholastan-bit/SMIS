@@ -37,16 +37,7 @@
         <span class="label label-default" style="...">Tiada</span>
         {% endif %}</p>
 
-        <span>Rumah Sukan:</span>
-        {% if rumahSukan %}
-        {% set colors = {'Merah': 'label-danger', 'Biru': 'label-primary', 'Kuning': 'label-warning', 'Hijau': 'label-success',
-        'Ungu': 'label-info'} %}
-        <span class="label {{ colors.get(rumahSukan, 'label-default') }}">
-            {{ rumahSukan }}
-        </span>
-        {% else %}
-        <span class="label label-default">Tiada</span>
-        {% endif %}
+        
 
     {% if session.get('verified_kp') %}
     <div class="well well-sm"
@@ -114,6 +105,13 @@
             <span style="margin-left: 8px;">{{ unit.name }}</span>
         </div>
         {% endfor %}
+
+        <span class="label label-default">Rumah Sukan:</span>
+        {% if rumahSukan %}
+        <span>{{ rumahSukan }}</span>
+        {% else %}
+        <span>Tiada</span>
+        {% endif %}
     </div>
     {% endif %}
     {% endif %}
