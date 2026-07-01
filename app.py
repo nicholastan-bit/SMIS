@@ -1975,8 +1975,12 @@ def admin_koku_list():
         base_query += " AND uk.unit_name = %s"
         params.append(act_filter)
     if rumah_filter:
-        base_query += " AND LOWER(p.rumah_sukan) = LOWER(%s)"
-        params.append(rumah_filter)
+        if rumah_filter == 'TIADA':
+            # Matches NULL, empty string, or variations of 'TIADA'
+            base_query += " AND (p.rumah_sukan IS NULL OR p.rumah_sukan = '' OR UPPER(p.rumah_sukan) = 'TIADA')"
+        else:
+            base_query += " AND UPPER(p.rumah_sukan) = UPPER(%s)"
+            params.append(rumah_filter)
     if search:
         base_query += " AND (p.nama_pelajar LIKE %s OR p.bil_kemasukan LIKE %s)"
         params.extend([f"%{search}%", f"%{search}%"])
@@ -2030,7 +2034,7 @@ def admin_koku_list():
 
     cursor.close()
     conn.close()
-    
+
     return render_template('koku_list.html', 
                            students=students, 
                            all_units=all_units_dropdown,
@@ -2254,52 +2258,74 @@ def admin_export_koku():
 def koku_statistics():
     semester_filter = request.args.get('semester', 'all')
     cat_filter = request.args.get('cat', 'all')
-    rumah_filter = request.args.get('rumah', 'all') # New filter
-
+    
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    query = """
-        SELECT
-            u.unit_name,
-            u.unit_type,
-            (
-                SELECT COUNT(*)
-                FROM KokurikulumPelajar kp
-                JOIN pelajar p ON kp.bil_kemasukan = p.bil_kemasukan
-                WHERE kp.unit_id = u.unit_id
+    # 1. Define pre-display items
+    if cat_filter == 'Rumah Sukan':
+        # List of expected houses
+        items = [{'label': r} for r in ['Merah', 'Biru', 'Kuning', 'Hijau', 'Ungu']]
+        items.append({'label': 'TIADA'})
+        group_sql = "COALESCE(p.rumah_sukan, 'TIADA')"
+    else:
+        # Fetch actual units if not filtered by House
+        cursor.execute("SELECT unit_name as label FROM UnitKokurikulum" + 
+                       (" WHERE unit_type = %s" if cat_filter != 'all' else ""), 
+                       [cat_filter] if cat_filter != 'all' else [])
+        items = cursor.fetchall()
+        group_sql = "COALESCE(u.unit_name, 'TIADA')"
+
+    # 2. Get data
+    query = f"""
+        SELECT label, jantina, COUNT(*) as count
+        FROM (
+            SELECT {group_sql} as label, 
+                   p.bil_kemasukan, 
+                   p.jantina
+            FROM KokurikulumPelajar kp
+            JOIN pelajar p ON kp.bil_kemasukan = p.bil_kemasukan
+            LEFT JOIN UnitKokurikulum u ON kp.unit_id = u.unit_id
+            WHERE 1=1 
+            {"AND p.semester = %s" if semester_filter != 'all' else ""}
+            {"AND u.unit_type = %s" if cat_filter not in ['all', 'Rumah Sukan'] else ""}
+            AND p.status_study = 1
+            GROUP BY label, p.bil_kemasukan, p.jantina
+        ) as unique_students
+        GROUP BY label, jantina
     """
     params = []
-
-    # Filter within the subquery
-    if semester_filter != 'all':
-        query += " AND p.semester = %s"
-        params.append(int(semester_filter))
-        
-    if rumah_filter != 'all':
-        query += " AND p.rumah_sukan = %s"
-        params.append(rumah_filter)
-
-    query += """
-            ) AS student_count
-        FROM UnitKokurikulum u
-        WHERE 1=1
-    """
-
-    # Filter on the unit table
-    if cat_filter != 'all':
-        query += " AND u.unit_type = %s"
-        params.append(cat_filter)
-
-    query += " ORDER BY u.unit_type, u.unit_name"
-
-    cursor.execute(query, params)
-    data = cursor.fetchall()
+    if semester_filter != 'all': params.append(int(semester_filter))
+    if cat_filter not in ['all', 'Rumah Sukan']: params.append(cat_filter)
     
+    cursor.execute(query, params)
+    results = cursor.fetchall()
+
+    # 3. Map results to the pre-defined items
+    # Use UPPERCASE for keys to ensure consistent matching
+    data_map = {str(item['label']).upper(): {'L': 0, 'P': 0} for item in items}
+
+    for row in results:
+        # Normalize: Convert label to uppercase and handle potential None/Empty values
+        raw_label = str(row['label']).strip().upper() if row['label'] else 'TIADA'
+        
+        # If the label isn't in our pre-defined list, bucket it as 'TIADA'
+        label = raw_label if raw_label in data_map else 'TIADA'
+            
+        # Gender normalization
+        raw_gender = str(row['jantina']).upper()
+        gender = 'L' if raw_gender == 'LELAKI' else 'P'
+        
+        # Safely increment
+        if label not in data_map:
+            data_map[label] = {'L': 0, 'P': 0}
+            
+        data_map[label][gender] += int(row['count'])
+
     cursor.close()
     conn.close()
 
-    return render_template('koku_statistics.html', units=data)
+    return render_template('koku_statistics.html', data_map=data_map)
 
 @app.route('/admin/export-koku-stats')
 def export_koku_stats():

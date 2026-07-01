@@ -14,6 +14,7 @@
                         endif %}>Badan Beruniform</option>
                     <option value="Sukan dan Permainan" {% if request.args.get('cat')=='Sukan dan Permainan'
                         %}selected{% endif %}>Sukan dan Permainan</option>
+                    <option value="Rumah Sukan" {% if request.args.get('cat')=='Rumah Sukan' %}selected{% endif %}>Rumah Sukan</option>
                 </select>
                 <label>Semester:</label>
                 <select name="semester" class="form-control" onchange="this.form.submit()">
@@ -21,15 +22,6 @@
                     {% for s in [1, 2, 3] %}
                     <option value="{{ s }}" {% if request.args.get('semester')|int==s %}selected{% endif %}>
                         {{ s }}
-                    </option>
-                    {% endfor %}
-                </select>
-                <label>Rumah Sukan:</label>
-                <select name="rumah" class="form-control" onchange="this.form.submit()">
-                    <option value="all">Semua Rumah</option>
-                    {% for rumah in ['Merah', 'Biru', 'Kuning', 'Hijau', 'Ungu'] %}
-                    <option value="{{ rumah }}" {% if request.args.get('rumah')==rumah %}selected{% endif %}>
-                        {{ rumah }}
                     </option>
                     {% endfor %}
                 </select>
@@ -45,19 +37,22 @@
         <table class="table table-bordered table-hover">
             <thead>
                 <tr class="active">
-                    <th>Nama Unit</th>
-                    <th>Kategori</th>
-                    <th class="text-center">Bilangan Pelajar</th>
+                    <th>Nama</th>
+                    <th class="text-center text-primary">L</th>
+                    <th class="text-center text-danger">P</th>
+                    <th class="text-center">Jumlah</th>
                 </tr>
             </thead>
             <tbody>
-                {% for u in units %}
+                {% for label, counts in data_map.items() %}
                 <tr>
-                    <td>{{ u.unit_name }}</td>
-                    <td>{{ u.unit_type }}</td>
-                    <td class="text-center"><strong>{{ u.student_count }}</strong></td>
+                    <td>{{ label.capitalize() }}</td>
+                    <td class="text-center">{{ counts.L }}</td>
+                    <td class="text-center">{{ counts.P }}</td>
+                    <td class="text-center"><strong>{{ counts.L + counts.P }}</strong></td>
                 </tr>
-                {% endfor %}    </tbody>
+                {% endfor %}    
+            </tbody>
         </table>
     </div>
 </div>
