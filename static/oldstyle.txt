@@ -1,0 +1,42 @@
+/* Ensure the html and body take up the full height */
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+/* Set body to be a flex container */
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+/* The container holding your navbar and content */
+.container {
+    flex: 1 0 auto; /* This tells the content to grow and push the footer down */
+}
+
+/* The footer stays at the bottom */
+.footer {
+    flex-shrink: 0; /* Prevents the footer from squishing */
+    padding: 20px;
+    background: #f8f8f8;
+    text-align: center;
+    border-top: 1px solid #e7e7e7;
+}
+
+.navbar-brand.small-brand {
+    font-size: 1.1rem;
+    /* Shrinks the text slightly (default is usually 1.25rem) */
+    padding-top: 5px;
+    /* Shrinks the vertical space around the text */
+    padding-bottom: 5px;
+}
+
+.editable {
+    cursor: pointer;
+    border: 1px dashed #ccc;
+}
+
+.editable:hover {
+    background-color: #f9f9f9;
+}

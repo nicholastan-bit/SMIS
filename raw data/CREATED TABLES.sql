@@ -77,6 +77,7 @@ CREATE TABLE pelajar (
 	CONSTRAINT fk_pelajar_pakej FOREIGN KEY (id_pakej) REFERENCES pakej (id_pakej) ON DELETE SET NULL
 ) AUTO_INCREMENT = 19207 ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+
 -- 2. Jadual Penjaga
 CREATE TABLE penjaga (
     no_penjaga INT AUTO_INCREMENT PRIMARY KEY,
@@ -101,6 +102,10 @@ CREATE TABLE spm_hasil (
     UNIQUE KEY student_subject (bil_kemasukan, subjek)
 ) ENGINE=InnoDB;
 
--- new changes 25/6/2026: SEMESTER ATTR REPLACEMENT
-ALTER TABLE pelajar
-ADD COLUMN semester TINYINT DEFAULT 1;
+CREATE TABLE late_arrivals (
+    late_id INT AUTO_INCREMENT PRIMARY KEY,
+    bil_kemasukan INT NOT NULL, 
+    arrival_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    reason VARCHAR(50),
+    FOREIGN KEY (bil_kemasukan) REFERENCES pelajar(bil_kemasukan) ON DELETE CASCADE
+);

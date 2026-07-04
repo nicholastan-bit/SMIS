@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Senarai Pelajar Lewat</h2>
+
+    <div class="alert alert-info">
+        Jumlah pelajar lewat pada {{ selected_date }}: <strong>{{ total_students }}</strong>
+    </div>
+
+    <div class="card bg-light border-0 p-3 mb-4 shadow-sm">
+        <form method="GET" class="row g-3 align-items-center">
+            <div class="col-auto">
+                <label class="visually-hidden">Tarikh</label>
+                <input type="date" name="date" class="form-control" value="{{ selected_date }}">
+            </div>
+    
+            <div class="col-auto">
+                <label class="visually-hidden">Status</label>
+                <select name="status" class="form-select">
+                    <option value="all" {% if status_filter=='all' %}selected{% endif %}>Semua Status</option>
+                    <option value="late" {% if status_filter=='late' %}selected{% endif %}>Lewat (> 07:30)</option>
+                    <option value="very_late" {% if status_filter=='very_late' %}selected{% endif %}>Sangat lewat (> 07:45)
+                    </option>
+                </select>
+            </div>
+    
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary px-4">
+                    <i class="bi bi-filter"></i> Tapis
+                </button>
+            </div>
+    
+            <div class="col-auto ms-auto">
+                <a href="{{ url_for('export_late_list', date=selected_date) }}" class="btn btn-success px-4">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
+                </a>
+            </div>
+        </form>
+        </div>
+
+    <table class="table table-bordered table-striped">
+        <thead>
+            <!-- Inside <thead> -->
+            <tr>
+                <th>Nama Pelajar</th>
+                <th>Pakej</th>
+                <th>Masa Ketibaan</th>
+                <th>Sebab</th>
+                <th>Status</th>
+                <th>Tindakan</th> <!-- New Column -->
+            </tr>
+            
+            <!-- Inside <tbody> / for loop -->
+            {% for s in late_students %}
+            <tr>
+                <td>{{ s.nama_pelajar }}</td>
+                <td>{{ s.kod_pakej }}</td>
+                <td>{{ s.arrival_time.strftime('%H:%M:%S') }}</td>
+                <td>{{ s.reason }}</td>
+                <td>
+                    <span class="badge {{ 'bg-danger' if s.late_status == 'Sangat Lewat' else 'bg-warning text-dark' }}">
+                        {{ s.late_status }}
+                    </span>
+                </td>
+                <!-- Inside your loop in late_list.html -->
+                <td>
+                    <form action="{{ url_for('delete_late', arrival_id=s.late_id) }}" method="POST"
+                        onsubmit="return confirm('Adakah anda pasti?');">
+                        <button type="submit" class="btn btn-danger btn-sm">Padam</button>
+                    </form>
+                </td>
+            </tr>    {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1128,9 +1128,100 @@ def submit_koku():
     conn.close()
     return redirect(url_for('kokurikulum_page'))
 
+@app.route('/late_arrival', methods=['GET'])
+def late_arrival_page():
+    kp = session.get('verified_kp')
+    if not kp:
+        flash("Sila masukkan No. KP anda terlebih dahulu.", "danger")
+        return redirect(url_for('gateway'))
+    
+    today = date.today().strftime('%Y-%m-%d')
+    existing_record = None
+
+    conn = get_db_connection()
+    # Explicitly use a dictionary cursor
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        query = """
+            SELECT l.* FROM late_arrivals l
+            JOIN pelajar p ON l.bil_kemasukan = p.bil_kemasukan
+            WHERE p.no_kp_pelajar = %s AND DATE(l.arrival_time) = %s
+        """
+        cursor.execute(query, (kp, today))
+        existing_record = cursor.fetchone()
+        
+        # FORCE: Clear any remaining unread rows in the buffer
+        # This prevents the "Unread result found" error
+        cursor.fetchall() 
+        
+    except Exception as e:
+        print(f"Database error: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+    
+    return render_template('late_arrival.html', 
+                           today_date=date.today().strftime('%d/%m/%Y'),
+                           existing_record=existing_record)
+
+@app.route('/submit_late', methods=['POST'])
+def submit_late():
+    kp = session.get('verified_kp')
+    if not kp:
+        flash("Please log in first.", "danger")
+        return redirect(url_for('gateway'))
+
+    reason = request.form.get('reason')
+    
+    # Simple validation to ensure the reason is one of the allowed options
+    allowed_reasons = ["Bangun lewat", "Masalah pengangkutan", "Urusan Keluarga", "Kesihatan", "Lain-lain"]
+    if reason not in allowed_reasons:
+        flash("Invalid reason selected.", "danger")
+        return redirect(url_for('late_arrival_page'))
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # Fetch bil_kemasukan
+    cursor.execute("SELECT bil_kemasukan FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
+    student = cursor.fetchone()
+
+    if not student: 
+        cursor.close()
+        conn.close()
+        flash("Student record not found.", "danger")
+        return redirect(url_for('index'))
+    
+    student_id = student['bil_kemasukan']
+
+    # Insert into database (arrival_time is handled automatically by MySQL)
+    try:
+        query = "INSERT INTO late_arrivals (bil_kemasukan, reason) VALUES (%s, %s)"
+        cursor.execute(query, (student_id, reason))
+        conn.commit()
+        flash("Late arrival record saved successfully.", "success")
+    except mysql.connector.Error as err:
+        conn.rollback()
+        flash(f"System Error: {err}", "danger")
+    finally:
+        cursor.close()
+        conn.close()
+
+    return redirect(url_for('index'))
+
+
+
+
+
 # =====================================================================
 # --- ADMINISTRATIVE CONTROL PANEL MODULES ---
 # =====================================================================
+
+
+
+
+
 
 @app.route('/admin/students-list')
 def admin_view_students_list():
@@ -2389,6 +2480,120 @@ def export_koku_stats():
         si.getvalue(), 
         mimetype="text/csv", 
         headers={"Content-Disposition": "attachment;filename=statistik_koku.csv"}
+    )
+
+@app.route('/late_list', methods=['GET'])
+def late_list():
+    selected_date = request.args.get('date', date.today().strftime('%Y-%m-%d'))
+    status_filter = request.args.get('status', 'all')
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # Query: Joined 'pakej' to get 'kod_pakej'
+    query = """
+    SELECT l.late_id, l.arrival_time, l.reason, p.nama_pelajar, p.kelas, pk.kod_pakej,
+           CASE 
+               WHEN TIME(l.arrival_time) > '07:45:00' THEN 'Sangat Lewat'
+               WHEN TIME(l.arrival_time) > '07:30:00' THEN 'Lewat'
+               ELSE 'Early'
+           END AS late_status
+    FROM late_arrivals l
+    JOIN pelajar p ON l.bil_kemasukan = p.bil_kemasukan
+    LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej
+    WHERE DATE(l.arrival_time) = %s
+"""
+    params = [selected_date]
+    
+    if status_filter == 'late':
+        query += " AND TIME(l.arrival_time) > '07:30:00' AND TIME(l.arrival_time) <= '07:45:00'"
+    elif status_filter == 'very_late':
+        query += " AND TIME(l.arrival_time) > '07:45:00'"
+        
+    query += " ORDER BY l.arrival_time DESC"
+    
+    cursor.execute(query, params)
+    late_students = cursor.fetchall()
+    
+    total_students = len(late_students)
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template('late_list.html', 
+                           late_students=late_students, 
+                           selected_date=selected_date,
+                           status_filter=status_filter,
+                           total_students=total_students)
+
+@app.route('/delete_late/<int:arrival_id>', methods=['POST'])
+def delete_late(arrival_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    # Ensure this matches the column name in your database
+    cursor.execute("DELETE FROM late_arrivals WHERE late_id = %s", (arrival_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    flash("Rekod telah dipadam.", "success")
+    return redirect(url_for('late_list'))
+
+@app.route('/export_late_list', methods=['GET'])
+def export_late_list():
+    selected_date = request.args.get('date', date.today().strftime('%Y-%m-%d'))
+    status_filter = request.args.get('status', 'all')
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # 1. Define the base query clearly with the full CASE statement
+    query = """
+        SELECT p.nama_pelajar, pk.kod_pakej, l.arrival_time, l.reason,
+               CASE 
+                   WHEN TIME(l.arrival_time) > '07:45:00' THEN 'Sangat lewat'
+                   WHEN TIME(l.arrival_time) > '07:30:00' THEN 'Lewat'
+                   ELSE 'Early'
+               END AS late_status
+        FROM late_arrivals l
+        JOIN pelajar p ON l.bil_kemasukan = p.bil_kemasukan
+        LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej
+        WHERE DATE(l.arrival_time) = %s
+    """
+    
+    params = [selected_date]
+    
+    # 2. Ensure there is a leading space before ' AND'
+    if status_filter == 'late':
+        query += " AND TIME(l.arrival_time) > '07:30:00' AND TIME(l.arrival_time) <= '07:45:00'"
+    elif status_filter == 'very_late':
+        query += " AND TIME(l.arrival_time) > '07:45:00'"
+        
+    cursor.execute(query, params)
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    # 3. Proceed to CSV generation
+    si = io.StringIO()
+    cw = csv.writer(si)
+    cw.writerow(['Nama Pelajar', 'Kelas', 'Masa Ketibaan/Submit', 'Sebab', 'Status'])
+    
+    for row in data:
+        cw.writerow([
+            row['nama_pelajar'], 
+            row['kod_pakej'], 
+            row['arrival_time'].strftime('%H:%M:%S') if row['arrival_time'] else '', 
+            row['reason'],
+            row['late_status']
+        ])
+    
+    output = si.getvalue()
+    si.close()
+    
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment;filename=ketibaan_lewat_{selected_date}.csv"}
     )
 
 if __name__ == '__main__':

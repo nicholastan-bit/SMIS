@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 col-md-offset-3">
+        <h2 class="text-center">Rekod Kelewatan</h2>
+        <hr>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">Sila pilih sebab kelewatan:</div>
+            <div class="panel-body">
+                {% if existing_record %}
+                <div class="alert alert-success text-center">
+                    <h4>Rekod anda telah diterima!</h4>
+                    <p>Sebab: <strong>{{ existing_record.reason }}</strong></p>
+                </div>
+                {% else %}
+                <form action="{{ url_for('submit_late') }}" method="POST">
+                    <div class="form-group">
+                        <select name="reason" class="form-control input-lg" required>
+                            <option value="" disabled selected>-- Pilih sebab --</option>
+                            <option value="Bangun lewat">Bangun lewat</option>
+                            <option value="Masalah pengangkutan">Masalah pengangkutan</option>
+                            <option value="Urusan Keluarga">Urusan Keluarga</option>
+                            <option value="Kesihatan">Kesihatan</option>
+                            <option value="Lain-lain">Lain-lain</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg btn-block">Hantar Rekod</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        <a href="{{ url_for('index') }}" class="btn btn-default btn-block">Kembali</a>
+    </div>
+</div>
+{% endblock %}
