@@ -59,9 +59,13 @@
                 <td>{{ s.arrival_time.strftime('%H:%M:%S') }}</td>
                 <td>{{ s.reason }}</td>
                 <td>
-                    <span class="badge {{ 'bg-danger' if s.late_status == 'Sangat Lewat' else 'bg-warning text-dark' }}">
-                        {{ s.late_status }}
-                    </span>
+                    {% if s.late_status == 'Sangat Lewat' %}
+                    <span class="badge bg-danger rounded-pill px-3">Sangat Lewat</span>
+                    {% elif s.late_status == 'Lewat' %}
+                    <span class="badge bg-warning text-dark rounded-pill px-3">Lewat</span>
+                    {% else %}
+                    <span class="badge bg-success rounded-pill px-3">Awal</span>
+                    {% endif %}           
                 </td>
                 <!-- Inside your loop in late_list.html -->
                 <td>

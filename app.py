@@ -8,6 +8,7 @@ import io
 import re
 from werkzeug.utils import secure_filename
 from datetime import date
+from zoneinfo import ZoneInfo
 
 LIMITS_FILE = 'limits.json'
 
@@ -2491,29 +2492,39 @@ def late_list():
     cursor = conn.cursor(dictionary=True)
     
     # Query: Joined 'pakej' to get 'kod_pakej'
+    # Inside your route (late_list)
     query = """
-    SELECT l.late_id, l.arrival_time, l.reason, p.nama_pelajar, p.kelas, pk.kod_pakej,
-           CASE 
-               WHEN TIME(l.arrival_time) > '07:45:00' THEN 'Sangat Lewat'
-               WHEN TIME(l.arrival_time) > '07:30:00' THEN 'Lewat'
-               ELSE 'Early'
-           END AS late_status
-    FROM late_arrivals l
-    JOIN pelajar p ON l.bil_kemasukan = p.bil_kemasukan
-    LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej
-    WHERE DATE(l.arrival_time) = %s
-"""
+        SELECT l.*, p.nama_pelajar, pk.kod_pakej,
+            CASE 
+                WHEN TIME(CONVERT_TZ(l.arrival_time, '+00:00', '+08:00')) > '07:45:00' THEN 'Sangat Lewat'
+                WHEN TIME(CONVERT_TZ(l.arrival_time, '+00:00', '+08:00')) > '07:30:00' THEN 'Lewat'
+                   ELSE 'Awal'
+            END AS late_status
+        FROM late_arrivals l
+        JOIN pelajar p ON l.bil_kemasukan = p.bil_kemasukan
+        LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej
+        WHERE DATE(CONVERT_TZ(l.arrival_time, '+00:00', '+08:00')) = %s
+    """
     params = [selected_date]
     
+    # In late_list route:
     if status_filter == 'late':
-        query += " AND TIME(l.arrival_time) > '07:30:00' AND TIME(l.arrival_time) <= '07:45:00'"
+        query += " AND TIME(CONVERT_TZ(l.arrival_time, '+00:00', '+08:00')) > '07:30:00' AND TIME(CONVERT_TZ(l.arrival_time, '+00:00', '+08:00')) <= '07:45:00'"
     elif status_filter == 'very_late':
-        query += " AND TIME(l.arrival_time) > '07:45:00'"
+        query += " AND TIME(CONVERT_TZ(l.arrival_time, '+00:00', '+08:00')) > '07:45:00'"
         
     query += " ORDER BY l.arrival_time DESC"
     
     cursor.execute(query, params)
     late_students = cursor.fetchall()
+
+    my_tz = ZoneInfo("Asia/Kuala_Lumpur")
+    for s in late_students:
+        if s['arrival_time']:
+            # Ensure the object is treated as UTC first
+            utc_time = s['arrival_time'].replace(tzinfo=ZoneInfo("UTC"))
+            # Convert to Malaysia time
+            s['arrival_time'] = utc_time.astimezone(my_tz)
     
     total_students = len(late_students)
     
@@ -2552,7 +2563,7 @@ def export_late_list():
                CASE 
                    WHEN TIME(l.arrival_time) > '07:45:00' THEN 'Sangat lewat'
                    WHEN TIME(l.arrival_time) > '07:30:00' THEN 'Lewat'
-                   ELSE 'Early'
+                   ELSE 'Awal'
                END AS late_status
         FROM late_arrivals l
         JOIN pelajar p ON l.bil_kemasukan = p.bil_kemasukan
