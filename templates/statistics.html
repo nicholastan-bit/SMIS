@@ -113,7 +113,25 @@
                     <td class="text-center text-primary">{{ grand_total_l or 0 }}</td>
                     <td class="text-center text-danger">{{ grand_total_p or 0 }}</td>
                 
-                    <td class="text-center">{{ grand_total or 0 }}</td>           </tr>
+                    <td class="text-center">{{ grand_total or 0 }}</td>           
+                </tr>
+                <tr class="active">
+                    <th rowspan="2" style="vertical-align: middle; background-color: #f5f5f5;">Pakej/Kelas</th>
+                    {% for cat in categories %}
+                    <th colspan="2" class="text-center" style="background-color: #eef6fc;">{{ cat }}</th>
+                    {% endfor %}
+                    <th colspan="2" class="text-center" style="background-color: #dff0d8;">Jumlah Jantina</th>
+                    <th rowspan="2" class="text-center" style="vertical-align: middle; background-color: #f5f5f5;">
+                        Jumlah Besar</th>
+                </tr>
+                <tr class="active">
+                    {% for cat in categories %}
+                    <th class="text-center text-primary">L</th>
+                    <th class="text-center text-danger">P</th>
+                    {% endfor %}
+                    <th class="text-center text-primary">L</th>
+                    <th class="text-center text-danger">P</th>
+                </tr>
             </tbody>
         </table>
     </div>

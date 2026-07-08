@@ -37,7 +37,13 @@
         <span class="label label-default" style="...">Tiada</span>
         {% endif %}</p>
 
-        
+    <p style="font-size: 16px;">
+        <span>Jumlah Rekod Kelambatan: </span>
+        <span class="badge {{ 'bg-danger' if total_late > 0 else 'bg-success' }}">
+            {{ total_late }}
+        </span>    
+    </p>    
+    
 
     {% if session.get('verified_kp') %}
     <div class="well well-sm"

@@ -7,7 +7,7 @@ import csv
 import io
 import re
 from werkzeug.utils import secure_filename
-from datetime import date
+from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
 LIMITS_FILE = 'limits.json'
@@ -197,6 +197,7 @@ def index():
         'penjaga': False, # Added key
         'koku': False,
     }
+    total_late = 0
     studentName = None
     package_class = None
     className = None
@@ -218,6 +219,12 @@ def index():
             student_id = student['bil_kemasukan']
             completion_status['profil'] = True
             
+
+            cursor.execute("SELECT COUNT(*) as total_late FROM late_arrivals WHERE bil_kemasukan = %s", (student_id,))
+            late_count_data = cursor.fetchone()
+            if late_count_data:
+                total_late = late_count_data['total_late']
+            # ----------------------
             # 1. Check SPM
             cursor.execute("SELECT COUNT(*) as total FROM spm_hasil WHERE bil_kemasukan = %s", (student_id,))
             spm_count = cursor.fetchone()
@@ -268,14 +275,15 @@ def index():
 
         cursor.close()
         conn.close()
-        print(rumahSukan)
+  
     return render_template('index.html',
                            studentName=studentName,
                            completion_status=completion_status, 
                            pkg_cls=package_class, 
                            clsName=className,
                            rumahSukan=rumahSukan,
-                           selected_units=selected_units)
+                           selected_units=selected_units,
+                           total_late=total_late)
 
 @app.route('/register')
 def register_page():
@@ -1175,7 +1183,6 @@ def submit_late():
 
     reason = request.form.get('reason')
     
-    # Simple validation to ensure the reason is one of the allowed options
     allowed_reasons = ["Bangun lewat", "Masalah pengangkutan", "Urusan Keluarga", "Kesihatan", "Lain-lain"]
     if reason not in allowed_reasons:
         flash("Invalid reason selected.", "danger")
@@ -1188,29 +1195,22 @@ def submit_late():
     cursor.execute("SELECT bil_kemasukan FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
     student = cursor.fetchone()
 
-    if not student: 
-        cursor.close()
-        conn.close()
-        flash("Student record not found.", "danger")
-        return redirect(url_for('index'))
-    
-    student_id = student['bil_kemasukan']
-
-    # Insert into database (arrival_time is handled automatically by MySQL)
     try:
-        query = "INSERT INTO late_arrivals (bil_kemasukan, reason) VALUES (%s, %s)"
-        cursor.execute(query, (student_id, reason))
+        # Generate timestamp in Malaysia Time (UTC+8)
+        malaysia_time = datetime.now(ZoneInfo("Asia/Kuala_Lumpur"))
+        
+        query = "INSERT INTO late_arrivals (bil_kemasukan, reason, arrival_time) VALUES (%s, %s, %s)"
+        cursor.execute(query, (student['bil_kemasukan'], reason, malaysia_time))
         conn.commit()
         flash("Late arrival record saved successfully.", "success")
-    except mysql.connector.Error as err:
+    except Exception as e:
         conn.rollback()
-        flash(f"System Error: {err}", "danger")
+        flash(f"Error: {e}", "danger")
     finally:
         cursor.close()
         conn.close()
 
     return redirect(url_for('index'))
-
 
 
 
@@ -2485,47 +2485,57 @@ def export_koku_stats():
 
 @app.route('/late_list', methods=['GET'])
 def late_list():
-    selected_date = request.args.get('date', date.today().strftime('%Y-%m-%d'))
+    # Get all filter parameters from the form
+    search_name = request.args.get('name', '').strip()
+    start_date = request.args.get('start_date', '')
+    end_date = request.args.get('end_date', '')
+    package_filter = request.args.get('package', '')
     status_filter = request.args.get('status', 'all')
-    
+    date_mode = request.args.get('dateMode', 'today')
+
+    # Handle Date Logic
+    if date_mode == 'today' or not start_date:
+        start_date = end_date = date.today().strftime('%Y-%m-%d')
+    elif not end_date:
+        end_date = start_date
+
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     
-    # Query: Joined 'pakej' to get 'kod_pakej'
-    # Inside your route (late_list)
+    # 1. Fetch Packages
+    cursor.execute("SELECT id_pakej, kod_pakej FROM pakej WHERE kod_pakej REGEXP '[0-9]/[0-9]' ORDER BY kod_pakej ASC")
+    all_packages = cursor.fetchall()
+    
+    # 2. Build Query
     query = """
         SELECT l.*, p.nama_pelajar, pk.kod_pakej,
             CASE 
-                WHEN TIME(CONVERT_TZ(l.arrival_time, '+00:00', '+08:00')) > '07:45:00' THEN 'Sangat Lewat'
-                WHEN TIME(CONVERT_TZ(l.arrival_time, '+00:00', '+08:00')) > '07:30:00' THEN 'Lewat'
-                   ELSE 'Awal'
+                WHEN TIME(l.arrival_time) > '07:45:00' THEN 'Sangat Lewat'
+                WHEN TIME(l.arrival_time) > '07:30:00' THEN 'Lewat'
+                ELSE 'Awal'
             END AS late_status
         FROM late_arrivals l
         JOIN pelajar p ON l.bil_kemasukan = p.bil_kemasukan
         LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej
-        WHERE DATE(CONVERT_TZ(l.arrival_time, '+00:00', '+08:00')) = %s
+        WHERE DATE(l.arrival_time) BETWEEN %s AND %s
     """
-    params = [selected_date]
-    
-    # In late_list route:
+    params = [start_date, end_date]
+
+    if search_name:
+        query += " AND p.nama_pelajar LIKE %s"
+        params.append(f"%{search_name}%")
+    if package_filter:
+        query += " AND pk.id_pakej = %s"
+        params.append(package_filter)
     if status_filter == 'late':
-        query += " AND TIME(CONVERT_TZ(l.arrival_time, '+00:00', '+08:00')) > '07:30:00' AND TIME(CONVERT_TZ(l.arrival_time, '+00:00', '+08:00')) <= '07:45:00'"
+        query += " AND TIME(l.arrival_time) > '07:30:00' AND TIME(l.arrival_time) <= '07:45:00'"
     elif status_filter == 'very_late':
-        query += " AND TIME(CONVERT_TZ(l.arrival_time, '+00:00', '+08:00')) > '07:45:00'"
+        query += " AND TIME(l.arrival_time) > '07:45:00'"
         
     query += " ORDER BY l.arrival_time DESC"
     
     cursor.execute(query, params)
     late_students = cursor.fetchall()
-
-    my_tz = ZoneInfo("Asia/Kuala_Lumpur")
-    for s in late_students:
-        if s['arrival_time']:
-            # Ensure the object is treated as UTC first
-            utc_time = s['arrival_time'].replace(tzinfo=ZoneInfo("UTC"))
-            # Convert to Malaysia time
-            s['arrival_time'] = utc_time.astimezone(my_tz)
-    
     total_students = len(late_students)
     
     cursor.close()
@@ -2533,7 +2543,11 @@ def late_list():
     
     return render_template('late_list.html', 
                            late_students=late_students, 
-                           selected_date=selected_date,
+                           all_packages=all_packages,
+                           start_date=start_date,
+                           end_date=end_date,
+                           search_name=search_name,
+                           package_filter=package_filter,
                            status_filter=status_filter,
                            total_students=total_students)
 
@@ -2551,61 +2565,202 @@ def delete_late(arrival_id):
 
 @app.route('/export_late_list', methods=['GET'])
 def export_late_list():
-    selected_date = request.args.get('date', date.today().strftime('%Y-%m-%d'))
+    # 1. Update to match the new filters
+    search_name = request.args.get('name', '').strip()
+    start_date = request.args.get('start_date', '')
+    end_date = request.args.get('end_date', '')
+    package_filter = request.args.get('package', '')
     status_filter = request.args.get('status', 'all')
-    
+    date_mode = request.args.get('dateMode', 'today')
+
+    # Handle Date Logic (must match late_list logic)
+    if date_mode == 'today' or not start_date:
+        start_date = end_date = date.today().strftime('%Y-%m-%d')
+    elif not end_date:
+        end_date = start_date
+
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    
-    # 1. Define the base query clearly with the full CASE statement
+
+    # 2. Rebuild the query using the range-based logic
     query = """
-        SELECT p.nama_pelajar, pk.kod_pakej, l.arrival_time, l.reason,
-               CASE 
-                   WHEN TIME(l.arrival_time) > '07:45:00' THEN 'Sangat lewat'
-                   WHEN TIME(l.arrival_time) > '07:30:00' THEN 'Lewat'
-                   ELSE 'Awal'
-               END AS late_status
+        SELECT l.*, p.nama_pelajar, pk.kod_pakej,
+            CASE 
+                WHEN TIME(l.arrival_time) > '07:45:00' THEN 'Sangat Lewat'
+                WHEN TIME(l.arrival_time) > '07:30:00' THEN 'Lewat'
+                ELSE 'Awal'
+            END AS late_status
         FROM late_arrivals l
         JOIN pelajar p ON l.bil_kemasukan = p.bil_kemasukan
         LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej
-        WHERE DATE(l.arrival_time) = %s
+        WHERE DATE(l.arrival_time) BETWEEN %s AND %s
     """
-    
-    params = [selected_date]
-    
-    # 2. Ensure there is a leading space before ' AND'
+    params = [start_date, end_date]
+
+    if search_name:
+        query += " AND p.nama_pelajar LIKE %s"
+        params.append(f"%{search_name}%")
+    if package_filter:
+        query += " AND pk.id_pakej = %s"
+        params.append(package_filter)
     if status_filter == 'late':
         query += " AND TIME(l.arrival_time) > '07:30:00' AND TIME(l.arrival_time) <= '07:45:00'"
     elif status_filter == 'very_late':
         query += " AND TIME(l.arrival_time) > '07:45:00'"
         
+    query += " ORDER BY l.arrival_time DESC"
+    
     cursor.execute(query, params)
     data = cursor.fetchall()
     cursor.close()
     conn.close()
 
-    # 3. Proceed to CSV generation
+    # 3. Generate CSV
     si = io.StringIO()
     cw = csv.writer(si)
-    cw.writerow(['Nama Pelajar', 'Kelas', 'Masa Ketibaan/Submit', 'Sebab', 'Status'])
+    cw.writerow(['Nama Pelajar', 'Kod Pakej', 'Masa Ketibaan', 'Sebab', 'Status'])
     
     for row in data:
         cw.writerow([
             row['nama_pelajar'], 
             row['kod_pakej'], 
-            row['arrival_time'].strftime('%H:%M:%S') if row['arrival_time'] else '', 
-            row['reason'],
+            row['arrival_time'].strftime('%d-%m-%Y %H:%M:%S'), 
+            row['reason'], 
             row['late_status']
         ])
     
     output = si.getvalue()
-    si.close()
-    
     return Response(
         output,
         mimetype="text/csv",
-        headers={"Content-Disposition": f"attachment;filename=ketibaan_lewat_{selected_date}.csv"}
+        headers={"Content-Disposition": "attachment;filename=senarai_lewat.csv"}
     )
+
+@app.route('/late_statistics', methods=['GET'])
+def late_statistics():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # Capture parameters
+    filter_sem = request.args.get('filter_sem', 'semua')
+    package_filter = request.args.get('package_filter', '')
+    date_mode = request.args.get('date_mode', 'today')
+    start_date = request.args.get('start_date', date.today().strftime('%Y-%m-%d'))
+    end_date = request.args.get('end_date', date.today().strftime('%Y-%m-%d'))
+
+    # Fetch packages
+    cursor.execute("SELECT id_pakej, kod_pakej FROM pakej WHERE kod_pakej REGEXP '[0-9]/[0-9]' ORDER BY kod_pakej ASC")
+    all_packages = cursor.fetchall()
+
+    # Query
+    query = """
+        SELECT pk.kod_pakej, 
+               CASE WHEN TIME(l.arrival_time) > '07:45:00' THEN 'Sangat Lewat' ELSE 'Lewat' END as status,
+               COUNT(*) as total
+        FROM late_arrivals l
+        JOIN pelajar p ON l.bil_kemasukan = p.bil_kemasukan
+        JOIN pakej pk ON p.id_pakej = pk.id_pakej
+        WHERE 1=1
+    """
+    params = []
+
+    # Date Filter
+    if date_mode == 'today':
+        query += " AND DATE(l.arrival_time) = %s"
+        params.append(date.today().strftime('%Y-%m-%d'))
+    elif date_mode == 'range':
+        query += " AND DATE(l.arrival_time) BETWEEN %s AND %s"
+        params.extend([start_date, end_date])
+        
+    # Semester Filter (1, 2, 3)
+    if filter_sem != 'semua':
+        query += " AND p.semester = %s"
+        params.append(filter_sem)
+        
+    # Package Filter
+    if package_filter:
+        query += " AND pk.id_pakej = %s"
+        params.append(package_filter)
+        
+    query += " GROUP BY pk.kod_pakej, status"
+    cursor.execute(query, params)
+    data = cursor.fetchall()
+    
+    # Process into matrix
+    matrix = {}
+    for row in data:
+        pkg = row['kod_pakej']
+        if pkg not in matrix: matrix[pkg] = {'Lewat': 0, 'Sangat Lewat': 0}
+        matrix[pkg][row['status']] = row['total']
+        
+    cursor.close()
+    conn.close()
+    
+    return render_template('late_statistics.html', **locals())
+
+@app.route('/export_late_statistics', methods=['GET'])
+def export_late_statistics():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # 1. Capture same parameters as late_statistics
+    filter_sem = request.args.get('filter_sem', 'semua')
+    package_filter = request.args.get('package_filter', '')
+    date_mode = request.args.get('date_mode', 'today')
+    start_date = request.args.get('start_date', date.today().strftime('%Y-%m-%d'))
+    end_date = request.args.get('end_date', date.today().strftime('%Y-%m-%d'))
+
+    # 2. Rebuild the exact same query
+    query = """
+        SELECT pk.kod_pakej, 
+               CASE WHEN TIME(l.arrival_time) > '07:45:00' THEN 'Sangat Lewat' ELSE 'Lewat' END as status,
+               COUNT(*) as total
+        FROM late_arrivals l
+        JOIN pelajar p ON l.bil_kemasukan = p.bil_kemasukan
+        JOIN pakej pk ON p.id_pakej = pk.id_pakej
+        WHERE 1=1
+    """
+    params = []
+    
+    if date_mode == 'today':
+        query += " AND DATE(l.arrival_time) = %s"
+        params.append(date.today().strftime('%Y-%m-%d'))
+    elif date_mode == 'range':
+        query += " AND DATE(l.arrival_time) BETWEEN %s AND %s"
+        params.extend([start_date, end_date])
+        
+    if filter_sem != 'semua':
+        query += " AND p.semester = %s"
+        params.append(filter_sem)
+    if package_filter:
+        query += " AND pk.id_pakej = %s"
+        params.append(package_filter)
+        
+    query += " GROUP BY pk.kod_pakej, status"
+    cursor.execute(query, params)
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    # 3. Process into Matrix for CSV
+    matrix = {}
+    for row in data:
+        pkg = row['kod_pakej']
+        if pkg not in matrix: matrix[pkg] = {'Lewat': 0, 'Sangat Lewat': 0}
+        matrix[pkg][row['status']] = row['total']
+
+    # 4. Generate CSV
+    si = io.StringIO()
+    cw = csv.writer(si)
+    cw.writerow(['Pakej', 'Lewat', 'Sangat Lewat', 'Jumlah'])
+    
+    for pkg, stats in matrix.items():
+        lewat = stats['Lewat']
+        sangat_lewat = stats['Sangat Lewat']
+        cw.writerow([pkg, lewat, sangat_lewat, lewat + sangat_lewat])
+    
+    return Response(si.getvalue(), mimetype="text/csv", 
+                    headers={"Content-Disposition": "attachment;filename=statistik_lewat.csv"})
 
 if __name__ == '__main__':
     app.run(debug=True)

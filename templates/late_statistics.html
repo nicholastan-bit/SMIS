@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h2>Statistik Kelambatan Pelajar</h2>
+    
+    <div class="card card-body bg-light mb-3">
+        <form method="GET" class="row g-3 align-items-end">
+    
+            <div class="col-md-2">
+                <label class="form-label">Mode Tarikh:</label>
+                <select name="date_mode" id="dateMode" class="form-control" onchange="updateDateUI()">
+                    <option value="today" {% if date_mode=='today' %}selected{% endif %}>Hari Ini</option>
+                    <option value="overall" {% if date_mode=='overall' %}selected{% endif %}>Keseluruhan</option>
+                    <option value="range" {% if date_mode=='range' %}selected{% endif %}>Julat (Start to End)</option>
+                </select>
+            </div>
+    
+            <div class="col-md-2" id="startDiv" style="display:none;">
+                <label class="form-label">Mula:</label>
+                <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+            </div>
+    
+            <div class="col-md-2" id="endDiv" style="display:none;">
+                <label class="form-label">Akhir:</label>
+                <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+            </div>
+    
+            <div class="col-md-2">
+                <label class="form-label">Semester:</label>
+                <select name="filter_sem" class="form-control">
+                    <option value="semua">Semua</option>
+                    <option value="1" {% if filter_sem=='1' %}selected{% endif %}>1</option>
+                    <option value="2" {% if filter_sem=='2' %}selected{% endif %}>2</option>
+                    <option value="3" {% if filter_sem=='3' %}selected{% endif %}>3</option>
+                </select>
+            </div>
+    
+            <div class="col-md-2">
+                <label class="form-label">Pakej:</label>
+                <select name="package_filter" class="form-control">
+                    <option value="">Semua Pakej</option>
+                    {% for p in all_packages %}
+                    <option value="{{ p.id_pakej }}" {% if package_filter|string==p.id_pakej|string %}selected{% endif %}>
+                        {{ p.kod_pakej }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+    
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary w-100">Tapis</button>
+                <a href="{{ url_for('export_late_statistics', 
+                                        date_mode=date_mode, 
+                                        start_date=start_date, 
+                                        end_date=end_date, 
+                                        filter_sem=filter_sem, 
+                                        package_filter=package_filter) }}" class="btn btn-success w-100 text-nowrap">
+                    <i class="bi bi-download"></i> Eksport
+                </a>
+            </div>
+    
+        </form>
+        </div>
+
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr class="active">
+                <th>Pakej</th>
+                <th class="text-center">Lewat</th>
+                <th class="text-center">Sangat Lewat</th>
+                <th class="text-center">Jumlah</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pkg, stats in matrix.items() %}
+            <tr>
+                <td><strong>{{ pkg }}</strong></td>
+                <td class="text-center">{{ stats['Lewat'] }}</td>
+                <td class="text-center">{{ stats['Sangat Lewat'] }}</td>
+                <td class="text-center"><strong>{{ stats['Lewat'] + stats['Sangat Lewat'] }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<script>
+    function updateDateUI() {
+        const mode = document.getElementById('dateMode').value;
+        document.getElementById('startDiv').style.display = (mode === 'range') ? 'block' : 'none';
+        document.getElementById('endDiv').style.display = (mode === 'range') ? 'block' : 'none';
+    }
+    window.onload = updateDateUI;
+</script>
+{% endblock %}

@@ -2,42 +2,87 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h2>Senarai Pelajar Lewat</h2>
 
-    <div class="alert alert-info">
-        Jumlah pelajar lewat pada {{ selected_date }}: <strong>{{ total_students }}</strong>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Senarai Pelajar Lewat</h2>
+
+        <div class="alert alert-info mb-0 py-2 px-3 data-summary-box">
+            <i class="bi bi-info-circle me-1"></i>
+            Jumlah Pelajar Lewat:
+            <strong>{{ total_students }}</strong>
+        </div>
     </div>
 
-    <div class="card bg-light border-0 p-3 mb-4 shadow-sm">
-        <form method="GET" class="row g-3 align-items-center">
-            <div class="col-auto">
-                <label class="visually-hidden">Tarikh</label>
-                <input type="date" name="date" class="form-control" value="{{ selected_date }}">
+    <div class="card mb-4 p-4 bg-light border-0 shadow-sm">
+        <form method="GET" class="row g-3 align-items-end">
+
+            <div class="col-xl-2 col-md-6">
+                <label class="form-label text-muted small fw-bold">Cari Nama</label>
+                <input type="text" name="name" class="form-control" value="{{ search_name }}" placeholder="Nama...">
             </div>
-    
-            <div class="col-auto">
-                <label class="visually-hidden">Status</label>
+
+            <div class="col-xl-2 col-md-6">
+                <label class="form-label text-muted small fw-bold">Pilihan Tarikh</label>
+                <select name="dateMode" id="dateMode" class="form-select" onchange="toggleDateInputs()">
+                    <option value="today" {% if start_date==end_date %}selected{% endif %}>Hari Ini</option>
+                    <option value="range" {% if start_date !=end_date %}selected{% endif %}>Julat Tarikh</option>
+                </select>
+            </div>
+
+            <div class="col-xl-2 col-md-6" id="startDateDiv">
+                <label class="form-label text-muted small fw-bold">Tarikh Mula</label>
+                <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+            </div>
+
+            <div class="col-xl-2 col-md-6" id="endDateDiv">
+                <label class="form-label text-muted small fw-bold">Tarikh Akhir</label>
+                <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+            </div>
+
+            <div class="col-xl-2 col-md-6">
+                <label class="form-label text-muted small fw-bold">Pakej</label>
+                <select name="package" class="form-select">
+                    <option value="">Semua Pakej</option>
+                    {% for p in all_packages %}
+                    <option value="{{ p.id_pakej }}" {% if package_filter|string==p.id_pakej|string %}selected{% endif
+                        %}>
+                        {{ p.kod_pakej }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-xl-2 col-md-6">
+                <label class="form-label text-muted small fw-bold">Status</label>
                 <select name="status" class="form-select">
                     <option value="all" {% if status_filter=='all' %}selected{% endif %}>Semua Status</option>
-                    <option value="late" {% if status_filter=='late' %}selected{% endif %}>Lewat (> 07:30)</option>
-                    <option value="very_late" {% if status_filter=='very_late' %}selected{% endif %}>Sangat lewat (> 07:45)
+                    <option value="late" {% if status_filter=='late' %}selected{% endif %}>Lewat</option>
+                    <option value="very_late" {% if status_filter=='very_late' %}selected{% endif %}>Sangat Lewat
                     </option>
                 </select>
             </div>
-    
-            <div class="col-auto">
-                <button type="submit" class="btn btn-primary px-4">
-                    <i class="bi bi-filter"></i> Tapis
+
+            <div class="col-12 d-flex justify-content-end gap-2 mt-3">
+                <a href="{{ url_for('late_list') }}" class="btn btn-outline-secondary px-4" title="Set Semula">
+                    Reset
+                </a>
+                <a href="{{ url_for('export_late_list', start_date=start_date, end_date=end_date, name=search_name, package=package_filter, status=status_filter) }}"
+                    class="btn btn-success px-4" title="Eksport ke CSV">
+                    <i class="bi bi-download me-1"></i> Export CSV
+                </a>
+                <button type="submit" class="btn btn-primary px-5" title="Tapis Hasil">
+                    Tapis
                 </button>
             </div>
-    
-            <div class="col-auto ms-auto">
-                <a href="{{ url_for('export_late_list', date=selected_date) }}" class="btn btn-success px-4">
-                    <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
-                </a>
-            </div>
+
         </form>
-        </div>
+    </div>
+
+    <div class="table-responsive shadow-sm rounded">
+        <table class="table table-striped table-hover align-middle mb-0">
+        </table>
+    </div>
+</div>
 
     <table class="table table-bordered table-striped">
         <thead>
@@ -52,30 +97,46 @@
             </tr>
             
             <!-- Inside <tbody> / for loop -->
-            {% for s in late_students %}
-            <tr>
-                <td>{{ s.nama_pelajar }}</td>
-                <td>{{ s.kod_pakej }}</td>
-                <td>{{ s.arrival_time.strftime('%H:%M:%S') }}</td>
-                <td>{{ s.reason }}</td>
-                <td>
-                    {% if s.late_status == 'Sangat Lewat' %}
-                    <span class="badge bg-danger rounded-pill px-3">Sangat Lewat</span>
-                    {% elif s.late_status == 'Lewat' %}
-                    <span class="badge bg-warning text-dark rounded-pill px-3">Lewat</span>
-                    {% else %}
-                    <span class="badge bg-success rounded-pill px-3">Awal</span>
-                    {% endif %}           
-                </td>
-                <!-- Inside your loop in late_list.html -->
-                <td>
-                    <form action="{{ url_for('delete_late', arrival_id=s.late_id) }}" method="POST"
-                        onsubmit="return confirm('Adakah anda pasti?');">
-                        <button type="submit" class="btn btn-danger btn-sm">Padam</button>
-                    </form>
-                </td>
-            </tr>    {% endfor %}
+                {% for s in late_students %}
+                <tr>
+                    <td>{{ s.nama_pelajar }}</td>
+                    <td>{{ s.kod_pakej }}</td>
+                    <td>{{ s.arrival_time.strftime('%d-%m-%Y %H:%M:%S') }}</td>
+                    <td>{{ s.reason }}</td>
+                    <td>
+                        {% if s.late_status == 'Sangat Lewat' %}
+                        <span class="badge bg-danger rounded-pill px-3">Sangat Lewat</span>
+                        {% elif s.late_status == 'Lewat' %}
+                        <span class="badge bg-warning text-dark rounded-pill px-3">Lewat</span>
+                        {% else %}
+                        <span class="badge bg-success rounded-pill px-3">Awal</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <form action="{{ url_for('delete_late', arrival_id=s.late_id) }}" method="POST"
+                            onsubmit="return confirm('Adakah anda pasti?');">
+                            <button type="submit" class="btn btn-danger btn-sm">Padam</button>
+                        </form>
+                    </td>
+                </tr>    
+                {% endfor %}
         </tbody>
     </table>
 </div>
+<script>
+    function toggleDateInputs() {
+        const mode = document.getElementById('dateMode').value;
+        const startDiv = document.getElementById('startDateDiv');
+        const endDiv = document.getElementById('endDateDiv');
+        if (mode === 'today') {
+            startDiv.style.display = 'none';
+            endDiv.style.display = 'none';
+        } else {
+            startDiv.style.display = 'block';
+            endDiv.style.display = 'block';
+        }
+    }
+    // Run on load
+    window.onload = toggleDateInputs;
+</script>
 {% endblock %}

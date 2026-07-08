@@ -63,6 +63,8 @@
     
                     <li><a href="{{ url_for('koku_statistics') }}">Jadual Kokurikulum</a></li>
 
+                    <li><a href="{{ url_for('late_statistics') }}">Jadual Kehadiran Lewat</a></li>
+
                     {% if session.get('admin_logged') %}
                     <li><a href="{{ url_for('view_students') }}">Senarai Pelajar</a></li>
                     {% endif %}
