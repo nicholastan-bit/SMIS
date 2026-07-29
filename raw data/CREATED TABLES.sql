@@ -112,7 +112,7 @@ CREATE TABLE late_arrivals (
 
 CREATE TABLE ubk_records (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    bil_pelajar INT,
+    bil_kemasukan INT,
     no_telefon_pelajar VARCHAR(20),
     perkara TEXT,
     nama_kaunselor VARCHAR(100)

@@ -1220,34 +1220,33 @@ def ubk_form():
 
     if not kp:
         flash("Sila log masuk dahulu.", "danger")
-        return redirect(url_for('gateway'))
+        return redirect(url_for('index'))
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
+    telefon_pelajar = ''
+
     try:
-        # First, fetch student details (bil_kemasukan and telefonNo) using no_kp_pelajar
+        # Fetch student details using bil_kemasukan and telefonNo
         cursor.execute("SELECT bil_kemasukan, telefonNo FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
         student = cursor.fetchone()
         
-        # Clear any unread rows from this query so the cursor is clear for next operations
-        cursor.fetchall()
-
         if not student:
             flash("Maklumat pelajar tidak dijumpai.", "danger")
-            return redirect(url_for('gateway'))
+            return redirect(url_for('index'))
 
         bil_kemasukan = student['bil_kemasukan']
+        telefon_pelajar = student['telefonNo'] if student['telefonNo'] else ''
 
         if request.method == 'POST':
             nama_kaunselor = request.form.get('nama_kaunselor')
             no_telefon = request.form.get('no_telefon_pelajar')
             
-            # Since 'perkara' is multi-select/checkboxes, getlist() grabs all selected options
             perkara_list = request.form.getlist('perkara')
-            perkara_str = ", ".join(perkara_list) # Combine choices into a single comma-separated string
+            perkara_str = ", ".join(perkara_list)
 
-            # Insert into ubk_records including bil_kemasukan
+            # Insert into ubk_records using bil_kemasukan
             query = """
                 INSERT INTO ubk_records (bil_kemasukan, no_telefon_pelajar, perkara, nama_kaunselor) 
                 VALUES (%s, %s, %s, %s)
@@ -1258,9 +1257,6 @@ def ubk_form():
             flash("Rekod UBK berjaya disimpan!", "success")
             return redirect(url_for('ubk_form'))
 
-        # GET Request: Get phone number if available
-        telefon_pelajar = student['telefonNo'] if student['telefonNo'] else ''
-
     except Exception as e:
         conn.rollback()
         flash(f"Ralat pangkalan data: {e}", "danger")
@@ -1268,7 +1264,6 @@ def ubk_form():
         cursor.close()
         conn.close()
 
-    # Predefined options for dropdowns
     perkara_options = [
         "Konsultasi", "Amalan Baik", "Individu", "Kelompok", "IMK", 
         "Kesejahteraan Emosi", "Kerjaya", "Komunikasi", "Hilang Kad Matrik", 
@@ -1279,8 +1274,7 @@ def ubk_form():
     return render_template('ubk_form.html', 
                            telefon_pelajar=telefon_pelajar, 
                            perkara_options=perkara_options, 
-                           kaunselor_options=COUNSELLORS
-)
+                           kaunselor_options=COUNSELLORS)
 
 # =====================================================================# =====================================================================
 # =====================================================================# =====================================================================
