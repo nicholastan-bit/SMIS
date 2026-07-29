@@ -10,6 +10,12 @@ from werkzeug.utils import secure_filename
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
+app = Flask(__name__)
+app.secret_key = 'smis_admin_secret_key'
+
+def get_db_connection():
+    return mysql.connector.connect(**db_config)
+
 LIMITS_FILE = 'limits.json'
 
 PACKAGE_LIMITS = {
@@ -46,6 +52,8 @@ PACKAGE_LIMITS = {
     'SK_PING PONG': 80
 }
 DEFAULT_LIMIT = 40
+
+COUNSELLORS = ["Noraizan Binti Mohd Noh" , "Nurul Hisham Bin Zakaria"]
 
 def get_limits():
     # If the file doesn't exist, create it with your default dictionary
@@ -88,12 +96,6 @@ def check_activity_limit(unit_id, unit_name, unit_type):
     limit = limits.get(full_key, 60) 
     
     return current_count < limit
-
-app = Flask(__name__)
-app.secret_key = 'smis_admin_secret_key'
-
-def get_db_connection():
-    return mysql.connector.connect(**db_config)
 
 # Tambah laluan folder baru untuk dokumen tambahan di bawah konfigurasi sedia ada
 UPLOAD_FOLDER_SPM = os.path.join(app.root_path, 'static', 'uploads', 'spm_slips')
@@ -1212,16 +1214,95 @@ def submit_late():
 
     return redirect(url_for('index'))
 
+@app.route('/ubk/form', methods=['GET', 'POST'])
+def ubk_form():
+    kp = session.get('verified_kp')
 
+    if not kp:
+        flash("Sila log masuk dahulu.", "danger")
+        return redirect(url_for('gateway'))
 
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
 
-# =====================================================================
-# --- ADMINISTRATIVE CONTROL PANEL MODULES ---
-# =====================================================================
+    try:
+        # First, fetch student details (bil_kemasukan and telefonNo) using no_kp_pelajar
+        cursor.execute("SELECT bil_kemasukan, telefonNo FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
+        student = cursor.fetchone()
+        
+        # Clear any unread rows from this query so the cursor is clear for next operations
+        cursor.fetchall()
 
+        if not student:
+            flash("Maklumat pelajar tidak dijumpai.", "danger")
+            return redirect(url_for('gateway'))
 
+        bil_kemasukan = student['bil_kemasukan']
 
+        if request.method == 'POST':
+            nama_kaunselor = request.form.get('nama_kaunselor')
+            no_telefon = request.form.get('no_telefon_pelajar')
+            
+            # Since 'perkara' is multi-select/checkboxes, getlist() grabs all selected options
+            perkara_list = request.form.getlist('perkara')
+            perkara_str = ", ".join(perkara_list) # Combine choices into a single comma-separated string
 
+            # Insert into ubk_records including bil_kemasukan
+            query = """
+                INSERT INTO ubk_records (bil_kemasukan, no_telefon_pelajar, perkara, nama_kaunselor) 
+                VALUES (%s, %s, %s, %s)
+            """
+            cursor.execute(query, (bil_kemasukan, no_telefon, perkara_str, nama_kaunselor))
+            conn.commit()
+            
+            flash("Rekod UBK berjaya disimpan!", "success")
+            return redirect(url_for('ubk_form'))
+
+        # GET Request: Get phone number if available
+        telefon_pelajar = student['telefonNo'] if student['telefonNo'] else ''
+
+    except Exception as e:
+        conn.rollback()
+        flash(f"Ralat pangkalan data: {e}", "danger")
+    finally:
+        cursor.close()
+        conn.close()
+
+    # Predefined options for dropdowns
+    perkara_options = [
+        "Konsultasi", "Amalan Baik", "Individu", "Kelompok", "IMK", 
+        "Kesejahteraan Emosi", "Kerjaya", "Komunikasi", "Hilang Kad Matrik", 
+        "Program Kaunseling", "kehadiran Perjumpaan Bola Jaring", "Pameran Kerjaya", 
+        "Datang Lambat", "Kaunseling Individu", "Kaunseling Kelompok", "Perjumpaan PRS"
+    ]
+
+    return render_template('ubk_form.html', 
+                           telefon_pelajar=telefon_pelajar, 
+                           perkara_options=perkara_options, 
+                           kaunselor_options=COUNSELLORS
+)
+
+# =====================================================================# =====================================================================
+# =====================================================================# =====================================================================
+# =====================================================================# =====================================================================
+# =====================================================================# =====================================================================
+# =====================================================================# =====================================================================
+# =====================================================================# =====================================================================
+# =====================================================================# =====================================================================
+# =====================================================================# =====================================================================
+# =====================================================================# =====================================================================
+# =====================================================================# =====================================================================
+# --- ADMINISTRATIVE SECTION BELOW ---
+# =====================================================================# =====================================================================
+# =====================================================================# =====================================================================
+# =====================================================================# =====================================================================
+# =====================================================================# =====================================================================
+# =====================================================================# =====================================================================
+# =====================================================================# =====================================================================
+# =====================================================================# =====================================================================
+# =====================================================================# =====================================================================
+# =====================================================================# =====================================================================
+# =====================================================================# =====================================================================
 
 
 @app.route('/admin/students-list')
@@ -1847,43 +1928,47 @@ def statistics():
 
 @app.route('/admin/export-statistics')
 def admin_export_statistics():
-    # 1. Capture filters (same as in statistics route)
     mode = request.args.get('mode', 'pakej')
     category = request.args.get('type', 'bangsa')
     filter_stream = request.args.get('filter_stream', 'semua')
     filter_sem = request.args.get('filter_sem', 'semua')
     status_study = request.args.get('status_study', 'all')
 
-    # 2. Get the pre-calculated data using the helper
     data = get_statistics_data(mode, category, filter_stream, filter_sem, status_study)
     
-    # 3. Generate CSV in memory
     si = io.StringIO()
     cw = csv.writer(si)
     
-    # Create Header
-    # Format: Group, Category/Gender (L/P), Total
-    header = [mode.capitalize(), 'Kategori', 'Lelaki', 'Perempuan', 'Jumlah']
-    cw.writerow(header)
+    # 1. Dynamic Header Row 1: Categories
+    header1 = [mode.capitalize()]
+    for cat in data['categories']: header1.extend([cat, '']) # Merge L/P under category
+    header1.extend(['Jumlah Jantina', '', 'Jumlah Besar'])
+    cw.writerow(header1)
     
-    # Data rows
+    # 2. Dynamic Header Row 2: L/P
+    header2 = ['']
+    for cat in data['categories']: header2.extend(['L', 'P'])
+    header2.extend(['L', 'P', ''])
+    cw.writerow(header2)
+    
+    # 3. Data Rows
     for item in data['items']:
         iid = str(item['id'])
-        label = item['label']
+        row = [item['label']]
         for cat in data['categories']:
-            l = data['counts'][iid][cat]['LELAKI']
-            p = data['counts'][iid][cat]['PEREMPUAN']
-            cw.writerow([label, cat, l, p, l + p])
+            row.extend([data['counts'][iid][cat]['LELAKI'], data['counts'][iid][cat]['PEREMPUAN']])
+        row.extend([data['row_gender_totals'][iid]['L'], data['row_gender_totals'][iid]['P'], data['row_totals'][iid]])
+        cw.writerow(row)
     
-    # Add Totals row at the bottom
-    cw.writerow(['JUMLAH KESELURUHAN', '', data['grand_total_l'], data['grand_total_p'], data['grand_total']])
+    # 4. Footer Totals Row
+    footer = ['JUMLAH']
+    for cat in data['categories']:
+        footer.extend([data['col_totals'][cat]['LELAKI'], data['col_totals'][cat]['PEREMPUAN']])
+    footer.extend([data['grand_total_l'], data['grand_total_p'], data['grand_total']])
+    cw.writerow(footer)
     
-    output = si.getvalue()
-    return Response(
-        output,
-        mimetype="text/csv",
-        headers={"Content-Disposition": f"attachment;filename=statistik_{mode}.csv"}
-    )
+    return Response(si.getvalue(), mimetype="text/csv", 
+                    headers={"Content-Disposition": f"attachment;filename=statistik_{mode}.csv"})
 
 @app.route('/admin/toggle_status/<int:student_id>', methods=['POST'])
 def toggle_status(student_id):
@@ -2688,10 +2773,23 @@ def late_statistics():
     
     # Process into matrix
     matrix = {}
+    grand_lewat = 0
+    grand_sangat_lewat = 0
+    
     for row in data:
         pkg = row['kod_pakej']
         if pkg not in matrix: matrix[pkg] = {'Lewat': 0, 'Sangat Lewat': 0}
-        matrix[pkg][row['status']] = row['total']
+        
+        count = row['total']
+        matrix[pkg][row['status']] += count
+        
+        # Accumulate grand totals
+        if row['status'] == 'Lewat':
+            grand_lewat += count
+        else:
+            grand_sangat_lewat += count
+            
+    grand_total = grand_lewat + grand_sangat_lewat
         
     cursor.close()
     conn.close()
@@ -2761,6 +2859,147 @@ def export_late_statistics():
     
     return Response(si.getvalue(), mimetype="text/csv", 
                     headers={"Content-Disposition": "attachment;filename=statistik_lewat.csv"})
+
+@app.route('/ubk_list', methods=['GET'])
+def ubk_list():
+    # Get filter parameters from query arguments
+    search_name = request.args.get('name', '').strip()
+    package_filter = request.args.get('package', '')
+    counselor_filter = request.args.get('counselor', '')
+    perkara_filter = request.args.get('perkara', '')  # Added perkara filter
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # 1. Fetch Packages for filter dropdown
+    cursor.execute("SELECT id_pakej, kod_pakej FROM pakej WHERE kod_pakej REGEXP '[0-9]/[0-9]' ORDER BY kod_pakej ASC")
+    all_packages = cursor.fetchall()
+    
+    # Predefined options for perkara dropdown and form
+    perkara_options = [
+        "Konsultasi", "Amalan Baik", "Individu", "Kelompok", "IMK", 
+        "Kesejahteraan Emosi", "Kerjaya", "Komunikasi", "Hilang Kad Matrik", 
+        "Program Kaunseling", "kehadiran Perjumpaan Bola Jaring", "Pameran Kerjaya", 
+        "Datang Lambat", "Kaunseling Individu", "Kaunseling Kelompok", "Perjumpaan PRS"
+    ]
+
+    kaunselor_options = COUNSELLORS
+
+    # 2. Build Query joining with 'pelajar' and 'pakej' tables
+    query = """
+        SELECT u.*, p.nama_pelajar, pk.kod_pakej
+        FROM ubk_records u
+        JOIN pelajar p ON u.bil_kemasukan = p.bil_kemasukan
+        LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej
+        WHERE 1=1
+    """
+    params = []
+
+    if search_name:
+        query += " AND p.nama_pelajar LIKE %s"
+        params.append(f"%{search_name}%")
+    if package_filter:
+        query += " AND pk.id_pakej = %s"
+        params.append(package_filter)
+    if counselor_filter:
+        query += " AND u.nama_kaunselor = %s"
+        params.append(counselor_filter)
+    if perkara_filter:
+        # Use LIKE since 'perkara' can be a comma-separated string of multiple items
+        query += " AND u.perkara LIKE %s"
+        params.append(f"%{perkara_filter}%")
+        
+    query += " ORDER BY u.id DESC"
+    
+    cursor.execute(query, params)
+    ubk_records = cursor.fetchall()
+    total_records = len(ubk_records)
+    
+    cursor.close()
+    conn.close()
+
+    return render_template('ubk_list.html', 
+                           ubk_records=ubk_records, 
+                           all_packages=all_packages,
+                           kaunselor_options=kaunselor_options,
+                           perkara_options=perkara_options,
+                           search_name=search_name,
+                           package_filter=package_filter,
+                           counselor_filter=counselor_filter,
+                           perkara_filter=perkara_filter,
+                           total_records=total_records)
+
+@app.route('/export_ubk_records', methods=['GET'])
+def export_ubk_records():
+    # Optional security check (uncomment if you use admin protection)
+    # if not session.get('is_admin'):
+    #     flash("Sila log masuk sebagai admin dahulu.", "danger")
+    #     return redirect(url_for('adminlogin'))
+
+    # 1. Capture the exact same filter parameters from request arguments
+    search_name = request.args.get('name', '').strip()
+    package_filter = request.args.get('package', '')
+    counselor_filter = request.args.get('counselor', '')
+    perkara_filter = request.args.get('perkara', '')
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # 2. Rebuild the exact same filtered query
+    query = """
+        SELECT u.*, p.nama_pelajar, pk.kod_pakej
+        FROM ubk_records u
+        JOIN pelajar p ON u.bil_kemasukan = p.bil_kemasukan
+        LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej
+        WHERE 1=1
+    """
+    params = []
+
+    if search_name:
+        query += " AND p.nama_pelajar LIKE %s"
+        params.append(f"%{search_name}%")
+    if package_filter:
+        query += " AND pk.id_pakej = %s"
+        params.append(package_filter)
+    if counselor_filter:
+        query += " AND u.nama_kaunselor = %s"
+        params.append(counselor_filter)
+    if perkara_filter:
+        query += " AND u.perkara LIKE %s"
+        params.append(f"%{perkara_filter}%")
+        
+    query += " ORDER BY u.id DESC"
+    
+    cursor.execute(query, params)
+    ubk_records = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+
+    # 3. Generate CSV in-memory using StringIO and csv.writer
+    si = io.StringIO()
+    cw = csv.writer(si)
+    
+    # Write header row
+    cw.writerow(['ID', 'Nama Pelajar', 'Pakej', 'No. Telefon', 'Perkara', 'Nama Kaunselor'])
+    
+    # Write data rows
+    for row in ubk_records:
+        cw.writerow([
+            row['id'],
+            row['nama_pelajar'],
+            row['kod_pakej'] if row['kod_pakej'] else '-',
+            ('+60' + row['no_telefon_pelajar']) if row['no_telefon_pelajar'] else '-',
+            row['perkara'],
+            row['nama_kaunselor']
+        ])
+    
+    # 4. Return as a downloadable CSV response
+    return Response(
+        si.getvalue(), 
+        mimetype="text/csv", 
+        headers={"Content-Disposition": "attachment;filename=rekod_ubk.csv"}
+    )
 
 if __name__ == '__main__':
     app.run(debug=True)

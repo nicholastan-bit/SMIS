@@ -2,19 +2,20 @@
 
 {% block content %}
 <div class="jumbotron text-center"
-    style="padding: 30px 15px; margin-bottom: 25px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-    <h1>
+    style="padding: 30px 15px; margin-bottom: 25px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); background-color: #68acaf9c; border: 1px solid #faebcc;">
+    <h1 style="color: #333;">
         <img src="{{ url_for('static', filename='ktesi_logo.png') }}" alt="Logo"
             style="height: 50px; vertical-align: middle; margin-right: 15px;">
-    
+
         {% if studentName and studentName|lower != 'null' and studentName|trim != '' %}
         Selamat Datang, {{ studentName }}
         {% else %}
         Selamat Datang
         {% endif %}
-        </h1>
+    </h1>
     <p style="font-size: 18px; color: #666;">KTESI School Management Information System (SMIS)</p>
-    <p style="font-size: 16px;">
+
+    <p style="font-size: 15px; margin-bottom: 10px;">
         Status Semasa:
         {% if session.get('verified_kp') %}
         <span class="label label-success" style="padding: 5px 10px;">PELAJAR LOG MASUK</span>
@@ -22,37 +23,39 @@
         <span class="label label-default" style="padding: 5px 10px;">TIADA AKSES</span>
         {% endif %}
     </p>
-    <p style="font-size: 16px; gap: 15px;">
-        <span>Kelas:</span>
-        {% if clsName %}
-        <span class="label label-success" style="...">{{ clsName }}</span>
-        {% else %}
-        <span class="label label-default" style="...">Tiada</span>
-        {% endif %}
-    
-        <span>Pakej:</span>
-        {% if pkg_cls %}
-        <span class="label label-success" style="...">{{ pkg_cls.name }}</span>
-        {% else %}
-        <span class="label label-default" style="...">Tiada</span>
-        {% endif %}</p>
 
-    <p style="font-size: 16px;">
+    <p style="font-size: 15px; margin-bottom: 15px;">
+        <span style="margin-right: 15px;">Kelas:
+            {% if clsName %}
+            <span class="label label-success">{{ clsName }}</span>
+            {% else %}
+            <span class="label label-default">Tiada</span>
+            {% endif %}
+        </span>
+        <span>Pakej:
+            {% if pkg_cls %}
+            <span class="label label-success">{{ pkg_cls.name }}</span>
+            {% else %}
+            <span class="label label-default">Tiada</span>
+            {% endif %}
+        </span>
+    </p>
+
+    <p style="font-size: 15px;">
         <span>Jumlah Rekod Kelambatan: </span>
-        <span class="badge {{ 'bg-danger' if total_late > 0 else 'bg-success' }}">
+        <span class="badge {{ 'bg-danger' if total_late > 0 else 'bg-success' }}" style="padding: 5px 10px;">
             {{ total_late }}
-        </span>    
-    </p>    
-    
+        </span>
+    </p>
 
     {% if session.get('verified_kp') %}
     <div class="well well-sm"
-        style="background-color: #ffffff; margin-top: 20px; margin-bottom: 5px; border-color: #e3e3e3;">
+        style="background-color: #ffffff; margin-top: 20px; margin-bottom: 5px; border-color: #e3e3e3; text-align: left; padding: 15px;">
         <h5 style="margin-top: 5px; margin-bottom: 12px; font-weight: bold; color: #444;">
             <span class="glyphicon glyphicon-tasks"></span> Status Kelengkapan Pendaftaran Pelajar:
         </h5>
         <ul class="list-inline" style="margin-bottom: 5px; font-size: 13px;">
-            <li style="margin-right: 15px;">
+            <li style="margin-right: 15px; margin-bottom: 5px;">
                 <span class="{{ 'text-success' if completion_status.profil else 'text-danger' }}"
                     style="font-weight: 600;">
                     <span
@@ -60,14 +63,15 @@
                     Maklumat Peribadi
                 </span>
             </li>
-            <li style="margin-right: 15px;">
-                <span class="{{ 'text-success' if completion_status.tambahan else 'text-danger' }}" style="font-weight: 600;">
+            <li style="margin-right: 15px; margin-bottom: 5px;">
+                <span class="{{ 'text-success' if completion_status.tambahan else 'text-danger' }}"
+                    style="font-weight: 600;">
                     <span
                         class="glyphicon {{ 'glyphicon-ok-sign' if completion_status.tambahan else 'glyphicon-remove-sign' }}"></span>
                     Dokumen Pelajar
                 </span>
             </li>
-            <li style="margin-right: 15px;">
+            <li style="margin-right: 15px; margin-bottom: 5px;">
                 <span class="{{ 'text-success' if completion_status.spm else 'text-danger' }}"
                     style="font-weight: 600;">
                     <span
@@ -75,7 +79,7 @@
                     Akademik (SPM)
                 </span>
             </li>
-            <li>
+            <li style="margin-right: 15px; margin-bottom: 5px;">
                 <span class="{{ 'text-success' if completion_status.pakej else 'text-danger' }}"
                     style="font-weight: 600;">
                     <span
@@ -83,15 +87,17 @@
                     Pakej Aliran
                 </span>
             </li>
-            <li>
-                <span class="{{ 'text-success' if completion_status.koku else 'text-danger' }}" style="font-weight: 600;">
+            <li style="margin-right: 15px; margin-bottom: 5px;">
+                <span class="{{ 'text-success' if completion_status.koku else 'text-danger' }}"
+                    style="font-weight: 600;">
                     <span
                         class="glyphicon {{ 'glyphicon-ok-sign' if completion_status.koku else 'glyphicon-remove-sign' }}"></span>
                     Kokurikulum
                 </span>
             </li>
-            <li>
-                <span class="{{ 'text-success' if completion_status.penjaga else 'text-danger' }}" style="font-weight: 600;">
+            <li style="margin-bottom: 5px;">
+                <span class="{{ 'text-success' if completion_status.penjaga else 'text-danger' }}"
+                    style="font-weight: 600;">
                     <span
                         class="glyphicon {{ 'glyphicon-ok-sign' if completion_status.penjaga else 'glyphicon-remove-sign' }}"></span>
                     Maklumat Penjaga
@@ -99,25 +105,23 @@
             </li>
         </ul>
     </div>
+
     {% if selected_units %}
-    <div style="text-align: left; max-width: 500px; margin: 0 auto;">
-        <div style="font-weight: 600; margin-bottom: 8px;">
-            Unit Kokurikulum
+    <div
+        style="text-align: left; background: #fff; padding: 12px 15px; border-radius: 4px; border: 1px solid #e3e3e3; margin-top: 10px;">
+        <div style="font-weight: 600; margin-bottom: 6px; color: #444;">
+            <span class="glyphicon glyphicon-flag"></span> Unit Kokurikulum &amp; Rumah Sukan
         </div>
-    
         {% for unit in selected_units %}
-        <div style="margin-bottom: 4px;">
+        <div style="display: inline-block; margin-right: 15px; margin-bottom: 4px;">
             <span class="label label-default">{{ unit.type }}</span>
-            <span style="margin-left: 8px;">{{ unit.name }}</span>
+            <span style="margin-left: 5px; font-size: 13px;">{{ unit.name }}</span>
         </div>
         {% endfor %}
-
-        <span class="label label-default">Rumah Sukan:</span>
-        {% if rumahSukan %}
-        <span>{{ rumahSukan }}</span>
-        {% else %}
-        <span>Tiada</span>
-        {% endif %}
+        <div style="margin-top: 4px; font-size: 13px;">
+            <span class="label label-default">Rumah Sukan:</span>
+            <span style="margin-left: 5px; font-weight: 600;">{{ rumahSukan if rumahSukan else 'Tiada' }}</span>
+        </div>
     </div>
     {% endif %}
     {% endif %}
@@ -127,104 +131,169 @@
     {% if session.get('verified_kp') %}
 
     <div class="col-md-12">
-        <div class="panel panel-default" style="margin-bottom: 15px;">
-            <div class="panel-body">
-                <div class="row">
-                    <div class="col-md-9">
-                        <h4>1. Maklumat Peribadi</h4>
+
+        <!-- ================= CATEGORY 1: PENDAFTARAN & AKADEMIK ================= -->
+        <div style="margin-bottom: 15px;">
+            <h3
+                style="border-bottom: 2px solid #ddd; padding-bottom: 8px; color: #333; font-size: 18px; font-weight: bold;">
+                <span class="glyphicon glyphicon-folder-open"></span> Pendaftaran &amp; Akademik Pelajar
+            </h3>
+        </div>
+
+        <div class="row">
+            <!-- 1. Maklumat Peribadi -->
+            <div class="col-md-6">
+                <div class="panel panel-primary" style="min-height: 180px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="panel-heading">
+                        <h3 class="panel-title" style="font-weight: bold;">1. Maklumat Peribadi</h3>
                     </div>
-                    <div class="col-md-3">
-                        <a class="btn btn-primary btn-block" href="{{ url_for('register_page') }}">Buka Borang</a>
+                    <div class="panel-body d-flex flex-column justify-content-between" style="min-height: 115px;">
+                        <p class="text-muted" style="font-size: 13px;">Kemaskini maklumat profil peribadi dan butiran
+                            asas pelajar.</p>
+                        <a class="btn btn-primary btn-block" href="{{ url_for('register_page') }}"
+                            style="margin-top: 15px; font-weight: bold;">Buka Borang</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Dokumen Pelajar -->
+            <div class="col-md-6">
+                <div class="panel panel-primary" style="min-height: 180px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="panel-heading">
+                        <h3 class="panel-title" style="font-weight: bold;">2. Dokumen Pelajar</h3>
+                    </div>
+                    <div class="panel-body" style="min-height: 115px;">
+                        <p class="text-muted" style="font-size: 13px;">Muat naik dan semak dokumen sokongan yang
+                            diperlukan.</p>
+                        <a class="btn btn-primary btn-block" href="{{ url_for('additional_page') }}"
+                            style="margin-top: 15px; font-weight: bold; color: #fff;">Buka Borang</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Keputusan SPM -->
+            <div class="col-md-6">
+                <div class="panel panel-primary" style="min-height: 180px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="panel-heading">
+                        <h3 class="panel-title" style="font-weight: bold;">3. Keputusan SPM</h3>
+                    </div>
+                    <div class="panel-body" style="min-height: 115px;">
+                        <p class="text-muted" style="font-size: 13px;">Masukkan keputusan SPM (Masukkan Maklumat
+                            Peribadi dahulu).</p>
+                        <a class="btn btn-primary btn-block" href="{{ url_for('spm_page') }}"
+                            style="margin-top: 15px; font-weight: bold;">Isi Keputusan</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Pemilihan Pakej -->
+            <div class="col-md-6">
+                <div class="panel panel-primary" style="min-height: 180px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="panel-heading">
+                        <h3 class="panel-title" style="font-weight: bold;">4. Pemilihan Pakej Aliran</h3>
+                    </div>
+                    <div class="panel-body" style="min-height: 115px;">
+                        <p class="text-muted" style="font-size: 13px;">Pilih pakej pengajian aktif mengikut kelayakan.
+                        </p>
+                        <a class="btn btn-primary btn-block" href="{{ url_for('package_page') }}"
+                            style="margin-top: 15px; font-weight: bold;">Pilih Pakej</a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="panel panel-default" style="margin-bottom: 15px;">
-            <div class="panel-body">
-                <div class="row">
-                    <div class="col-md-9">
-                        <h4>2. Dokumen Pelajar</h4>
+        <!-- ================= CATEGORY 2: AKTIVITI & MAKLUMAT TAMBAHAN ================= -->
+        <div style="margin-top: 25px; margin-bottom: 15px;">
+            <h3
+                style="border-bottom: 2px solid #ddd; padding-bottom: 8px; color: #333; font-size: 18px; font-weight: bold;">
+                <span class="glyphicon glyphicon-user"></span> Kokurikulum, Penjaga &amp; Perkhidmatan
+            </h3>
+        </div>
+
+        <div class="row">
+            <!-- 5. Kokurikulum -->
+            <div class="col-md-6">
+                <div class="panel panel-success" style="min-height: 180px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="panel-heading">
+                        <h3 class="panel-title" style="font-weight: bold;">5. Pemilihan Unit Kokurikulum</h3>
                     </div>
-                    <div class="col-md-3">
-                        <a class="btn btn-primary btn-block" href="{{ url_for('additional_page') }}">Buka Borang</a>
+                    <div class="panel-body" style="min-height: 115px;">
+                        <p class="text-muted" style="font-size: 13px;">Pilih unit kelab, badan beruniform, dan sukan.
+                        </p>
+                        <a class="btn btn-success btn-block" href="{{ url_for('kokurikulum_page') }}"
+                            style="margin-top: 15px; font-weight: bold; border-color: #ccc;">Pilih Unit</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. Maklumat Penjaga -->
+            <div class="col-md-6">
+                <div class="panel panel-success" style="min-height: 180px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="panel-heading">
+                        <h3 class="panel-title" style="font-weight: bold;">6. Maklumat Penjaga</h3>
+                    </div>
+                    <div class="panel-body" style="min-height: 115px;">
+                        <p class="text-muted" style="font-size: 13px;">Kemaskini maklumat waris atau penjaga pelajar.
+                        </p>
+                        <a class="btn btn-success btn-block" href="{{ url_for('guardian_page') }}"
+                            style="margin-top: 15px; font-weight: bold; border-color: #ccc;">Kemaskini Maklumat</a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="panel panel-default" style="margin-bottom: 15px;">
-            <div class="panel-body">
-                <div class="row">
-                    <div class="col-md-9">
-                        <h4>3. Keputusan SPM</h4> <h5 class="text-muted">Masukkan Maklumat Peribadi dahulu</h5>
+        <!-- ================= CATEGORY 3: REKOD KELAMBATAN & PERKHIDMATAN LAIN ================= -->
+        <div style="margin-top: 25px; margin-bottom: 15px;">
+            <h3
+                style="border-bottom: 2px solid #ddd; padding-bottom: 8px; color: #333; font-size: 18px; font-weight: bold;">
+                <span class="glyphicon glyphicon-time"></span> Rekod Lewat &amp; Perkhidmatan Lain
+            </h3>
+        </div>
+
+        <div class="row">
+            <!-- Form Kelambatan (Kept separate as requested) -->
+            <div class="col-md-6">
+                <div class="panel panel-danger" style="min-height: 180px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="panel-heading"
+                        style="background-color: #f2dede; border-color: #ebccd1; color: #a94442;">
+                        <h3 class="panel-title" style="font-weight: bold;">
+                            <span class="glyphicon glyphicon-warning-sign"></span> Rekod Hadir Lewat
+                        </h3>
                     </div>
-                    <div class="col-md-3">
-                        <a class="btn btn-primary btn-block" href="{{ url_for('spm_page') }}">Isi Keputusan</a>
+                    <div class="panel-body" style="min-height: 115px;">
+                        <p class="text-muted" style="font-size: 13px;">Hantar atau semak maklumat rekod kehadiran lewat
+                            ke sekolah.</p>
+                        <a class="btn btn-danger btn-block" href="{{ url_for('late_arrival_page') }}"
+                            style="margin-top: 15px; font-weight: bold;">Masuk Rekod</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Placeholder Alongside Lateness -->
+            <div class="col-md-6">
+                <div class="panel panel-warning" style="min-height: 180px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="panel-heading">
+                        <h3 class="panel-title" style="font-weight: bold;">
+                            <span class="glyphicon glyphicon-warning-sign"></span> Rekod Lawatan ke UBK
+                        </h3>
+                    </div>
+                    <div class="panel-body" style="min-height: 115px;">
+                        <p class="text-muted" style="font-size: 13px;"> - </p>
+                        <a class="btn btn-warning btn-block" href="{{ url_for('ubk_form') }}"
+                            style="margin-top: 15px; font-weight: bold;">Masuk Rekod</a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="panel panel-default" style="margin-bottom: 25px;">
-            <div class="panel-body">
-                <div class="row">
-                    <div class="col-md-9">
-                        <h4>4. Pemilihan Pakej</h4> <h5 class="text-muted">Masukkan Maklumat Peribadi dan Keputusan SPM dahulu</h5>
-                    </div>
-                    <div class="col-md-3">
-                        <a class="btn btn-primary btn-block" href="{{ url_for('package_page') }}">Pilih Pakej</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="panel panel-default" style="margin-bottom: 25px;">
-            <div class="panel-body">
-                <div class="row">
-                    <div class="col-md-9">
-                        <h4>5. Pemilihan Unit Kokurikulum</h4>
-                        <h5 class="text-muted">Masukkan Maklumat diatas dahulu</h5>
-                    </div>
-                    <div class="col-md-3">
-                        <a class="btn btn-primary btn-block" href="{{ url_for('kokurikulum_page') }}">Pilih Unit</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="panel panel-default" style="margin-bottom: 25px;">
-            <div class="panel-body">
-                <div class="row">
-                    <div class="col-md-9">
-                        <h4>Isi Maklumat Penjaga</h4> <h5 class="text-muted">Masukkan Maklumat Peribadi dahulu</h5>
-                    </div>
-                    <div class="col-md-3">
-                        <a class="btn btn-primary btn-block" href="{{ url_for('guardian_page') }}">Kemaskini Maklumat</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="panel panel-default" style="margin-bottom: 25px;">
-            <div class="panel-body">
-                <div class="row">
-                    <div class="col-md-9">
-                        <h4>Isi Form Kelambatan</h4>
-                    </div>
-                    <div class="col-md-3">
-                        <a class="btn btn-primary btn-block" href="{{ url_for('late_arrival_page') }}">Masuk</a>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     {% else %}
-    <div class="col-md-12 text-center">
-        <div class="alert alert-warning">
-            <p>Sila log masuk untuk meneruskan.</p>
-            <a href="{{ url_for('gateway') }}" class="btn btn-primary">Log Masuk Pelajar</a>
+    <div class="col-md-12 text-center" style="margin-top: 40px;">
+        <div class="alert alert-warning" style="padding: 20px;">
+            <p style="font-size: 16px; margin-bottom: 15px;">Sila log masuk menggunakan nombor kad pengenalan untuk
+                meneruskan.</p>
+            <a href="{{ url_for('gateway') }}" class="btn btn-primary btn-lg font-weight-bold">Log Masuk Pelajar</a>
         </div>
     </div>
     {% endif %}

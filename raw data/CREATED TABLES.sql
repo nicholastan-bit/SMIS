@@ -109,3 +109,11 @@ CREATE TABLE late_arrivals (
     reason VARCHAR(50),
     FOREIGN KEY (bil_kemasukan) REFERENCES pelajar(bil_kemasukan) ON DELETE CASCADE
 );
+
+CREATE TABLE ubk_records (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    bil_pelajar INT,
+    no_telefon_pelajar VARCHAR(20),
+    perkara TEXT,
+    nama_kaunselor VARCHAR(100)
+);

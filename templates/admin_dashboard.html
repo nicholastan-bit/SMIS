@@ -6,15 +6,22 @@
     <h1 style="color: #8a6d3b;"><span class="glyphicon glyphicon-queen"></span> Admin Panel</h1>
     <p style="font-size: 16px; color: #666;">KTESI School Management Information System (SMIS)</p>
     <p style="font-size: 14px;">
-        <span class="label label-danger" style="padding: 5px 10px; font-weight: bold;">PENTADBIR SISTEM (ADMIN
-            ACTIVE)</span>
+        <span class="label label-danger" style="padding: 5px 10px; font-weight: bold;">PENTADBIR SISTEM (ADMIN ACTIVE)</span>
     </p>
 </div>
 
 <div class="row">
     <div class="col-md-12">
-        <div class="row">
 
+        <!-- ================= CATEGORY 1: MANAGEMENT & CONFIGURATION ================= -->
+        <div style="margin-bottom: 20px;">
+            <h3 style="border-bottom: 2px solid #ddd; padding-bottom: 8px; margin-bottom: 15px; color: #333;">
+                <span class="glyphicon glyphicon-cog"></span> Pengurusan &amp; Konfigurasi Sistem
+            </h3>
+        </div>
+
+        <div class="row">
+            <!-- Konfigurasi Utama Sistem -->
             <div class="col-md-6">
                 <div class="panel panel-danger"
                     style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-color: #ebccd1;">
@@ -25,8 +32,7 @@
                         </h3>
                     </div>
                     <div class="panel-body">
-                        <p class="text-muted" style="font-size: 13px;">Urus tetapan data asas sistem pendaftaran, edit
-                            kriteria mata pelajaran STPM, dan konfigurasi pakej pengajian aktif.</p>
+                        <p class="text-muted" style="font-size: 13px;">Konfigurasi: Status borang, had kapasiti pakej dan unit kokurikulum</p>
                         <a href="{{ url_for('admin_settings') }}" class="btn btn-danger btn-block"
                             style="margin-top: 15px; padding: 10px; font-weight: bold;">
                             <span class="glyphicon glyphicon-th-list"></span> Urus Tetapan &amp; Kriteria Aliran
@@ -35,25 +41,7 @@
                 </div>
             </div>
 
-            <div class="col-md-6">
-                <div class="panel panel-primary" style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                    <div class="panel-heading">
-                        <h3 class="panel-title" style="font-weight: bold;">
-                            <span class="glyphicon glyphicon-user"></span> Direktori Pangkalan Pelajar
-                        </h3>
-                    </div>
-                    <div class="panel-body">
-                        <p class="text-muted" style="font-size: 13px;">Akses senarai induk data pendaftaran pelajar.
-                            Pantau kelayakan keputusan SPM, semak muat naik dokumen, dan sahkan status pengajian.</p>
-                        <a href="{{ url_for('admin_view_students_list') }}" class="btn btn-primary btn-block"
-                            style="margin-top: 15px; padding: 10px; font-weight: bold;">
-                            <span class="glyphicon glyphicon-list"></span> Lihat Senarai Pelajar Berdaftar
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Inside admin_dashboard.html -->
+            <!-- Kelayakan Subjek Khas -->
             <div class="col-md-6">
                 <div class="panel panel-success" style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                     <div class="panel-heading">
@@ -62,8 +50,7 @@
                         </h3>
                     </div>
                     <div class="panel-body">
-                        <p class="text-muted" style="font-size: 13px;">Urus kelayakan pelajar untuk subjek Syariah atau Sains Sukan.
-                        </p>
+                        <p class="text-muted" style="font-size: 13px;">Urus kelayakan pelajar untuk subjek Syariah atau Sains Sukan.</p>
                         <a href="{{ url_for('eligible_subject_page') }}" class="btn btn-success btn-block"
                             style="margin-top: 15px; padding: 10px; font-weight: bold;">
                             <span class="glyphicon glyphicon-edit"></span> Urus Kelayakan Pelajar
@@ -71,44 +58,89 @@
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="col-md-6">
+        <!-- ================= CATEGORY 2: STUDENT LISTS ================= -->
+        <div style="margin-top: 30px; margin-bottom: 20px;">
+            <h3 style="border-bottom: 2px solid #ddd; padding-bottom: 8px; margin-bottom: 15px; color: #333;">
+                <span class="glyphicon glyphicon-list-alt"></span> Senarai &amp; Direktori Pelajar
+            </h3>
+        </div>
+
+        <div class="row">
+            <!-- Direktori Pangkalan Pelajar -->
+            <div class="col-md-4">
                 <div class="panel panel-primary" style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                     <div class="panel-heading">
                         <h3 class="panel-title" style="font-weight: bold;">
-                            <span class="glyphicon glyphicon-list"></span> Senarai Pelajar untuk Kokurikulum
+                            <span class="glyphicon glyphicon-user"></span> Maklumat Pelajar
                         </h3>
                     </div>
                     <div class="panel-body">
-                        <p class="text-muted" style="font-size: 13px;">Kokurikulum
-                        </p>
-                        <a href="{{ url_for('admin_koku_list') }}" class="btn btn-primary btn-block"
+                        <p class="text-muted" style="font-size: 13px;">Senarai pelajar dan info pelajar</p>
+                        <a href="{{ url_for('admin_view_students_list') }}" class="btn btn-primary btn-block"
                             style="margin-top: 15px; padding: 10px; font-weight: bold;">
-                            <span class="glyphicon glyphicon-list"></span> Masuk
+                            <span class="glyphicon glyphicon-list"></span> Lihat Senarai Pelajar
                         </a>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-6">
-                <div class="panel panel-warning" style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <!-- Senarai Pelajar untuk Kokurikulum -->
+            <div class="col-md-4">
+                <div class="panel panel-primary" style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                     <div class="panel-heading">
                         <h3 class="panel-title" style="font-weight: bold;">
-                            <span class="glyphicon glyphicon-list"></span>Senarai Pelajar Lambat
+                            <span class="glyphicon glyphicon-list"></span> Maklumat Kokurikulum
                         </h3>
                     </div>
                     <div class="panel-body">
-                        <p class="text-muted" style="font-size: 13px;">Pelajar Lambat
-                        </p>
-                        <a href="{{ url_for('late_list') }}" class="btn btn-warning btn-block"
+                        <p class="text-muted" style="font-size: 13px;">Senarai pelajar ikut unit-unit dalam kokurikulum</p>
+                        <a href="{{ url_for('admin_koku_list') }}" class="btn btn-primary btn-block"
+                            style="margin-top: 15px; padding: 10px; font-weight: bold; color: #fff;">
+                            <span class="glyphicon glyphicon-list"></span> Akses Senarai Koku
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Senarai Pelajar Lambat -->
+            <div class="col-md-4">
+                <div class="panel panel-primary" style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="panel-heading">
+                        <h3 class="panel-title" style="font-weight: bold;">
+                            <span class="glyphicon glyphicon-list"></span> Kehadiran Lewat
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                        <p class="text-muted" style="font-size: 13px;">Senarai pelajar lewat hadir.</p>
+                        <a href="{{ url_for('late_list') }}" class="btn btn-primary btn-block"
                             style="margin-top: 15px; padding: 10px; font-weight: bold;">
-                            <span class="glyphicon glyphicon-list"></span> Masuk
+                            <span class="glyphicon glyphicon-list"></span> Akses Senarai Lambat
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="panel panel-primary" style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="panel-heading">
+                        <h3 class="panel-title" style="font-weight: bold;">
+                            <span class="glyphicon glyphicon-list"></span> Rekod Lawatan ke UBK
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                        <p class="text-muted" style="font-size: 13px;">Senarai rekod UBK</p>
+                        <a href="{{ url_for('ubk_list') }}" class="btn btn-primary btn-block"
+                            style="margin-top: 15px; padding: 10px; font-weight: bold;">
+                            <span class="glyphicon glyphicon-list"></span> Akses Senarai Rekod UBK
                         </a>
                     </div>
                 </div>
             </div>
 
         </div>
+
     </div>
 </div>
 {% endblock %}

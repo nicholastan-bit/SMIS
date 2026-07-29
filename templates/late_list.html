@@ -1,128 +1,151 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-5">
+<div class="container mt-4 mb-5">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">Senarai Pelajar Lewat</h2>
+    <!-- Header & Summary Section -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h2 class="mb-1 fw-bold text-dark">Senarai Pelajar Lewat</h2>
+            <p class="text-muted small mb-0">Urus dan pantau rekod kehadiran pelajar yang lewat.</p>
+        </div>
 
-        <div class="alert alert-info mb-0 py-2 px-3 data-summary-box">
-            <i class="bi bi-info-circle me-1"></i>
-            Jumlah Pelajar Lewat:
-            <strong>{{ total_students }}</strong>
+        <div class="alert alert-info mb-0 py-2 px-3 shadow-sm d-flex align-items-center">
+            <i class="bi bi-info-circle me-2 fs-5"></i>
+            <div>
+                <span class="small text-muted d-block">Jumlah Pelajar</span>
+                <strong>{{ total_students }} Rekod</strong>
+            </div>
         </div>
     </div>
 
-    <div class="card mb-4 p-4 bg-light border-0 shadow-sm">
-        <form method="GET" class="row g-3 align-items-end">
+    <!-- Always Visible, Cleaned-Up Filter Card -->
+    <div class="card border-0 shadow-sm bg-light mb-4">
+        <div class="card-body p-4">
+            <h5 class="card-title mb-3 fw-bold text-secondary fs-6">
+                <i class="bi bi-funnel me-1"></i> Tapis &amp; Carian Rekod
+            </h5>
+            <form method="GET" class="row g-3 align-items-end">
 
-            <div class="col-xl-2 col-md-6">
-                <label class="form-label text-muted small fw-bold">Cari Nama</label>
-                <input type="text" name="name" class="form-control" value="{{ search_name }}" placeholder="Nama...">
-            </div>
+                <div class="col-xl-2 col-md-6">
+                    <label class="form-label text-muted small fw-bold">Cari Nama</label>
+                    <input type="text" name="name" class="form-control" value="{{ search_name }}" placeholder="Nama...">
+                </div>
 
-            <div class="col-xl-2 col-md-6">
-                <label class="form-label text-muted small fw-bold">Pilihan Tarikh</label>
-                <select name="dateMode" id="dateMode" class="form-select" onchange="toggleDateInputs()">
-                    <option value="today" {% if start_date==end_date %}selected{% endif %}>Hari Ini</option>
-                    <option value="range" {% if start_date !=end_date %}selected{% endif %}>Julat Tarikh</option>
-                </select>
-            </div>
+                <div class="col-xl-2 col-md-6">
+                    <label class="form-label text-muted small fw-bold">Pilihan Tarikh</label>
+                    <select name="dateMode" id="dateMode" class="form-select" onchange="toggleDateInputs()">
+                        <option value="today" {% if start_date==end_date %}selected{% endif %}>Hari Ini</option>
+                        <option value="range" {% if start_date !=end_date %}selected{% endif %}>Julat Tarikh</option>
+                    </select>
+                </div>
 
-            <div class="col-xl-2 col-md-6" id="startDateDiv">
-                <label class="form-label text-muted small fw-bold">Tarikh Mula</label>
-                <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
-            </div>
+                <div class="col-xl-2 col-md-6" id="startDateDiv">
+                    <label class="form-label text-muted small fw-bold">Tarikh Mula</label>
+                    <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+                </div>
 
-            <div class="col-xl-2 col-md-6" id="endDateDiv">
-                <label class="form-label text-muted small fw-bold">Tarikh Akhir</label>
-                <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
-            </div>
+                <div class="col-xl-2 col-md-6" id="endDateDiv">
+                    <label class="form-label text-muted small fw-bold">Tarikh Akhir</label>
+                    <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+                </div>
 
-            <div class="col-xl-2 col-md-6">
-                <label class="form-label text-muted small fw-bold">Pakej</label>
-                <select name="package" class="form-select">
-                    <option value="">Semua Pakej</option>
-                    {% for p in all_packages %}
-                    <option value="{{ p.id_pakej }}" {% if package_filter|string==p.id_pakej|string %}selected{% endif
-                        %}>
-                        {{ p.kod_pakej }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
+                <div class="col-xl-2 col-md-6">
+                    <label class="form-label text-muted small fw-bold">Pakej</label>
+                    <select name="package" class="form-select">
+                        <option value="">Semua Pakej</option>
+                        {% for p in all_packages %}
+                        <option value="{{ p.id_pakej }}" {% if package_filter|string==p.id_pakej|string %}selected{% endif %}>
+                            {{ p.kod_pakej }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-            <div class="col-xl-2 col-md-6">
-                <label class="form-label text-muted small fw-bold">Status</label>
-                <select name="status" class="form-select">
-                    <option value="all" {% if status_filter=='all' %}selected{% endif %}>Semua Status</option>
-                    <option value="late" {% if status_filter=='late' %}selected{% endif %}>Lewat</option>
-                    <option value="very_late" {% if status_filter=='very_late' %}selected{% endif %}>Sangat Lewat
-                    </option>
-                </select>
-            </div>
+                <div class="col-xl-2 col-md-6">
+                    <label class="form-label text-muted small fw-bold">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="all" {% if status_filter=='all' %}selected{% endif %}>Semua Status</option>
+                        <option value="late" {% if status_filter=='late' %}selected{% endif %}>Lewat</option>
+                        <option value="very_late" {% if status_filter=='very_late' %}selected{% endif %}>Sangat Lewat</option>
+                    </select>
+                </div>
 
-            <div class="col-12 d-flex justify-content-end gap-2 mt-3">
-                <a href="{{ url_for('late_list') }}" class="btn btn-outline-secondary px-4" title="Set Semula">
-                    Reset
-                </a>
-                <a href="{{ url_for('export_late_list', start_date=start_date, end_date=end_date, name=search_name, package=package_filter, status=status_filter) }}"
-                    class="btn btn-success px-4" title="Eksport ke CSV">
-                    <i class="bi bi-download me-1"></i> Export CSV
-                </a>
-                <button type="submit" class="btn btn-primary px-5" title="Tapis Hasil">
-                    Tapis
-                </button>
-            </div>
+                <div class="col-12 d-flex justify-content-end gap-2 mt-3 pt-2 border-top">
+                    <a href="{{ url_for('late_list') }}" class="btn btn-outline-secondary px-4" title="Set Semula">
+                        Reset
+                    </a>
+                    <a href="{{ url_for('export_late_list', start_date=start_date, end_date=end_date, name=search_name, package=package_filter, status=status_filter) }}"
+                        class="btn btn-success px-4" title="Eksport ke CSV">
+                        <i class="bi bi-download me-1"></i> Export CSV
+                    </a>
+                    <button type="submit" class="btn btn-primary px-5" title="Tapis Hasil">
+                        Tapis
+                    </button>
+                </div>
 
-        </form>
+            </form>
+        </div>
     </div>
 
-    <div class="table-responsive shadow-sm rounded">
-        <table class="table table-striped table-hover align-middle mb-0">
-        </table>
-    </div>
-</div>
-
-    <table class="table table-bordered table-striped">
-        <thead>
-            <!-- Inside <thead> -->
-            <tr>
-                <th>Nama Pelajar</th>
-                <th>Pakej</th>
-                <th>Masa Ketibaan</th>
-                <th>Sebab</th>
-                <th>Status</th>
-                <th>Tindakan</th> <!-- New Column -->
-            </tr>
-            
-            <!-- Inside <tbody> / for loop -->
-                {% for s in late_students %}
-                <tr>
-                    <td>{{ s.nama_pelajar }}</td>
-                    <td>{{ s.kod_pakej }}</td>
-                    <td>{{ s.arrival_time.strftime('%d-%m-%Y %H:%M:%S') }}</td>
-                    <td>{{ s.reason }}</td>
-                    <td>
-                        {% if s.late_status == 'Sangat Lewat' %}
-                        <span class="badge bg-danger rounded-pill px-3">Sangat Lewat</span>
-                        {% elif s.late_status == 'Lewat' %}
-                        <span class="badge bg-warning text-dark rounded-pill px-3">Lewat</span>
+    <!-- Main Data Table Card -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-uppercase fs-7">
+                        <tr>
+                            <th class="ps-4">Nama Pelajar</th>
+                            <th>Pakej</th>
+                            <th>Masa Ketibaan</th>
+                            <th>Sebab</th>
+                            <th>Status</th>
+                            <th class="text-end pe-4">Tindakan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if late_students %}
+                            {% for s in late_students %}
+                            <tr>
+                                <td class="ps-4 fw-semibold text-dark">{{ s.nama_pelajar }}</td>
+                                <td><span class="badge bg-light text-dark border">{{ s.kod_pakej }}</span></td>
+                                <td>{{ s.arrival_time.strftime('%d-%m-%Y %H:%M:%S') }}</td>
+                                <td class="text-muted">{{ s.reason }}</td>
+                                <td>
+                                    {% if s.late_status == 'Sangat Lewat' %}
+                                    <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-1">Sangat Lewat</span>
+                                    {% elif s.late_status == 'Lewat' %}
+                                    <span class="badge bg-warning bg-opacity-10 text-dark rounded-pill px-3 py-1">Lewat</span>
+                                    {% else %}
+                                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-1">Awal</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end pe-4">
+                                    <form action="{{ url_for('delete_late', arrival_id=s.late_id) }}" method="POST"
+                                        onsubmit="return confirm('Adakah anda pasti?');" style="display:inline;">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            <i class="bi bi-trash"></i> Padam
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
                         {% else %}
-                        <span class="badge bg-success rounded-pill px-3">Awal</span>
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                    Tiada rekod pelajar lewat ditemui.
+                                </td>
+                            </tr>
                         {% endif %}
-                    </td>
-                    <td>
-                        <form action="{{ url_for('delete_late', arrival_id=s.late_id) }}" method="POST"
-                            onsubmit="return confirm('Adakah anda pasti?');">
-                            <button type="submit" class="btn btn-danger btn-sm">Padam</button>
-                        </form>
-                    </td>
-                </tr>    
-                {% endfor %}
-        </tbody>
-    </table>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
 </div>
+
 <script>
     function toggleDateInputs() {
         const mode = document.getElementById('dateMode').value;

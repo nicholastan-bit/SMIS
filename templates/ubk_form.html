@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 col-md-offset-3">
+        <h2 class="text-center">Borang Rekod Unit Bimbingan Kaunseling (UBK)</h2>
+        <hr>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} text-center">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <div class="panel panel-default">
+            <div class="panel-heading">Sila lengkapkan maklumat di bawah:</div>
+            <div class="panel-body">
+                <!-- Added id="ubkForm" for JavaScript validation -->
+                <form id="ubkForm" action="{{ url_for('ubk_form') }}" method="POST">
+
+                    <!-- 1st Option: Nama Kaunselor (Required by default) -->
+                    <div class="form-group mb-3">
+                        <label for="nama_kaunselor"><strong>Nama Kaunselor</strong></label>
+                        <select name="nama_kaunselor" class="form-control input-lg" required>
+                            <option value="" disabled selected>-- Pilih Kaunselor --</option>
+                            {% for kaunselor in kaunselor_options %}
+                            <option value="{{ kaunselor }}">{{ kaunselor }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- 2nd Option: No Telefon Pelajar (Optional - No 'required' attribute) -->
+                    <div class="form-group mb-3">
+                        <label for="no_telefon_pelajar"><strong>No. Telefon</strong></label>
+                        <input type="text" name="no_telefon_pelajar" class="form-control input-lg"
+                            value="{{ telefon_pelajar }}" placeholder="Masukkan no telefon jika kosong">
+                    </div>
+
+                    <!-- 3rd Option: Perkara (Checkboxes) -->
+                    <div class="form-group mb-4">
+                        <label><strong>Perkara</strong> <small class="text-muted">(Wajib pilih sekurang-kurangnya
+                                satu)</small></label>
+
+                        <!-- Scrollable box container for checkboxes -->
+                        <div
+                            style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 4px; background-color: #fff;">
+                            {% for item in perkara_options %}
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" name="perkara" value="{{ item }}"> {{ item }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <small class="help-block text-muted">Tanda pada sekurang-kurangnya satu kotak pilihan.</small>
+                    </div>
+
+                    <!-- 4th: Submit Button -->
+                    <button type="submit" class="btn btn-primary btn-lg btn-block">Hantar Rekod</button>
+                </form>
+            </div>
+        </div>
+
+        <a href="{{ url_for('index') }}" class="btn btn-default btn-block">Kembali</a>
+    </div>
+</div>
+
+<!-- JavaScript to ensure at least one checkbox is selected -->
+<script>
+    document.getElementById('ubkForm').addEventListener('submit', function (event) {
+        var checkboxes = document.querySelectorAll('input[name="perkara"]');
+        var isChecked = false;
+
+        checkboxes.forEach(function (checkbox) {
+            if (checkbox.checked) {
+                isChecked = true;
+            }
+        });
+
+        if (!isChecked) {
+            alert('Sila pilih sekurang-kurangnya satu perkara.');
+            event.preventDefault(); // Stop form submission
+        }
+    });
+</script>
+{% endblock %}

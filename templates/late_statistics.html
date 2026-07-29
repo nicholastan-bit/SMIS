@@ -62,6 +62,38 @@
         </form>
         </div>
 
+        <div class="card card-body bg-light mb-3">
+        </div>
+        
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <div class="alert alert-warning text-center">
+                    <strong>Lewat:</strong> {{ grand_lewat }}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="alert alert-danger text-center">
+                    <strong>Sangat Lewat:</strong> {{ grand_sangat_lewat }}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="alert alert-info text-center">
+                    <strong>Jumlah Keseluruhan:</strong> {{ grand_total }}
+                </div>
+            </div>
+        </div>
+        
+        <table class="table table-bordered table-striped">
+            <tfoot>
+                <tr class="active fw-bold">
+                    <td>JUMLAH KESELURUHAN</td>
+                    <td class="text-center">{{ grand_lewat }}</td>
+                    <td class="text-center">{{ grand_sangat_lewat }}</td>
+                    <td class="text-center">{{ grand_total }}</td>
+                </tr>
+            </tfoot>
+            </table>
+
     <table class="table table-bordered table-striped">
         <thead>
             <tr class="active">

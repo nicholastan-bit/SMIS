@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2 class="text-center">Senarai Rekod UBK</h2>
+        <hr>
+
+        <!-- Carian & Penapis -->
+        <div class="panel panel-default mb-4">
+            <div class="panel-heading">Carian & Tapis Rekod</div>
+            <div class="panel-body">
+                <form method="GET" action="{{ url_for('ubk_list') }}" class="row">
+                    <div class="col-md-3 form-group">
+                        <label>Nama Pelajar</label>
+                        <input type="text" name="name" class="form-control" placeholder="Cari nama..."
+                            value="{{ search_name }}">
+                    </div>
+                    <div class="col-md-2 form-group">
+                        <label>Pakej</label>
+                        <select name="package" class="form-control">
+                            <option value="">-- Semua Pakej --</option>
+                            {% for pkg in all_packages %}
+                            <option value="{{ pkg.id_pakej }}" {% if package_filter==pkg.id_pakej|string %}selected{%
+                                endif %}>
+                                {{ pkg.kod_pakej }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2 form-group">
+                        <label>Kaunselor</label>
+                        <select name="counselor" class="form-control">
+                            <option value="">-- Semua Kaunselor --</option>
+                            {% for k in kaunselor_options %}
+                            <option value="{{ k }}" {% if counselor_filter==k %}selected{% endif %}>
+                                {{ k }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2 form-group">
+                        <label>Perkara</label>
+                        <select name="perkara" class="form-control">
+                            <option value="">-- Semua Perkara --</option>
+                            {% for item in perkara_options %}
+                            <option value="{{ item }}" {% if perkara_filter==item %}selected{% endif %}>
+                                {{ item }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label>&nbsp;</label>
+                        <div class="btn-group btn-block" style="display: flex;">
+                            <button type="submit" class="btn btn-primary" style="flex: 1;">Cari</button>
+                            <a href="{{ url_for('ubk_list') }}" class="btn btn-default" style="flex: 1;">Reset</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Jadual Rekod -->
+        <div class="panel panel-default">
+            <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>Jumlah Rekod: <strong>{{ total_records }}</strong></span>
+                <!-- Export Button matching current filters -->
+                <a href="{{ url_for('export_ubk_records', name=search_name, package=package_filter, counselor=counselor_filter, perkara=perkara_filter) }}"
+                    class="btn btn-success btn-sm">
+                    <span class="glyphicon glyphicon-download-alt"></span> Export CSV
+                </a>
+            </div>
+            <div class="panel-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered align-middle">
+                        <thead>
+                            <tr class="active">
+                                <th>ID</th>
+                                <th>Nama Pelajar</th>
+                                <th>Pakej</th>
+                                <th>No. Telefon</th>
+                                <th>Perkara</th>
+                                <th>Nama Kaunselor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if ubk_records %}
+                            {% for row in ubk_records %}
+                            <tr>
+                                <td>{{ row.id }}</td>
+                                <td><strong>{{ row.nama_pelajar }}</strong></td>
+                                <td>{{ row.kod_pakej if row.kod_pakej else '-' }}</td>
+                                <td>{{ row.no_telefon_pelajar if row.no_telefon_pelajar else '-' }}</td>
+                                <td>{{ row.perkara }}</td>
+                                <td>{{ row.nama_kaunselor }}</td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">Tiada rekod dijumpai.</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <a href="{{ url_for('index') }}" class="btn btn-default">Kembali</a>
+    </div>
+</div>
+{% endblock %}
