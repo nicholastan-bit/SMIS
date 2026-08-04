@@ -54,6 +54,12 @@ PACKAGE_LIMITS = {
 DEFAULT_LIMIT = 40
 
 COUNSELLORS = ["Noraizan Binti Mohd Noh" , "Nurul Hisham Bin Zakaria"]
+PERKARA_OPTIONS = [
+        "Konsultasi", "Amalan Baik", "Individu", "Kelompok", "IMK", 
+        "Kesejahteraan Emosi", "Kerjaya", "Komunikasi", "Hilang Kad Matrik", 
+        "Program Kaunseling", "kehadiran Perjumpaan Bola Jaring", "Pameran Kerjaya", 
+        "Datang Lambat", "Kaunseling Individu", "Kaunseling Kelompok", "Perjumpaan PRS", "Kelas Ganti"
+    ]
 
 def get_limits():
     # If the file doesn't exist, create it with your default dictionary
@@ -1145,6 +1151,13 @@ def late_arrival_page():
     if not kp:
         flash("Sila masukkan No. KP anda terlebih dahulu.", "danger")
         return redirect(url_for('gateway'))
+
+    cursor.execute("SELECT bil_kemasukan, telefonNo FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
+    student = cursor.fetchone()
+        
+    if not student:
+        flash("Maklumat pelajar tidak dijumpai.", "danger")
+        return redirect(url_for('index'))
     
     today = date.today().strftime('%Y-%m-%d')
     existing_record = None
@@ -1264,16 +1277,9 @@ def ubk_form():
         cursor.close()
         conn.close()
 
-    perkara_options = [
-        "Konsultasi", "Amalan Baik", "Individu", "Kelompok", "IMK", 
-        "Kesejahteraan Emosi", "Kerjaya", "Komunikasi", "Hilang Kad Matrik", 
-        "Program Kaunseling", "kehadiran Perjumpaan Bola Jaring", "Pameran Kerjaya", 
-        "Datang Lambat", "Kaunseling Individu", "Kaunseling Kelompok", "Perjumpaan PRS"
-    ]
-
     return render_template('ubk_form.html', 
                            telefon_pelajar=telefon_pelajar, 
-                           perkara_options=perkara_options, 
+                           perkara_options=PERKARA_OPTIONS, 
                            kaunselor_options=COUNSELLORS)
 
 # =====================================================================# =====================================================================
@@ -1301,6 +1307,10 @@ def ubk_form():
 
 @app.route('/admin/students-list')
 def admin_view_students_list():
+    if session.get('role') != 'admin':
+            flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
+            return redirect(url_for('gateway'))
+    
     page = int(request.args.get('page', 1))
     per_page = 20
     offset = (page - 1) * per_page
@@ -1390,8 +1400,114 @@ def admin_view_students_list():
                            all_classes=all_classes, 
                            status_filter=status_filter)
 
+@app.route('/admin/sijil-berhenti/<int:student_id>', methods=['GET'])
+def admin_sijil_berhenti(student_id):
+    if session.get('role') != 'admin':
+        flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
+        return redirect(url_for('gateway'))
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True, buffered=True)
+
+    # 1. Fetch student details
+    cursor.execute("SELECT * FROM pelajar WHERE bil_kemasukan = %s", (student_id,))
+    student = cursor.fetchone()
+
+    if not student:
+        cursor.close()
+        conn.close()
+        return "Student not found", 404
+
+    # 2. Fetch student co-curricular activities
+    query_koku = """
+        SELECT u.unit_type, u.unit_name, kp.jawatan 
+        FROM KokurikulumPelajar kp
+        JOIN UnitKokurikulum u ON kp.unit_id = u.unit_id
+        WHERE kp.bil_kemasukan = %s
+    """
+    cursor.execute(query_koku, (student_id,))
+    koku_activities = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return render_template('sijil_form.html', student=student, koku_activities=koku_activities)
+
+@app.route('/admin/sijil-berhenti/<int:student_id>/print', methods=['POST'])
+def admin_print_sijil_pdf(student_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True, buffered=True)
+
+    # 1. Fetch student details
+    cursor.execute("SELECT * FROM pelajar WHERE bil_kemasukan = %s", (student_id,))
+    student = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    # 2. Capture dynamic co-curricular inputs from the form arrays
+    koku_types = request.form.getlist('koku_type[]')
+    koku_names = request.form.getlist('koku_name[]')
+    koku_jawatans = request.form.getlist('koku_jawatan[]')
+
+    # Reconstruct into a list of dictionaries for the template
+    custom_koku_activities = []
+    for i in range(len(koku_types)):
+        if koku_types[i].strip() or koku_names[i].strip(): # Only add if fields aren't completely blank
+            custom_koku_activities.append({
+                'unit_type': koku_types[i],
+                'unit_name': koku_names[i],
+                'jawatan': koku_jawatans[i]
+            })
+
+    # 3. Handle certificate date formatting (Malay months)
+    raw_date = request.form.get('tarikh_sijil')
+    formatted_date = '-'
+    if raw_date:
+        try:
+            dt_obj = datetime.strptime(raw_date, '%Y-%m-%d')
+            months_bm = {
+                1: 'JANUARI', 2: 'FEBRUARI', 3: 'MAC', 4: 'APRIL', 
+                5: 'MEI', 6: 'JUN', 7: 'JULAI', 8: 'OGOS', 
+                9: 'SEPTEMBER', 10: 'OKTOBER', 11: 'NOVEMBER', 12: 'DISEMBER'
+            }
+            formatted_date = f"{dt_obj.day} {months_bm[dt_obj.month]} {dt_obj.year}"
+        except ValueError:
+            formatted_date = raw_date
+
+    # 4. Capture remaining form data
+    form_data = {
+        'nama_pelajar': request.form.get('nama_pelajar'),
+        'no_kp_pelajar': request.form.get('no_kp_pelajar'),
+        'tarikh_lahir': request.form.get('tarikh_lahir'),
+        'tempat_lahir': request.form.get('tempat_lahir'),
+        'no_surat_beranak': request.form.get('no_surat_beranak'),
+        'bil_kemasukan': request.form.get('bil_kemasukan'),
+        'tarikh_pendaftaran': request.form.get('tarikh_pendaftaran'),
+        'tarikh_berhenti': request.form.get('tarikh_berhenti'),
+        'sebab_berhenti': request.form.get('sebab_berhenti'),
+        'tugas_khas': request.form.get('tugas_khas'),
+        'tarikh_sijil': formatted_date,
+        'tahun_1': request.form.get('tahun_1'),
+        'kedatangan_1': request.form.get('kedatangan_1'),
+        'tahun_2': request.form.get('tahun_2'),
+        'kedatangan_2': request.form.get('kedatangan_2'),
+        'tahun_3': request.form.get('tahun_3'),
+        'kedatangan_3': request.form.get('kedatangan_3'),
+        'kelakuan': request.form.get('kelakuan'),
+        'catatan': request.form.get('catatan')
+    }
+
+    return render_template('sijil_print_preview.html', 
+                           student=student, 
+                           koku_activities=custom_koku_activities, # Passes customized list
+                           form_data=form_data)
+
 @app.route('/admin/export-students')
 def admin_export_students():
+    if session.get('role') != 'admin':
+        flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
+        return redirect(url_for('gateway'))
     # 1. Capture filters, including the new semester_filter
     search = request.args.get('search', '')
     sort_filter = request.args.get('sort', '')
@@ -1474,6 +1590,9 @@ def admin_export_students():
 
 @app.route('/admin/update-student-package', methods=['POST'])
 def admin_update_student_package():
+    if session.get('role') != 'admin':
+        flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
+        return redirect(url_for('gateway'))    
     student_id = request.form.get('student_id')
     new_package_id = request.form.get('package_id')
     
@@ -1596,25 +1715,40 @@ def admin_view_profile(student_id):
 #------------------------
 @app.route('/admin/update-field', methods=['POST'])
 def update_field():
+    if session.get('role') != 'admin':
+        flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
+        return redirect(url_for('gateway'))
     data = request.json
     field = data.get('field')
     try:
-        # Assuming bil_kemasukan is numeric based on your int() conversion
         student_id = data.get('id') 
     except (TypeError, ValueError):
         return jsonify(success=False, message="ID Pelajar tidak sah"), 400
         
     value = data.get('value')
+    target_table = data.get('table', 'pelajar') # Defaults to 'pelajar' table
 
-    allowed_fields = [
-        'nama_pelajar','email', 'jantina', 'bangsa', 'agama', 'telefonNo', 
+    # Allowed fields for the main 'pelajar' table (excluding primary key bil_kemasukan)
+    allowed_student_fields = [
+        'nama_pelajar', 'email', 'jantina', 'bangsa', 'agama', 'telefonNo', 
         'alamat_rumah', 'cara_datang_sekolah', 'masalah_penglihatan', 
         'masalah_kesihatan', 'status_oku', 'aliran_ditawar', 'kelas',
-        'tarikh_lahir', 'tempat_lahir', 'no_surat_beranak', 'id_pakej', 'status_study', 'semester'
+        'tarikh_lahir', 'tempat_lahir', 'no_surat_beranak', 'id_pakej', 
+        'status_study', 'semester', 'tarikh_pendaftaran'
     ]
 
-    if field not in allowed_fields:
-        return jsonify(success=False, message="Medan tidak sah"), 400
+    # Allowed fields for the guardian/waris table
+    allowed_guardian_fields = [
+        'hubungan', 'nama_penjaga', 'no_kp_penjaga', 'no_telefon', 
+        'pekerjaan', 'pendapatan', 'alamat_tempat_kerja'
+    ]
+
+    if target_table == 'guardian':
+        if field not in allowed_guardian_fields:
+            return jsonify(success=False, message="Medan penjaga tidak sah"), 400
+    else:
+        if field not in allowed_student_fields:
+            return jsonify(success=False, message="Medan pelajar tidak sah"), 400
     
     if value == "":
         value = None
@@ -1629,26 +1763,29 @@ def update_field():
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         
-        # 1. Perform the primary update
-        query = f"UPDATE pelajar SET {field} = %s WHERE bil_kemasukan = %s"
-        cursor.execute(query, (value, student_id))
+        # 1. Perform the primary update based on target table
+        if target_table == 'guardian':
+            # Assuming id passed for guardian refers to the guardian's unique ID row or student link
+            query = f"UPDATE waris SET {field} = %s WHERE id = %s"
+            cursor.execute(query, (value, student_id))
+        else:
+            query = f"UPDATE pelajar SET {field} = %s WHERE bil_kemasukan = %s"
+            cursor.execute(query, (value, student_id))
         
         # 2. If the field was id_pakej, auto-update the semester
-        if field == 'id_pakej' and value is not None:
+        if target_table == 'pelajar' and field == 'id_pakej' and value is not None:
             cursor.execute("SELECT kod_pakej FROM pakej WHERE id_pakej = %s", (value,))
             pkg = cursor.fetchone()
             
             if pkg and '/' in pkg['kod_pakej']:
                 try:
-                    # Extract suffix and update semester
                     suffix = pkg['kod_pakej'].split('/')[-1]
                     semester_val = int(suffix)
                     cursor.execute("UPDATE pelajar SET semester = %s WHERE bil_kemasukan = %s", (semester_val, student_id))
                 except (ValueError, IndexError):
-                    pass # Keep existing semester if suffix is invalid
-        
-        # If user cleared the package, you might optionally want to clear the semester too:
-        elif field == 'id_pakej' and value is None:
+                    pass
+                    
+        elif target_table == 'pelajar' and field == 'id_pakej' and value is None:
             cursor.execute("UPDATE pelajar SET semester = NULL WHERE bil_kemasukan = %s", (student_id,))
 
         conn.commit()
@@ -1663,6 +1800,9 @@ def update_field():
         
 @app.route('/admin/delete-student/<int:student_id>', methods=['POST'])
 def delete_student(student_id):
+    if session.get('role') != 'admin':
+            flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
+            return redirect(url_for('gateway'))
     conn = None
     cursor = None
     try:
@@ -2084,6 +2224,9 @@ def eligible_subject_page():
 
 @app.route('/admin/submit_eligibility', methods=['POST'])
 def submit_eligibility():
+    if session.get('role') != 'admin':
+        flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
+        return redirect(url_for('gateway'))
     action = request.form.get('action')
     kp = request.form.get('no_kp_pelajar')
     subjek = request.form.get('subjek_khas')
@@ -2233,6 +2376,9 @@ def execute_db_update(query, params):
 # Now your routes remain clean and simple:
 @app.route('/admin/update-jawatan', methods=['POST'])
 def update_jawatan_ajax():
+    if session.get('role') != 'admin':
+            flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
+            return redirect(url_for('gateway'))
     kkplr_id = request.form.get('kkplr_id')
     new_jawatan = request.form.get('jawatan')
     
@@ -2243,6 +2389,9 @@ def update_jawatan_ajax():
 
 @app.route('/update_student_info/<int:bil>', methods=['POST'])
 def update_student_info(bil):
+    if session.get('role') != 'admin':
+            flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
+            return redirect(url_for('gateway'))
     # Logic for updating both tables
     execute_db_update("UPDATE pelajar SET tugas_khas = %s, rumah_sukan = %s WHERE bil_kemasukan = %s", 
                       (request.form.get('tugas_khas'), request.form.get('rumah_sukan'), bil))
@@ -2255,7 +2404,8 @@ def update_student_info(bil):
 @app.route('/admin/delete-koku-record/<int:kkplr_id>', methods=['POST'])
 def delete_koku_record(kkplr_id):
     if session.get('role') != 'admin':
-        return redirect(url_for('gateway'))
+            flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
+            return redirect(url_for('gateway'))
         
     bil = request.args.get('bil') # Get student bil_kemasukan from URL
     
@@ -2564,6 +2714,9 @@ def export_koku_stats():
 
 @app.route('/late_list', methods=['GET'])
 def late_list():
+    if session.get('role') != 'admin':
+            flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
+            return redirect(url_for('gateway'))
     # Get all filter parameters from the form
     search_name = request.args.get('name', '').strip()
     start_date = request.args.get('start_date', '')
@@ -2632,6 +2785,9 @@ def late_list():
 
 @app.route('/delete_late/<int:arrival_id>', methods=['POST'])
 def delete_late(arrival_id):
+    if session.get('role') != 'admin':
+            flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
+            return redirect(url_for('gateway'))
     conn = get_db_connection()
     cursor = conn.cursor()
     # Ensure this matches the column name in your database
@@ -2644,6 +2800,9 @@ def delete_late(arrival_id):
 
 @app.route('/export_late_list', methods=['GET'])
 def export_late_list():
+    if session.get('role') != 'admin':
+            flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
+            return redirect(url_for('gateway'))
     # 1. Update to match the new filters
     search_name = request.args.get('name', '').strip()
     start_date = request.args.get('start_date', '')
@@ -2856,6 +3015,9 @@ def export_late_statistics():
 
 @app.route('/ubk_list', methods=['GET'])
 def ubk_list():
+    if session.get('role') != 'admin':
+            flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
+            return redirect(url_for('gateway'))
     # Get filter parameters from query arguments
     search_name = request.args.get('name', '').strip()
     package_filter = request.args.get('package', '')
@@ -2868,16 +3030,6 @@ def ubk_list():
     # 1. Fetch Packages for filter dropdown
     cursor.execute("SELECT id_pakej, kod_pakej FROM pakej WHERE kod_pakej REGEXP '[0-9]/[0-9]' ORDER BY kod_pakej ASC")
     all_packages = cursor.fetchall()
-    
-    # Predefined options for perkara dropdown and form
-    perkara_options = [
-        "Konsultasi", "Amalan Baik", "Individu", "Kelompok", "IMK", 
-        "Kesejahteraan Emosi", "Kerjaya", "Komunikasi", "Hilang Kad Matrik", 
-        "Program Kaunseling", "kehadiran Perjumpaan Bola Jaring", "Pameran Kerjaya", 
-        "Datang Lambat", "Kaunseling Individu", "Kaunseling Kelompok", "Perjumpaan PRS"
-    ]
-
-    kaunselor_options = COUNSELLORS
 
     # 2. Build Query joining with 'pelajar' and 'pakej' tables
     query = """
@@ -2915,8 +3067,8 @@ def ubk_list():
     return render_template('ubk_list.html', 
                            ubk_records=ubk_records, 
                            all_packages=all_packages,
-                           kaunselor_options=kaunselor_options,
-                           perkara_options=perkara_options,
+                           kaunselor_options=COUNSELLORS,
+                           perkara_options=PERKARA_OPTIONS,
                            search_name=search_name,
                            package_filter=package_filter,
                            counselor_filter=counselor_filter,
@@ -2925,10 +3077,9 @@ def ubk_list():
 
 @app.route('/export_ubk_records', methods=['GET'])
 def export_ubk_records():
-    # Optional security check (uncomment if you use admin protection)
-    # if not session.get('is_admin'):
-    #     flash("Sila log masuk sebagai admin dahulu.", "danger")
-    #     return redirect(url_for('adminlogin'))
+    if session.get('role') != 'admin':
+           flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
+           return redirect(url_for('gateway'))
 
     # 1. Capture the exact same filter parameters from request arguments
     search_name = request.args.get('name', '').strip()
@@ -2994,6 +3145,8 @@ def export_ubk_records():
         mimetype="text/csv", 
         headers={"Content-Disposition": "attachment;filename=rekod_ubk.csv"}
     )
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)

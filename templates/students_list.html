@@ -109,7 +109,7 @@
                 <th>Pendapatan Rumah</th>
                 <th>Pakej dipilih</th>
                 <th>Kelas</th>
-                <th style="width: 130px;">Tindakan</th>
+                <th style="width: 180px;">Tindakan</th>
             </tr></thead>
         <tbody>
             {% for s in students %}
@@ -155,15 +155,19 @@
                     {% endif %}           
                 </td>
                 <td>
-                    <a href="{{ url_for('admin_view_profile', student_id=s.bil_kemasukan) }}"
-                    class="btn btn-primary btn-sm btn-block">
+                    <a href="{{ url_for('admin_view_profile', student_id=s.bil_kemasukan) }}" class="btn btn-primary btn-sm btn-block"
+                        style="margin-bottom: 5px;">
                         <span class="glyphicon glyphicon-eye-open"></span> Lihat Profil
+                    </a>
+                    <a href="{{ url_for('admin_sijil_berhenti', student_id=s.bil_kemasukan) }}"
+                        class="btn btn-warning btn-sm btn-block">
+                        <span class="glyphicon glyphicon-print"></span> Print Sijil Berhenti
                     </a>
                 </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="8" class="text-center text-muted" style="padding: 20px;">Tiada rekod pendaftaran ditemui
+                <td colspan="10" class="text-center text-muted" style="padding: 20px;">Tiada rekod pendaftaran ditemui
                     mengikut kriteria tapisan tersebut.</td>
             </tr>
             {% endfor %}

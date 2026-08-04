@@ -36,419 +36,451 @@
                             <strong>Nama Pelajar: {{ student.nama_pelajar | upper }}</strong>
                         </h4>
                     </div>
-                <div class="col-md-6 text-right">
+                    <div class="col-md-6 text-right">
+                    </div>
+                </div>
             </div>
+
         </div>
     </div>
 
     <div class="row">
-    <div class="col-md-7">
+        <div class="col-md-7">
 
-        <div class="panel panel-default" style="box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-            <div class="panel-heading" style="background-color: #f5f5f5;">
-                <h3 class="panel-title" style="font-weight: bold; color: #333;">
-                    <span class="glyphicon glyphicon-user"></span> 1. Maklumat Peribadi Pelajar
-                </h3>
-            </div>
-            <div class="panel-body">
-                <table class="table table-striped (NULL)-margin" style="font-size: 14px;">
-                    <tbody>
-                        <tr>
-                            <th>Nama Pelajar:</th>
-                            <td class="editable" data-field="nama_pelajar" data-id="{{ student.bil_kemasukan }}" contenteditable="true">
-                                {{ student.nama_pelajar if student.nama_pelajar else '...' }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <th style="width: 35%;">Bil. Kemasukan:</th>
-                            <td><code>{{ student.bil_kemasukan }}</code></td>
-                        </tr>
-                        <tr>
-                            <th>No. Kad Pengenalan:</th>
-                            <td>{{ student.no_kp_pelajar }}</td>
-                        </tr>
-                        <tr>
-                            <th>E-mel Pelajar:</th>
-                            <td class="editable" data-field="email" data-id="{{ student.bil_kemasukan }}" contenteditable="true">
-                                {{ student.email if student.email else '...' }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Jantina:</th>
-                            <td>
-                                <select class="form-control editable-field" data-field="jantina" data-id="{{ student.bil_kemasukan }}">
-                                    <option value="LELAKI" {% if student.jantina=='LELAKI' %}selected{% endif %}>LELAKI</option>
-                                    <option value="PEREMPUAN" {% if student.jantina=='PEREMPUAN' %}selected{% endif %}>PEREMPUAN</option>
-                                </select>
-                            </td>
-                        </tr>
-                        
-                        <tr>
-                            <th>Bangsa:</th>
-                            <td>
-                                <select class="form-control editable-field" data-field="bangsa" data-id="{{ student.bil_kemasukan }}">
-                                    {% for b in ['MELAYU', 'CINA', 'INDIA', 'SABAH/SARAWAK', 'BUKAN WARGANEGARA'] %}
-                                    <option value="{{ b }}" {% if student.bangsa==b %}selected{% endif %}>{{ b }}</option>
-                                    {% endfor %}
-                                </select>
-                            </td>                   
-                        </tr>
-                        <tr>
-                            <th>Agama:</th>
-                            <td>
-                                <select class="form-control editable-field" data-field="agama" data-id="{{ student.bil_kemasukan }}">
-                                    {% for b in ['ISLAM', 'BUDDHA', 'HINDU', 'KRISTIAN', 'SIKH', 'LAIN-LAIN'] %}
-                                    <option value="{{ b }}" {% if student.agama==b %}selected{% endif %}>{{ b }}</option>
-                                    {% endfor %}
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Tarikh Lahir:</th>
-                            <td class="editable" data-field="tarikh_lahir" data-id="{{ student.bil_kemasukan }}" contenteditable="true">
-                                {{ student.tarikh_lahir }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Tempat Lahir:</th>
-                            <td class="editable" data-field="tempat_lahir" data-id="{{ student.bil_kemasukan }}" contenteditable="true">
-                                {{ student.tempat_lahir if student.tempat_lahir else '' }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>No. Surat Beranak:</th>
-                            <td class="editable" data-field="no_surat_beranak" data-id="{{ student.bil_kemasukan }}" contenteditable="true">
-                                {{ student.no_surat_beranak if student.no_surat_beranak else '' }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>No. Telefon:</th>
-                            <td class="editable" data-field="telefonNo" data-id="{{ student.bil_kemasukan }}" contenteditable="true">
-                                {{ student.telefonNo if student.telefonNo else '' }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Alamat Rumah:</th>
-                            <td class="editable" data-field="alamat_rumah" data-id="{{ student.bil_kemasukan }}" contenteditable="true">
-                                {{ student.alamat_rumah if student.alamat_rumah else '' }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Cara Datang Sekolah:</th>
-                            <td>
-                                <select class="form-control editable-field" data-field="cara_datang_sekolah" data-id="{{ student.bil_kemasukan }}">
-                                    {% for b in ['JALAN', 'KERETA', 'MOTOR', 'BASIKAL', 'BAS', 'LAIN-LAIN'] %}
-                                    <option value="{{ b }}" {% if student.cara_datang_sekolah==b %}selected{% endif %}>{{ b }}</option>
-                                    {% endfor %}
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Masalah penglihatan:</th>
-                            <td>
-                                <select class="form-control editable-field" data-field="masalah_penglihatan" data-id="{{ student.bil_kemasukan }}">
-                                    <option value="YA" {% if student.masalah_penglihatan=='YA' %}selected{% endif %}>YA</option>
-                                    <option value="TIDAK BAIK" {% if student.masalah_penglihatan=='TIDAK' %}selected{% endif %}>TIDAK</option>
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Masalah Kesihatan:</th>
-                            <td class="editable" data-field="masalah_kesihatan" data-id="{{ student.bil_kemasukan }}" contenteditable="true">
-                                {{ student.masalah_kesihatan if student.masalah_kesihatan else 'TIADA' }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Status OKU:</th>
-                            <td>
-                                <select class="form-control editable-field" data-field="status_oku" data-id="{{ student.bil_kemasukan }}">
-                                    <option value="YA" {% if student.status_oku=='YA' %}selected{% endif %}>YA</option>
-                                    <option value="TIDAK" {% if student.status_oku=='TIDAK' %}selected{% endif %}>TIDAK
-                                    </option>
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Kelas:</th>
-                            <td>
-                                <select class="form-control editable-field" data-field="kelas" data-id="{{ student.bil_kemasukan }}">
-                                    <option value="">TIADA</option>
-                        
-                                    {% for i in range(1, 9) %}
-                                    {% set class_name = 'A' ~ i %}
-                                    <option value="{{ class_name }}" {% if student.kelas==class_name %}selected{% endif %}>
-                                        {{ class_name }}
-                                    </option>
-                                    {% endfor %}
-                        
-                                    {% for i in range(1, 16) %}
-                                    {% set class_name = 'B' ~ i %}
-                                    <option value="{{ class_name }}" {% if student.kelas==class_name %}selected{% endif %}>
-                                        {{ class_name }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                            </td>                   
-                        </tr>
-
-                        <tr>
-                            <th>Aliran ditawar:</th>
-                            <td>
-                                <select class="form-control editable-field" data-field="aliran_ditawar" data-id="{{ student.bil_kemasukan }}">
-                                    <option value="SAINS" {% if student.aliran_ditawar=='SAINS' %}selected{% endif %}>SAINS</option>
-                                    <option value="SAINS SOSIAL" {% if student.aliran_ditawar=='SAINS SOSIAL' %}selected{% endif %}>SAINS SOSIAL
-                                    </option>
-                                </select>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <th>Pakej Aliran Dipilih:</th>
-                            <td>
-                                <select class="form-control editable-field" data-field="id_pakej" data-id="{{ student.bil_kemasukan }}">
-                                    <option value="">-- PILIH PAKEJ --</option>
-                                    {% for p in all_packages %}
-                                    <option value="{{ p.id_pakej }}" {% if student.id_pakej==p.id_pakej %}selected{% endif %}>
-                                        {{ p.kod_pakej }} - Aliran: {{ p.aliran }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                            </td>                   
-                        </tr>
-                        <tr>
-                            <th>Semester:</th>
-                            <td>
-                                <select class="form-control editable-field" data-field="semester" data-id="{{ student.bil_kemasukan }}">
-                                    <option value=0 {% if student.semester==0 %}selected{% endif %}>0 </option>
-                                    <option value=1 {% if student.semester==1 %}selected{% endif %}>1</option>
-                                    <option value=2 {% if student.semester==2 %}selected{% endif %}>2 </option>
-                                    <option value=3 {% if student.semester==3 %}selected{% endif %}>3 </option>
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Status pelajaran:</th>
-                            <td>
-                                <select class="form-control editable-field" data-field="status_study" data-id="{{ student.bil_kemasukan }}">
-                                    <option value=1 {% if student.status_study==1 %}selected{% endif %}>AKTIF</option>
-                                    <option value=0 {% if student.status_study==0 or not student.status_study %}selected{% endif %}>TIDAK AKTIF
-                                    </option>
-                                </select>
-                            </td>
-                        </tr>
-                        
-                        <tr>
-                            <th>Tarikh Pendaftaran:</th>
-                            <td>{{ student.tarikh_pendaftaran }}</td>
-                        </tr>
-
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="panel panel-default" style="box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-top: 20px;">
-            <div class="panel-heading" style="background-color: #f5f5f5;">
-                <h3 class="panel-title" style="font-weight: bold; color: #333;">
-                    <span class="glyphicon glyphicon-heart"></span> 2. Maklumat Penjaga / Waris
-                </h3>
-            </div>
-            <div class="panel-body">
-                {% if guardians %}
-                {% for g in guardians %}
-                <div class="well well-sm"
-                    style="background-color: white; border-left: 4px solid #337ab7; margin-bottom: 15px;">
-                    <h5 style="margin-top: 5px; font-weight: bold; color: #337ab7;">
-                        Hubungan: {{ g.hubungan }}
-                    </h5>
-                    <table class="table table-condensed (NULL)-margin" style="font-size: 13px;">
+            <!-- 1. MAKLUMAT PERIBADI PELAJAR -->
+            <div class="panel panel-default" style="box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div class="panel-heading" style="background-color: #f5f5f5;">
+                    <h3 class="panel-title" style="font-weight: bold; color: #333;">
+                        <span class="glyphicon glyphicon-user"></span> 1. Maklumat Peribadi Pelajar
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <table class="table table-striped (NULL)-margin" style="font-size: 14px;">
                         <tbody>
                             <tr>
-                                <th style="width: 30%;">Nama Penjaga:</th>
-                                <td>{{ g.nama_penjaga }}</td>
+                                <th style="width: 35%;">Bil. Kemasukan:</th>
+                                <td><code>{{ student.bil_kemasukan }}</code></td>
                             </tr>
                             <tr>
-                                <th>No. KP Penjaga:</th>
-                                <td>{{ g.no_kp_penjaga }}</td>
-                            </tr>
-                            <tr>
-                                <th>No. Telefon:</th>
-                                <td>{{ g.no_telefon }}</td>
-                            </tr>
-                            <tr>
-                                <th>Pekerjaan:</th>
-                                <td>{{ g.pekerjaan if g.pekerjaan else '<i>Tiada Data (NULL)</i>' | safe }}
+                                <th>Nama Pelajar:</th>
+                                <td class="editable" data-field="nama_pelajar" data-id="{{ student.bil_kemasukan }}"
+                                    contenteditable="true">
+                                    {{ student.nama_pelajar if student.nama_pelajar else '...' }}
                                 </td>
                             </tr>
                             <tr>
-                                <th>Pendapatan:</th>
-                                <td><strong>RM {{ "{:,.2f}".format(g.pendapatan if g.pendapatan else 0.00)
-                                        }}</strong></td>
+                                <th>No. Kad Pengenalan:</th>
+                                <td class="editable" data-field="no_kp_pelajar" data-id="{{ student.bil_kemasukan }}"
+                                    contenteditable="true">
+                                    {{ student.no_kp_pelajar }}
+                                </td>
                             </tr>
                             <tr>
-                                <th>Alamat Kerja:</th>
-                                <td><small>{{ g.alamat_tempat_kerja if g.alamat_tempat_kerja else '<i>Tiada
-                                            Data (NULL)</i>' | safe }}</small></td>
+                                <th>E-mel Pelajar:</th>
+                                <td class="editable" data-field="email" data-id="{{ student.bil_kemasukan }}"
+                                    contenteditable="true">
+                                    {{ student.email if student.email else '...' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Jantina:</th>
+                                <td>
+                                    <select class="form-control editable-field" data-field="jantina"
+                                        data-id="{{ student.bil_kemasukan }}">
+                                        <option value="LELAKI" {% if student.jantina=='LELAKI' %}selected{% endif %}>
+                                            LELAKI</option>
+                                        <option value="PEREMPUAN" {% if student.jantina=='PEREMPUAN' %}selected{% endif
+                                            %}>PEREMPUAN</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Bangsa:</th>
+                                <td>
+                                    <select class="form-control editable-field" data-field="bangsa"
+                                        data-id="{{ student.bil_kemasukan }}">
+                                        {% for b in ['MELAYU', 'CINA', 'INDIA', 'SABAH/SARAWAK', 'BUKAN WARGANEGARA'] %}
+                                        <option value="{{ b }}" {% if student.bangsa==b %}selected{% endif %}>{{ b }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Agama:</th>
+                                <td>
+                                    <select class="form-control editable-field" data-field="agama"
+                                        data-id="{{ student.bil_kemasukan }}">
+                                        {% for b in ['ISLAM', 'BUDDHA', 'HINDU', 'KRISTIAN', 'SIKH', 'LAIN-LAIN'] %}
+                                        <option value="{{ b }}" {% if student.agama==b %}selected{% endif %}>{{ b }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Tarikh Lahir:</th>
+                                <td>
+                                    <input type="date" class="form-control input-sm editable-field"
+                                        data-field="tarikh_lahir" data-id="{{ student.bil_kemasukan }}"
+                                        value="{{ student.tarikh_lahir }}">
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Tempat Lahir:</th>
+                                <td class="editable" data-field="tempat_lahir" data-id="{{ student.bil_kemasukan }}"
+                                    contenteditable="true">
+                                    {{ student.tempat_lahir if student.tempat_lahir else '' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>No. Surat Beranak:</th>
+                                <td class="editable" data-field="no_surat_beranak" data-id="{{ student.bil_kemasukan }}"
+                                    contenteditable="true">
+                                    {{ student.no_surat_beranak if student.no_surat_beranak else '' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>No. Telefon:</th>
+                                <td class="editable" data-field="telefonNo" data-id="{{ student.bil_kemasukan }}"
+                                    contenteditable="true">
+                                    {{ student.telefonNo if student.telefonNo else '' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Alamat Rumah:</th>
+                                <td class="editable" data-field="alamat_rumah" data-id="{{ student.bil_kemasukan }}"
+                                    contenteditable="true">
+                                    {{ student.alamat_rumah if student.alamat_rumah else '' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Cara Datang Sekolah:</th>
+                                <td>
+                                    <select class="form-control editable-field" data-field="cara_datang_sekolah"
+                                        data-id="{{ student.bil_kemasukan }}">
+                                        {% for b in ['JALAN', 'KERETA', 'MOTOR', 'BASIKAL', 'BAS', 'LAIN-LAIN'] %}
+                                        <option value="{{ b }}" {% if student.cara_datang_sekolah==b %}selected{% endif
+                                            %}>{{ b }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Masalah Penglihatan:</th>
+                                <td>
+                                    <select class="form-control editable-field" data-field="masalah_penglihatan"
+                                        data-id="{{ student.bil_kemasukan }}">
+                                        <option value="YA" {% if student.masalah_penglihatan=='YA' %}selected{% endif
+                                            %}>YA</option>
+                                        <option value="TIDAK" {% if student.masalah_penglihatan=='TIDAK' %}selected{%
+                                            endif %}>TIDAK</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Masalah Kesihatan:</th>
+                                <td class="editable" data-field="masalah_kesihatan"
+                                    data-id="{{ student.bil_kemasukan }}" contenteditable="true">
+                                    {{ student.masalah_kesihatan if student.masalah_kesihatan else 'TIADA' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Status OKU:</th>
+                                <td>
+                                    <select class="form-control editable-field" data-field="status_oku"
+                                        data-id="{{ student.bil_kemasukan }}">
+                                        <option value="YA" {% if student.status_oku=='YA' %}selected{% endif %}>YA
+                                        </option>
+                                        <option value="TIDAK" {% if student.status_oku=='TIDAK' %}selected{% endif %}>
+                                            TIDAK</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Kelas:</th>
+                                <td>
+                                    <select class="form-control editable-field" data-field="kelas"
+                                        data-id="{{ student.bil_kemasukan }}">
+                                        <option value="">TIADA</option>
+                                        {% for i in range(1, 9) %}
+                                        {% set class_name = 'A' ~ i %}
+                                        <option value="{{ class_name }}" {% if student.kelas==class_name %}selected{%
+                                            endif %}>{{ class_name }}</option>
+                                        {% endfor %}
+                                        {% for i in range(1, 16) %}
+                                        {% set class_name = 'B' ~ i %}
+                                        <option value="{{ class_name }}" {% if student.kelas==class_name %}selected{%
+                                            endif %}>{{ class_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Aliran Ditawar:</th>
+                                <td>
+                                    <select class="form-control editable-field" data-field="aliran_ditawar"
+                                        data-id="{{ student.bil_kemasukan }}">
+                                        <option value="SAINS" {% if student.aliran_ditawar=='SAINS' %}selected{% endif
+                                            %}>SAINS</option>
+                                        <option value="SAINS SOSIAL" {% if student.aliran_ditawar=='SAINS SOSIAL'
+                                            %}selected{% endif %}>SAINS SOSIAL</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Pakej Aliran Dipilih:</th>
+                                <td>
+                                    <select class="form-control editable-field" data-field="id_pakej"
+                                        data-id="{{ student.bil_kemasukan }}">
+                                        <option value="">-- PILIH PAKEJ --</option>
+                                        {% for p in all_packages %}
+                                        <option value="{{ p.id_pakej }}" {% if student.id_pakej==p.id_pakej %}selected{%
+                                            endif %}>
+                                            {{ p.kod_pakej }} - Aliran: {{ p.aliran }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Semester:</th>
+                                <td>
+                                    <select class="form-control editable-field" data-field="semester"
+                                        data-id="{{ student.bil_kemasukan }}">
+                                        <option value="0" {% if student.semester==0 %}selected{% endif %}>0</option>
+                                        <option value="1" {% if student.semester==1 %}selected{% endif %}>1</option>
+                                        <option value="2" {% if student.semester==2 %}selected{% endif %}>2</option>
+                                        <option value="3" {% if student.semester==3 %}selected{% endif %}>3</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Status Pelajaran:</th>
+                                <td>
+                                    <select class="form-control editable-field" data-field="status_study"
+                                        data-id="{{ student.bil_kemasukan }}">
+                                        <option value="1" {% if student.status_study==1 %}selected{% endif %}>AKTIF
+                                        </option>
+                                        <option value="0" {% if student.status_study==0 or not student.status_study
+                                            %}selected{% endif %}>TIDAK AKTIF</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Tarikh Pendaftaran:</th>
+                                <td>
+                                    <input type="date" class="form-control input-sm editable-field"
+                                        data-field="tarikh_pendaftaran" data-id="{{ student.bil_kemasukan }}"
+                                        value="{{ student.tarikh_pendaftaran }}">
+                                </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                {% endfor %}
-                {% else %}
-                <div class="text-center text-muted" style="padding: 20px 0;">
-                    <span class="glyphicon glyphicon-info-sign" style="font-size: 20px;"></span><br>
-                    <p style="margin-top: 5px;">Tiada maklumat waris/penjaga didaftarkan (NULL).</p>
-                </div>
-                {% endif %}
             </div>
+
+            <!-- 2. MAKLUMAT PENJAGA / WARIS (Display Only) -->
+            <div class="panel panel-default" style="box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-top: 20px;">
+                <div class="panel-heading" style="background-color: #f5f5f5;">
+                    <h3 class="panel-title" style="font-weight: bold; color: #333;">
+                        <span class="glyphicon glyphicon-heart"></span> 2. Maklumat Penjaga / Waris
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    {% if guardians %}
+                    {% for g in guardians %}
+                    <div class="well well-sm"
+                        style="background-color: white; border-left: 4px solid #337ab7; margin-bottom: 15px;">
+                        <h5 style="margin-top: 5px; font-weight: bold; color: #337ab7;">
+                            Hubungan: {{ g.hubungan }}
+                        </h5>
+                        <table class="table table-condensed (NULL)-margin" style="font-size: 13px;">
+                            <tbody>
+                                <tr>
+                                    <th style="width: 30%;">Nama Penjaga:</th>
+                                    <td>{{ g.nama_penjaga }}</td>
+                                </tr>
+                                <tr>
+                                    <th>No. KP Penjaga:</th>
+                                    <td>{{ g.no_kp_penjaga }}</td>
+                                </tr>
+                                <tr>
+                                    <th>No. Telefon:</th>
+                                    <td>{{ g.no_telefon }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Pekerjaan:</th>
+                                    <td>{{ g.pekerjaan if g.pekerjaan else '' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Pendapatan (RM):</th>
+                                    <td>{{ g.pendapatan if g.pendapatan else 0.00 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Alamat Kerja:</th>
+                                    <td><small>{{ g.alamat_tempat_kerja if g.alamat_tempat_kerja else '' }}</small></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="text-center text-muted" style="padding: 20px 0;">
+                        <span class="glyphicon glyphicon-info-sign" style="font-size: 20px;"></span><br>
+                        <p style="margin-top: 5px;">Tiada maklumat waris/penjaga didaftarkan (NULL).</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
         </div>
 
+        <div class="col-md-5">
+
+            <!-- 3. KEPUTUSAN PENCAPAIAN SPM -->
+            <div class="panel panel-default" style="box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div class="panel-heading" style="background-color: #f5f5f5;">
+                    <h3 class="panel-title" style="font-weight: bold; color: #333;">
+                        <span class="glyphicon glyphicon-education"></span> 3. Keputusan Pencapaian SPM
+                    </h3>
+                </div>
+                <div class="panel-body" style="padding: 0;">
+                    {% if spm %}
+                    <table class="table table-striped table-hover (NULL)-margin" style="margin-bottom: 0;">
+                        <thead>
+                            <tr style="background-color: #f9f9f9;">
+                                <th style="padding-left: 20px;">Mata Pelajaran (Subjek)</th>
+                                <th style="width: 30%;">Gred</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in spm %}
+                            <tr>
+                                <td style="padding-left: 20px;">{{ s.subjek }}</td>
+                                <td><span class="badge" style="background-color: #337ab7; font-size: 13px;">{{ s.gred
+                                        }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="text-center text-danger" style="padding: 30px 0;">
+                        <span class="glyphicon glyphicon-exclamation-sign" style="font-size: 26px;"></span><br>
+                        <p style="margin-top: 5px; font-weight: bold;">Rekod mata pelajaran SPM belum diisi.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 4. DOKUMEN LAMPIRAN DIGITAL -->
+            <div class="panel panel-default" style="box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-top: 20px;">
+                <div class="panel-heading" style="background-color: #f5f5f5;">
+                    <h3 class="panel-title" style="font-weight: bold; color: #333;">
+                        <span class="glyphicon glyphicon-picture"></span> 4. Dokumen Lampiran Digital
+                    </h3>
+                </div>
+                <div class="panel-body" style="background-color: #fcfcfc;">
+
+                    <label style="font-size: 13px; color:#555;"><span class="glyphicon glyphicon-paperclip"></span>
+                        Salinan Kad Pengenalan Pelajar:</label>
+                    <div class="thumbnail text-center" style="padding: 10px; background: white;">
+                        {% if student.ic_photo_path %}
+                        {% if student.ic_photo_path.lower().endswith('.pdf') %}
+                        <div style="padding: 20px 0;">
+                            <span class="glyphicon glyphicon-file" style="font-size: 40px; color: #d9534f;"></span><br>
+                            <p style="margin-top: 10px;"><small class="text-primary">{{ student.ic_photo_path }}</small>
+                            </p>
+                            <a href="{{ url_for('static', filename='uploads/student_docs/' + student.ic_photo_path) }}"
+                                target="_blank" class="btn btn-default btn-xs">Buka Fail PDF <span
+                                    class="glyphicon glyphicon-new-window"></span></a>
+                        </div>
+                        {% else %}
+                        <img src="{{ url_for('static', filename='uploads/student_docs/' + student.ic_photo_path) }}"
+                            alt="Salinan IC" class="img-responsive img-rounded"
+                            style="max-height: 220px; margin: 0 auto; box-shadow: inset 0 0 1px rgba(0,0,0,0.2);">
+                        <div class="caption" style="padding: 5px 0 0 0;">
+                            <a href="{{ url_for('static', filename='uploads/student_docs/' + student.ic_photo_path) }}"
+                                target="_blank" class="btn btn-link btn-xs">Lihat Gambar Asal</a>
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <div style="padding: 25px 0; color: #777; background-color: #f9f9f9; border-radius: 4px;">
+                            <span class="glyphicon glyphicon-minus-sign"
+                                style="font-size: 24px; color: #aaa;"></span><br>
+                            <small class="text-muted">Dokumen belum dimuat naik (NULL)</small>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <label style="font-size: 13px; color:#555; margin-top: 10px;"><span
+                            class="glyphicon glyphicon-paperclip"></span> Salinan Surat Tawaran Tingkatan 6:</label>
+                    <div class="thumbnail text-center" style="padding: 10px; background: white;">
+                        {% if student.surat_tawaran_path %}
+                        {% if student.surat_tawaran_path.lower().endswith('.pdf') %}
+                        <div style="padding: 20px 0;">
+                            <span class="glyphicon glyphicon-file" style="font-size: 40px; color: #d9534f;"></span><br>
+                            <p style="margin-top: 10px;"><small class="text-primary">{{ student.surat_tawaran_path
+                                    }}</small></p>
+                            <a href="{{ url_for('static', filename='uploads/student_docs/' + student.surat_tawaran_path) }}"
+                                target="_blank" class="btn btn-default btn-xs">Buka Fail PDF <span
+                                    class="glyphicon glyphicon-new-window"></span></a>
+                        </div>
+                        {% else %}
+                        <img src="{{ url_for('static', filename='uploads/student_docs/' + student.surat_tawaran_path) }}"
+                            alt="Surat Tawaran T6" class="img-responsive img-rounded"
+                            style="max-height: 220px; margin: 0 auto; box-shadow: inset 0 0 1px rgba(0,0,0,0.2);">
+                        <div class="caption" style="padding: 5px 0 0 0;">
+                            <a href="{{ url_for('static', filename='uploads/student_docs/' + student.surat_tawaran_path) }}"
+                                target="_blank" class="btn btn-link btn-xs">Lihat Gambar Asal</a>
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <div style="padding: 25px 0; color: #777; background-color: #f9f9f9; border-radius: 4px;">
+                            <span class="glyphicon glyphicon-minus-sign"
+                                style="font-size: 24px; color: #aaa;"></span><br>
+                            <small class="text-muted">Dokumen belum dimuat naik (NULL)</small>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <label style="font-size: 13px; color:#555; margin-top: 10px;"><span
+                            class="glyphicon glyphicon-paperclip"></span> Salinan Slip Keputusan SPM:</label>
+                    <div class="thumbnail text-center" style="padding: 10px; background: white;">
+                        {% if student.spm_slip_filename %}
+                        {% if student.spm_slip_filename.lower().endswith('.pdf') %}
+                        <div style="padding: 20px 0;">
+                            <span class="glyphicon glyphicon-file" style="font-size: 40px; color: #d9534f;"></span><br>
+                            <p style="margin-top: 10px;"><small class="text-primary">{{ student.spm_slip_filename
+                                    }}</small></p>
+                            <a href="{{ url_for('static', filename='uploads/spm_slips/' + student.spm_slip_filename) }}"
+                                target="_blank" class="btn btn-default btn-xs">Buka Fail PDF <span
+                                    class="glyphicon glyphicon-new-window"></span></a>
+                        </div>
+                        {% else %}
+                        <img src="{{ url_for('static', filename='uploads/spm_slips/' + student.spm_slip_filename) }}"
+                            alt="Slip SPM" class="img-responsive img-rounded"
+                            style="max-height: 220px; margin: 0 auto; box-shadow: inset 0 0 1px rgba(0,0,0,0.2);">
+                        <div class="caption" style="padding: 5px 0 0 0;">
+                            <a href="{{ url_for('static', filename='uploads/spm_slips/' + student.spm_slip_filename) }}"
+                                target="_blank" class="btn btn-link btn-xs">Lihat Gambar Asal</a>
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <div style="padding: 25px 0; color: #777; background-color: #f9f9f9; border-radius: 4px;">
+                            <span class="glyphicon glyphicon-minus-sign"
+                                style="font-size: 24px; color: #aaa;"></span><br>
+                            <small class="text-muted">Slip SPM belum dimuat naik (NULL)</small>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
     </div>
 
-    <div class="col-md-5">
-
-        <div class="panel panel-default" style="box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-            <div class="panel-heading" style="background-color: #f5f5f5;">
-                <h3 class="panel-title" style="font-weight: bold; color: #333;">
-                    <span class="glyphicon glyphicon-education"></span> 3. Keputusan Pencapaian SPM
-                </h3>
-            </div>
-            <div class="panel-body" style="padding: 0;">
-                {% if spm %}
-                <table class="table table-striped table-hover (NULL)-margin" style="margin-bottom: 0;">
-                    <thead>
-                        <tr style="background-color: #f9f9f9;">
-                            <th style="padding-left: 20px;">Mata Pelajaran (Subjek)</th>
-                            <th style="width: 30%; text-center">Gred</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for s in spm %}
-                        <tr>
-                            <td style="padding-left: 20px;">{{ s.subjek }}</td>
-                            <td><span class="badge" style="background-color: #337ab7; font-size: 13px;">{{
-                                    s.gred }}</span></td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <div class="text-center text-danger" style="padding: 30px 0;">
-                    <span class="glyphicon glyphicon-exclamation-sign" style="font-size: 26px;"></span><br>
-                    <p style="margin-top: 5px; font-weight: bold;">Rekod mata pelajaran SPM belum diisi.</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="panel panel-default" style="box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-top: 20px;">
-            <div class="panel-heading" style="background-color: #f5f5f5;">
-                <h3 class="panel-title" style="font-weight: bold; color: #333;">
-                    <span class="glyphicon glyphicon-picture"></span> 4. Dokumen Lampiran Digital
-                </h3>
-            </div>
-            <div class="panel-body" style="background-color: #fcfcfc;">
-
-                <label style="font-size: 13px; color:#555;"><span class="glyphicon glyphicon-paperclip"></span> Salinan
-                    Kad Pengenalan
-                    Pelajar:</label>
-                <div class="thumbnail text-center" style="padding: 10px; background: white;">
-                    {% if student.ic_photo_path %}
-                    {% if student.ic_photo_path.lower().endswith('.pdf') %}
-                    <div style="padding: 20px 0;">
-                        <span class="glyphicon glyphicon-file" style="font-size: 40px; color: #d9534f;"></span><br>
-                        <p style="margin-top: 10px;"><small class="text-primary">{{ student.ic_photo_path
-                                }}</small></p>
-                        <a href="{{ url_for('static', filename='uploads/student_docs/' + student.ic_photo_path) }}"
-                            target="_blank" class="btn btn-default btn-xs">Buka Fail PDF <span
-                                class="glyphicon glyphicon-new-window"></span></a>
-                    </div>
-                    {% else %}
-                    <img src="{{ url_for('static', filename='uploads/student_docs/' + student.ic_photo_path) }}"
-                        alt="Salinan IC" class="img-responsive img-rounded"
-                        style="max-height: 220px; margin: 0 auto; box-shadow: inset 0 0 1px rgba(0,0,0,0.2);">
-                    <div class="caption" style="padding: 5px 0 0 0;">
-                        <a href="{{ url_for('static', filename='uploads/student_docs/' + student.ic_photo_path) }}"
-                            target="_blank" class="btn btn-link btn-xs">Lihat Gambar Asal</a>
-                    </div>
-                    {% endif %}
-                    {% else %}
-                    <div style="padding: 25px 0; color: #777; background-color: #f9f9f9; border-radius: 4px;">
-                        <span class="glyphicon glyphicon-minus-sign" style="font-size: 24px; color: #aaa;"></span><br>
-                        <small class="text-muted">Dokumen belum dimuat naik (NULL)</small>
-                    </div>
-                    {% endif %}
-                </div>
-
-                <label style="font-size: 13px; color:#555; margin-top: 10px;"><span
-                        class="glyphicon glyphicon-paperclip"></span> Salinan Surat Tawaran Tingkatan
-                    6:</label>
-                <div class="thumbnail text-center" style="padding: 10px; background: white;">
-                    {% if student.surat_tawaran_path %}
-                    {% if student.surat_tawaran_path.lower().endswith('.pdf') %}
-                    <div style="padding: 20px 0;">
-                        <span class="glyphicon glyphicon-file" style="font-size: 40px; color: #d9534f;"></span><br>
-                        <p style="margin-top: 10px;"><small class="text-primary">{{
-                                student.surat_tawaran_path }}</small></p>
-                        <a href="{{ url_for('static', filename='uploads/student_docs/' + student.surat_tawaran_path) }}"
-                            target="_blank" class="btn btn-default btn-xs">Buka Fail PDF <span
-                                class="glyphicon glyphicon-new-window"></span></a>
-                    </div>
-                    {% else %}
-                    <img src="{{ url_for('static', filename='uploads/student_docs/' + student.surat_tawaran_path) }}"
-                        alt="Surat Tawaran T6" class="img-responsive img-rounded"
-                        style="max-height: 220px; margin: 0 auto; box-shadow: inset 0 0 1px rgba(0,0,0,0.2);">
-                    <div class="caption" style="padding: 5px 0 0 0;">
-                        <a href="{{ url_for('static', filename='uploads/student_docs/' + student.surat_tawaran_path) }}"
-                            target="_blank" class="btn btn-link btn-xs">Lihat Gambar Asal</a>
-                    </div>
-                    {% endif %}
-                    {% else %}
-                    <div style="padding: 25px 0; color: #777; background-color: #f9f9f9; border-radius: 4px;">
-                        <span class="glyphicon glyphicon-minus-sign" style="font-size: 24px; color: #aaa;"></span><br>
-                        <small class="text-muted">Dokumen belum dimuat naik (NULL)</small>
-                    </div>
-                    {% endif %}
-                </div>
-
-                <label style="font-size: 13px; color:#555; margin-top: 10px;"><span
-                        class="glyphicon glyphicon-paperclip"></span> Salinan Slip Keputusan SPM:</label>
-                <div class="thumbnail text-center" style="padding: 10px; background: white;">
-                    {% if student.spm_slip_filename %}
-                    {% if student.spm_slip_filename.lower().endswith('.pdf') %}
-                    <div style="padding: 20px 0;">
-                        <span class="glyphicon glyphicon-file" style="font-size: 40px; color: #d9534f;"></span><br>
-                        <p style="margin-top: 10px;"><small class="text-primary">{{
-                                student.spm_slip_filename }}</small></p>
-                        <a href="{{ url_for('static', filename='uploads/spm_slips/' + student.spm_slip_filename) }}"
-                            target="_blank" class="btn btn-default btn-xs">Buka Fail PDF <span
-                                class="glyphicon glyphicon-new-window"></span></a>
-                    </div>
-                    {% else %}
-                    <img src="{{ url_for('static', filename='uploads/spm_slips/' + student.spm_slip_filename) }}"
-                        alt="Slip SPM" class="img-responsive img-rounded"
-                        style="max-height: 220px; margin: 0 auto; box-shadow: inset 0 0 1px rgba(0,0,0,0.2);">
-                    <div class="caption" style="padding: 5px 0 0 0;">
-                        <a href="{{ url_for('static', filename='uploads/spm_slips/' + student.spm_slip_filename) }}"
-                            target="_blank" class="btn btn-link btn-xs">Lihat Gambar Asal</a>
-                    </div>
-                    {% endif %}
-                    {% else %}
-                    <div style="padding: 25px 0; color: #777; background-color: #f9f9f9; border-radius: 4px;">
-                        <span class="glyphicon glyphicon-minus-sign" style="font-size: 24px; color: #aaa;"></span><br>
-                        <small class="text-muted">Slip SPM belum dimuat naik (NULL)</small>
-                    </div>
-                    {% endif %}
-                </div>
-
-            </div>
-        </div>
-
-    </div>
-</div>
-
-</div>
-</div>
 </div>
 
 <style>
@@ -464,53 +496,48 @@
 
 <script>
     function confirmDelete(id) {
-            if (confirm("AMARAN: Adakah anda pasti mahu memadam rekod pelajar ini? Tindakan ini tidak boleh diubah.")) {
-                // Send request to delete
-                fetch('/admin/delete-student/' + id, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            alert("Rekod telah dipadam.");
-                            window.location.href = "{{ url_for('admin_view_students_list') }}";
-                        } else {
-                            alert("Ralat: " + data.message);
-                        }
-                    });
-            }
+        if (confirm("AMARAN: Adakah anda pasti mahu memadam rekod pelajar ini? Tindakan ini tidak boleh diubah.")) {
+            fetch('/admin/delete-student/' + id, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert("Rekod telah dipadam.");
+                        window.location.href = "{{ url_for('admin_view_students_list') }}";
+                    } else {
+                        alert("Ralat: " + data.message);
+                    }
+                });
         }
-    // Update this line to select both classes
-    document.querySelectorAll('.editable-field, .editable').forEach(element => {
+    }
 
-        // If it is a <td> with .editable, we need to get text. 
-        // If it is an <input>/<select> with .editable-field, we get value.
+    document.querySelectorAll('.editable-field, .editable').forEach(element => {
         const eventType = (element.tagName === 'SELECT' || element.tagName === 'INPUT') ? 'change' : 'blur';
 
         element.addEventListener(eventType, function () {
             const field = this.getAttribute('data-field');
             const id = this.getAttribute('data-id');
+            const targetTable = this.getAttribute('data-table') || 'student';
 
-            // Determine the value based on element type
             const value = (this.tagName === 'SELECT' || this.tagName === 'INPUT')
                 ? this.value
                 : this.innerText.trim();
 
             fetch('/admin/update-field', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ field: field, id: id, value: value })
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({field: field, id: id, table: targetTable, value: value})
             })
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
-                        // Visual success indicator
                         this.style.backgroundColor = '#dff0d8';
                         setTimeout(() => this.style.backgroundColor = '', 1000);
                     } else {
                         alert('Gagal: ' + data.message);
-                        location.reload(); // Reload on failure to restore original data
+                        location.reload();
                     }
                 });
         });

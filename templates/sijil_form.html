@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container" style="margin-bottom: 50px;">
+    <div class="page-header">
+        <h2>Penyesuaian Sijil Berhenti Sekolah</h2>
+        <p class="text-muted">Maklumat di bawah diambil terus dari pangkalan data[cite: 4]. Anda boleh mengubah sebarang
+            butiran sebelum mencetak.</p>
+    </div>
+
+    <form action="{{ url_for('admin_print_sijil_pdf', student_id=student.bil_kemasukan) }}" method="POST"
+        target="_blank">
+        <!-- MAKLUMAT DIRI (Now Fully Editable) -->
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">1. Maklumat Diri / Personal Information</h3>
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-6 form-group">
+                        <label>Nama / Name</label>
+                        <input type="text" name="nama_pelajar" class="form-control" value="{{ student.nama_pelajar }}">
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label>No Kad Pengenalan / Identity Card No.</label>
+                        <input type="text" name="no_kp_pelajar" class="form-control"
+                            value="{{ student.no_kp_pelajar }}">
+                    </div>
+                    <div class="col-md-4 form-group">
+                        <label>Tarikh Lahir / Date of Birth</label>
+                        <input type="text" name="tarikh_lahir" class="form-control" value="{{ student.tarikh_lahir }}">
+                    </div>
+                    <div class="col-md-4 form-group">
+                        <label>Tempat Lahir / Place of Birth</label>
+                        <input type="text" name="tempat_lahir" class="form-control"
+                            value="{{ student.tempat_lahir or '' }}">
+                    </div>
+                    <div class="col-md-4 form-group">
+                        <label>No Sijil Kelahiran / Birth Certificate No.</label>
+                        <input type="text" name="no_surat_beranak" class="form-control"
+                            value="{{ student.no_surat_beranak or '' }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAKLUMAT PERSEKOLAHAN (Now Fully Editable) -->
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">2. Maklumat Persekolahan / School Information</h3>
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-4 form-group">
+                        <label>Bil Kemasukan / Registration No.</label>
+                        <input type="text" name="bil_kemasukan" class="form-control"
+                            value="{{ student.bil_kemasukan }}">
+                    </div>
+                    <div class="col-md-4 form-group">
+                        <label>Tarikh Masuk / Date of Registration</label>
+                        <input type="text" name="tarikh_pendaftaran" class="form-control"
+                            value="{{ student.tarikh_pendaftaran or '' }}">
+                    </div>
+                    <div class="col-md-4 form-group">
+                        <label>Tarikh Berhenti / Date of Leaving</label>
+                        <input type="date" name="tarikh_berhenti" class="form-control"
+                            value="{{ student.sekolah_tamat or '' }}">
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label>Sebab Berhenti / Reason of Leaving</label>
+                        <input type="text" name="sebab_berhenti" class="form-control" value="TAMAT TINGKATAN ENAM"
+                            required>
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label>Tugas Khas (Jika ada) / Special Task</label>
+                        <input type="text" name="tugas_khas" class="form-control"
+                            value="{{ student.tugas_khas or '' }}">
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label>Tarikh Sijil Dikeluarkan / Certificate Date</label>
+                        <input type="date" name="tarikh_sijil" class="form-control" id="tarikh_sijil" required>
+                    </div>
+                </div>
+
+                <hr>
+                <h4>Kedatangan / Attendance (Pilih Tahun & Bilangan Hari Hadir)</h4>
+                <div class="row">
+                    <div class="col-md-4 form-group">
+                        <label>Tahun 1</label>
+                        <select name="tahun_1" class="form-control">
+                            {% for y in range(2020, 2031) %}
+                            <option value="{{ y }}" {% if y==2024 %}selected{% endif %}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="text" name="kedatangan_1" class="form-control" placeholder="Cth: 190/200"
+                            style="margin-top: 5px;">
+                    </div>
+                    <div class="col-md-4 form-group">
+                        <label>Tahun 2</label>
+                        <select name="tahun_2" class="form-control">
+                            {% for y in range(2020, 2031) %}
+                            <option value="{{ y }}" {% if y==2025 %}selected{% endif %}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="text" name="kedatangan_2" class="form-control" placeholder="Cth: 195/200"
+                            style="margin-top: 5px;">
+                    </div>
+                    <div class="col-md-4 form-group">
+                        <label>Tahun 3</label>
+                        <select name="tahun_3" class="form-control">
+                            {% for y in range(2020, 2031) %}
+                            <option value="{{ y }}" {% if y==2026 %}selected{% endif %}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="text" name="kedatangan_3" class="form-control" placeholder="Cth: 40/50"
+                            style="margin-top: 5px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KEGIATAN KOKURIKULUM (Editable / Interactive Table) -->
+        <div class="panel panel-default">
+            <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 class="panel-title" style="margin: 0;">3. Kegiatan Kokurikulum / Co-Curricular Activities</h3>
+                <button type="button" class="btn btn-xs btn-primary" onclick="addKokuRow()">+ Tambah Baris</button>
+            </div>
+            <div class="panel-body">
+                <table class="table table-bordered" id="kokuTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 30%;">Jenis Aktiviti</th>
+                            <th style="width: 45%;">Nama Unit</th>
+                            <th style="width: 20%;">Jawatan</th>
+                            <th style="width: 5%;">Tindakan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if koku_activities %}
+                        {% for koku in koku_activities %}
+                        <tr>
+                            <td><input type="text" name="koku_type[]" class="form-control input-sm"
+                                    value="{{ koku.unit_type }}"></td>
+                            <td><input type="text" name="koku_name[]" class="form-control input-sm"
+                                    value="{{ koku.unit_name }}"></td>
+                            <td><input type="text" name="koku_jawatan[]" class="form-control input-sm"
+                                    value="{{ koku.jawatan }}"></td>
+                            <td class="text-center"><button type="button" class="btn btn-danger btn-xs"
+                                    onclick="removeKokuRow(this)">&times;</button></td>
+                        </tr>
+                        {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td><input type="text" name="koku_type[]" class="form-control input-sm"
+                                    placeholder="Cth: Kelab"></td>
+                            <td><input type="text" name="koku_name[]" class="form-control input-sm"
+                                    placeholder="Cth: Kelab Komputer"></td>
+                            <td><input type="text" name="koku_jawatan[]" class="form-control input-sm"
+                                    placeholder="Cth: Pengerusi"></td>
+                            <td class="text-center"><button type="button" class="btn btn-danger btn-xs"
+                                    onclick="removeKokuRow(this)">&times;</button></td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ULASAN GURU (Editable Form Inputs) -->
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">4. Ulasan Guru / Teacher's Comments</h3>
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-6 form-group">
+                        <label>Kelakuan / Conduct</label>
+                        <input type="text" name="kelakuan" class="form-control" value="BAIK" required>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 form-group">
+                        <label>Catatan / Comments</label>
+                        <textarea name="catatan" class="form-control"
+                            rows="3">Seorang pelajar yang berdedikasi dan mempunyai sikap positif.</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="form-group">
+            <a href="{{ url_for('admin_view_students_list') }}" class="btn btn-default">
+                <span class="glyphicon glyphicon-chevron-left"></span> Kembali
+            </a>
+            <button type="submit" class="btn btn-success pull-right">
+                <span class="glyphicon glyphicon-print"></span> Jana & Cetak PDF Sijil
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- JavaScript for Dynamic Rows & Date -->
+<script>
+    function addKokuRow() {
+        const table = document.getElementById('kokuTable');
+        if (!table) return;
+        const tbody = table.getElementsByTagName('tbody')[0];
+        const newRow = tbody.insertRow();
+        newRow.innerHTML = `
+            <td><input type="text" name="koku_type[]" class="form-control input-sm" placeholder="Cth: Sukan"></td>
+            <td><input type="text" name="koku_name[]" class="form-control input-sm" placeholder="Cth: Bola Sepak"></td>
+            <td><input type="text" name="koku_jawatan[]" class="form-control input-sm" placeholder="Cth: Ahli"></td>
+            <td class="text-center"><button type="button" class="btn btn-danger btn-xs" onclick="removeKokuRow(this)">&times;</button></td>
+        `;
+    }
+
+    function removeKokuRow(button) {
+        const row = button.closest('tr');
+        if (row) row.remove();
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const today = new Date().toISOString().split('T')[0];
+        const dateField = document.getElementById('tarikh_sijil');
+        if (dateField) dateField.value = today;
+    });
+</script>
+{% endblock %}
