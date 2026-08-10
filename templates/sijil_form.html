@@ -118,7 +118,7 @@
 
                 <hr>
                 <h4>Kedatangan / Attendance (Pilih Tahun & Bilangan Hari Hadir)</h4>
-                <div class="row">
+                <div class="row justify-content-center">
                     <div class="col-md-4 form-group">
                         <label>Tahun 1</label>
                         <select name="tahun_1" class="form-control">
@@ -137,16 +137,6 @@
                             {% endfor %}
                         </select>
                         <input type="text" name="kedatangan_2" class="form-control" placeholder="Cth: 195/200"
-                            style="margin-top: 5px;">
-                    </div>
-                    <div class="col-md-4 form-group">
-                        <label>Tahun 3</label>
-                        <select name="tahun_3" class="form-control">
-                            {% for y in range(2020, 2031) %}
-                            <option value="{{ y }}" {% if y==2026 %}selected{% endif %}>{{ y }}</option>
-                            {% endfor %}
-                        </select>
-                        <input type="text" name="kedatangan_3" class="form-control" placeholder="Cth: 40/50"
                             style="margin-top: 5px;">
                     </div>
                 </div>

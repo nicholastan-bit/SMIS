@@ -1,80 +1,126 @@
 <!DOCTYPE html>
 <html lang="ms">
+
 <head>
     <meta charset="UTF-8">
     <title>Sijil Berhenti Sekolah - {{ student.nama_pelajar }}</title>
     <style>
         @page {
-            size: A4;
-            margin: 10mm; /* Adjust page margins to maximize printable area */
+            size: A4 portrait;
+            margin: 0;
         }
 
         body {
-            font-family: Arial, sans-serif;
-            font-size: 12px; /* Slightly reduced base font to prevent text wrapping overflows */
+            font-family: "Times New Roman", Times, serif;
+            font-size: 11px;
             color: #000;
-            line-height: 1.3;
+            line-height: 1.25;
             margin: 0;
             padding: 0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
 
         .certificate-container {
-            width: 100%;
-            max-width: 100%;
-            margin: 0 auto;
-            border: none; /* Remove border if it triggers extra height, or keep it thin */
-            padding: 10px;
+            background-image: url("{{ url_for('static', filename='sijil_berhenti.jpg') }}");
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            width: 210mm;
+            height: 297mm;
             box-sizing: border-box;
+            padding: 55mm 22mm 15mm 22mm;
+            position: relative;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
-        .text-center { text-align: center; }
-        .header-title { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
-        .sub-title { font-size: 14px; font-weight: bold; margin-bottom: 20px; }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 6px 8px; vertical-align: top; text-align: left; }
-        .table-bordered th, .table-bordered td { border: 1px solid #000; }
-        
-        table, .section-heading, .signature-section {
+
+        .text-center {
+            text-align: center;
+        }
+
+        .header-title {
+            font-size: 15px;
+            font-weight: bold;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+        }
+
+        .sub-title {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2px;
+        }
+
+        td {
+            padding: 2px 4px;
+            vertical-align: top;
+            text-align: left;
+            font-size: 12px;
+            border: none;
+        }
+
+        th {
+            border-bottom: 1px solid #000;
+            padding-bottom: 4px;
+        }
+
+        table,
+        .section-heading,
+        .signature-section {
             page-break-inside: avoid;
         }
 
+        /* Plain text look for headings (removed background color and borders) */
         .section-heading {
-            background-color: #f0f0f0 !important; /* Forces background color to print in browsers */
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
             font-weight: bold;
-            padding: 4px 6px;
-            margin-top: 10px;
-            font-size: 13px;
-            border: 1px solid #000;
+            padding-bottom: 2px; /* Adds space between text and the line */
+            margin-top: 16px; 
+            margin-bottom: 6px; /* Adds a little space between the line and the table below it */
+            font-size: 14px;
+            border: none;
+            border-bottom: 1px solid #000; /* Adds a clean thin black line */
+            background: none !important;
+            text-transform: uppercase;
         }
-        
+
         .no-print {
             margin-top: 20px;
             text-align: center;
         }
 
         @media print {
-            .no-print { display: none; }
-            body { padding: 0; }
-            .certificate-container { border: none; }
+            .no-print {
+                display: none;
+            }
+
+            body {
+                padding: 0;
+                background: none;
+            }
         }
     </style>
 </head>
+
 <body onload="window.print()">
 
     <div class="certificate-container">
         <!-- Header -->
         <div class="text-center">
-            <div class="header-title">SIJIL BERHENTI SEKOLAH</div>
-            <div class="sub-title">SCHOOL LEAVING CERTIFICATE</div>
+            <div class="header-title">Sijil Berhenti</div>
+            <div class="sub-title">Leaving Certificate</div>
         </div>
 
         <!-- Maklumat Diri -->
         <div class="section-heading">MAKLUMAT DIRI / Personal Information</div>
         <table>
             <tr>
-                <td style="width: 30%;"><strong>Nama / Name</strong></td>
+                <td style="width: 32%;"><strong>Nama / Name</strong></td>
                 <td style="width: 2%;">:</td>
                 <td>{{ form_data.nama_pelajar }}</td>
             </tr>
@@ -104,7 +150,7 @@
         <div class="section-heading">MAKLUMAT PERSEKOLAHAN / School Information</div>
         <table>
             <tr>
-                <td style="width: 30%;"><strong>Bil Kemasukan / Reg No</strong></td>
+                <td style="width: 32%;"><strong>Bil Kemasukan / Reg No</strong></td>
                 <td style="width: 2%;">:</td>
                 <td>{{ student.bil_kemasukan }}</td>
             </tr>
@@ -128,46 +174,44 @@
                 <td>:</td>
                 <td>
                     {{ form_data.tahun_1 }}: {{ form_data.kedatangan_1 or '-' }} |
-                    {{ form_data.tahun_2 }}: {{ form_data.kedatangan_2 or '-' }} |
-                    {{ form_data.tahun_3 }}: {{ form_data.kedatangan_3 or '-' }}
+                    {{ form_data.tahun_2 }}: {{ form_data.kedatangan_2 or '-' }}
                 </td>
             </tr>
         </table>
 
         <!-- Kegiatan Kokurikulum & Tugas Khas -->
         <div class="section-heading">KEGIATAN KOKURIKULUM & TUGAS KHAS / Co-Curricular Activities & Special Tasks</div>
-        <table class="table-bordered" style="margin-top: 10px;">
+        <table style="margin-top: 2px;">
             <thead>
                 <tr>
-                    <th>Persatuan / Kelab / Sukan / Badan Beruniform / Tugas Khas</th>
-                    <th>Jawatan / Position</th>
+                    <th style="font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 4px;">Persatuan / Kelab / Sukan
+                        / Badan Beruniform / Tugas Khas</th>
+                    <th style="width: 35%; font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 4px;">Jawatan /
+                        Position</th>
                 </tr>
             </thead>
             <tbody>
-                <!-- Loop through Kokurikulum Activities -->
                 {% if koku_activities %}
                 {% for koku in koku_activities %}
                 <tr>
-                    <td>{{ koku.unit_type }} - {{ koku.unit_name }}</td>
-                    <td>{{ koku.jawatan }}</td>
+                    <td style="padding-top: 4px;">{{ koku.unit_type }} - {{ koku.unit_name }}</td>
+                    <td style="padding-top: 4px;">{{ koku.jawatan }}</td>
                 </tr>
                 {% endfor %}
                 {% endif %}
         
-                <!-- Loop through Tugas Khas Records -->
                 {% if tugas_khas_records %}
                 {% for tk in tugas_khas_records %}
                 <tr>
-                    <td>Tugas Khas: {{ tk.tugas }}</td>
-                    <td>{{ tk.jawatan if tk.jawatan else '-' }}</td>
+                    <td style="padding-top: 4px;">Tugas Khas: {{ tk.tugas }}</td>
+                    <td style="padding-top: 4px;">{{ tk.jawatan if tk.jawatan else '-' }}</td>
                 </tr>
                 {% endfor %}
                 {% endif %}
         
-                <!-- Fallback if both are empty -->
                 {% if not koku_activities and not tugas_khas_records %}
                 <tr>
-                    <td colspan="2" class="text-center">Tiada rekod kokurikulum atau tugas khas</td>
+                    <td colspan="2" class="text-center" style="padding-top: 4px;">Tiada rekod kokurikulum atau tugas khas</td>
                 </tr>
                 {% endif %}
             </tbody>
@@ -177,7 +221,7 @@
         <div class="section-heading">ULASAN GURU / Teacher's Comments</div>
         <table>
             <tr>
-                <td style="width: 30%;"><strong>Kelakuan / Conduct</strong></td>
+                <td style="width: 32%;"><strong>Kelakuan / Conduct</strong></td>
                 <td style="width: 2%;">:</td>
                 <td>{{ form_data.kelakuan }}</td>
             </tr>
@@ -189,23 +233,27 @@
         </table>
 
         <!-- Signature Section -->
-        <br><br>
-        <div style="margin: 0 auto; text-align: center; width: 350px;">
-            <p>......................................................<br>
+        <div style="margin: 100px auto 0 auto; text-align: center; width: 280px; font-size: 10px;">
+            <p style="margin-bottom: 25px;">......................................................<br>
                 <strong>PN NORLIZA BINTI MOHD NOH</strong><br>
                 Penolong Kanan Pentadbiran<br>
                 Kolej Tingkatan Enam (Prauniversiti) Sri Istana
             </p>
-            <p style="margin-bottom: 5px;">{{ form_data.tarikh_sijil or '-' }}</p>
+            <p style="margin-bottom: 10px;">{{ form_data.tarikh_sijil or '-' }}</p>
         </div>
         <div style="clear: both;"></div>
     </div>
 
     <!-- Print Control Button -->
     <div class="no-print">
-        <button onclick="window.print()" style="padding: 10px 20px; font-size: 16px; background: #5cb85c; color: white; border: none; border-radius: 4px; cursor: pointer;">Cetak Semula / Print PDF</button>
-        <button onclick="window.close()" style="padding: 10px 20px; font-size: 16px; background: #d9534f; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">Tutup Laman</button>
+        <button onclick="window.print()"
+            style="padding: 10px 20px; font-size: 16px; background: #5cb85c; color: white; border: none; border-radius: 4px; cursor: pointer;">Cetak
+            Semula / Print PDF</button>
+        <button onclick="window.close()"
+            style="padding: 10px 20px; font-size: 16px; background: #d9534f; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">Tutup
+            Laman</button>
     </div>
 
 </body>
+
 </html>
