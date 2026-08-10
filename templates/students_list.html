@@ -82,20 +82,60 @@
     </div>
 
     <div class="row" style="margin-bottom: 20px; align-items: center; display: flex;">
+        <!-- Left: Total Students Counter -->
         <div class="col-md-4">
             <div class="alert alert-info" style="margin-bottom: 0;">
                 <strong>Jumlah Pelajar:</strong> {{ total_students }}
             </div>
         </div>
     
-        <div class="col-md-8 text-right">
+        <!-- Center: Pagination -->
+        <div class="col-md-4 text-center" style="display: flex; justify-content: center;">
+            <nav style="margin: 0;">
+                <ul class="pagination" style="margin: 0;">
+                    {% if page > 1 %}
+                    <li>
+                        <a href="{{ url_for('admin_view_students_list', 
+                                                page=page-1, 
+                                                search=search, 
+                                                sort=sort, 
+                                                class_filter=class_filter, 
+                                                pakej_filter=pakej_filter,
+                                                status_filter=status_filter,
+                                                semester_filter=semester_filter) }}">
+                            &laquo; Previous
+                        </a>
+                    </li>
+                    {% endif %}
+    
+                    <li class="active"><span>Page {{ page }} of {{ total_pages }}</span></li>
+    
+                    {% if page < total_pages %} <li>
+                        <a href="{{ url_for('admin_view_students_list', 
+                                                page=page+1, 
+                                                search=search, 
+                                                sort=sort, 
+                                                class_filter=class_filter, 
+                                                pakej_filter=pakej_filter,
+                                                status_filter=status_filter,
+                                                semester_filter=semester_filter) }}">
+                            Next &raquo;
+                        </a>
+                        </li>
+                        {% endif %}
+                </ul>
+            </nav>
+        </div>
+    
+        <!-- Right: Export Button -->
+        <div class="col-md-4 text-right">
             <a href="{{ url_for('admin_export_students', 
-                        search=request.args.get('search', ''), 
-                        sort=request.args.get('sort', ''), 
-                        class_filter=request.args.get('class_filter', ''),
-                        pakej_filter=request.args.get('pakej_filter', ''),
-                        status_filter=request.args.get('status_filter', ''),
-                        semester_filter=request.args.get('semester_filter', '')) }}" class="btn btn-success">
+                            search=request.args.get('search', ''), 
+                            sort=request.args.get('sort', ''), 
+                            class_filter=request.args.get('class_filter', ''),
+                            pakej_filter=request.args.get('pakej_filter', ''),
+                            status_filter=request.args.get('status_filter', ''),
+                            semester_filter=request.args.get('semester_filter', '')) }}" class="btn btn-success">
                 Muat Turun ke Excel (CSV)
             </a>
         </div>
@@ -159,8 +199,10 @@
                     {% endif %}           
                 </td>
                 <td>
-                    <a href="{{ url_for('admin_view_profile', student_id=s.bil_kemasukan) }}" class="btn btn-primary btn-sm btn-block"
-                        style="margin-bottom: 5px;">
+                    <a href="{{ url_for('admin_view_profile', student_id=s.bil_kemasukan, 
+                                search=search, sort=sort, class_filter=class_filter, 
+                                pakej_filter=pakej_filter, status_filter=status_filter, semester_filter=semester_filter) }}"
+                        class="btn btn-primary btn-sm btn-block" style="margin-bottom: 5px;">
                         <span class="glyphicon glyphicon-eye-open"></span> Lihat Profil
                     </a>
                     <a href="{{ url_for('admin_sijil_berhenti', student_id=s.bil_kemasukan) }}"
@@ -178,38 +220,46 @@
         </tbody>
         
     </table>
-    <nav class="text-center">
-        <ul class="pagination">
-            {% if page > 1 %}
-            <li>
-                <a href="{{ url_for('admin_view_students_list', 
-                        page=page-1, 
-                        search=search, 
-                        sort=sort, 
-                        class_filter=class_filter, 
-                        pakej_filter=pakej_filter,
-                        status_filter=status_filter) }}">
-                    &laquo; Previous
-                </a>
-            </li>
-            {% endif %}
+
+    <div class="row" style="margin-top: 20px; margin-bottom: 40px;">
+        <div class="col-md-12 text-center" style="display: flex; justify-content: center;">
+            <nav style="margin: 0;">
+                <ul class="pagination" style="margin: 0;">
+                    {% if page > 1 %}
+                    <li>
+                        <a href="{{ url_for('admin_view_students_list', 
+                                                page=page-1, 
+                                                search=search, 
+                                                sort=sort, 
+                                                class_filter=class_filter, 
+                                                pakej_filter=pakej_filter,
+                                                status_filter=status_filter,
+                                                semester_filter=semester_filter) }}">
+                            &laquo; Previous
+                        </a>
+                    </li>
+                    {% endif %}
     
-            <li class="active"><span>Page {{ page }} of {{ total_pages }}</span></li>
+                    <li class="active"><span>Page {{ page }} of {{ total_pages }}</span></li>
     
-            {% if page < total_pages %} <li>
-                <a href="{{ url_for('admin_view_students_list', 
-                        page=page+1, 
-                        search=search, 
-                        sort=sort, 
-                        class_filter=class_filter, 
-                        pakej_filter=pakej_filter,
-                        status_filter=status_filter) }}">
-                    Next &raquo;
-                </a>
-                </li>
-                {% endif %}
-        </ul>
-    </nav>
+                    {% if page < total_pages %} <li>
+                        <a href="{{ url_for('admin_view_students_list', 
+                                                page=page+1, 
+                                                search=search, 
+                                                sort=sort, 
+                                                class_filter=class_filter, 
+                                                pakej_filter=pakej_filter,
+                                                status_filter=status_filter,
+                                                semester_filter=semester_filter) }}">
+                            Next &raquo;
+                        </a>
+                        </li>
+                        {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+
     <div style="margin-bottom: 50px;">
         <a href="{{ url_for('index') }}" class="btn btn-default">
             <span class="glyphicon glyphicon-chevron-left"></span> Kembali ke Dashboard Utama

@@ -4,19 +4,46 @@
 
 <div class="row">
     <div class="col-md-12 text-center" style="margin-bottom: 40px;">
-        <a href="{{ url_for('admin_view_students_list') }}" class="btn btn-primary btn-lg"
-            style="min-width: 200px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-            <span class="glyphicon glyphicon-chevron-left"></span> Kembali Ke Senarai Pelajar
+
+        <!-- Back to List -->
+        <a href="{{ url_for('admin_view_students_list', search=search, sort=sort, class_filter=class_filter, pakej_filter=pakej_filter, status_filter=status_filter, semester_filter=semester_filter) }}"
+            class="btn btn-primary btn-lg" style="box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+            <span class="glyphicon glyphicon-chevron-left"></span> Kembali Ke Senarai
         </a>
 
+        <!-- Previous Student Button -->
+        {% if prev_student_id %}
+        <a href="{{ url_for('admin_view_profile', student_id=prev_student_id, search=search, sort=sort, class_filter=class_filter, pakej_filter=pakej_filter, status_filter=status_filter, semester_filter=semester_filter) }}"
+            class="btn btn-default btn-lg" style="margin-left: 10px;">
+            <span class="glyphicon glyphicon-arrow-left"></span> Pelajar Sebelumnya
+        </a>
+        {% else %}
+        <button class="btn btn-default btn-lg" style="margin-left: 10px;" disabled>
+            <span class="glyphicon glyphicon-arrow-left"></span> Pelajar Sebelumnya
+        </button>
+        {% endif %}
+
+        <!-- Next Student Button -->
+        {% if next_student_id %}
+        <a href="{{ url_for('admin_view_profile', student_id=next_student_id, search=search, sort=sort, class_filter=class_filter, pakej_filter=pakej_filter, status_filter=status_filter, semester_filter=semester_filter) }}"
+            class="btn btn-default btn-lg" style="margin-left: 5px;">
+            Pelajar Seterusnya <span class="glyphicon glyphicon-arrow-right"></span>
+        </a>
+        {% else %}
+        <button class="btn btn-default btn-lg" style="margin-left: 5px;" disabled>
+            Pelajar Seterusnya <span class="glyphicon glyphicon-arrow-right"></span>
+        </button>
+        {% endif %}
+
+        <!-- Print & Delete Buttons -->
         <button type="button" onclick="window.print();" class="btn btn-success btn-lg"
-            style="min-width: 150px; margin-left: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-            <span class="glyphicon glyphicon-print"></span> Cetak Dokumen Profil
+            style="margin-left: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+            <span class="glyphicon glyphicon-print"></span> Cetak
         </button>
 
         <button type="button" onclick="confirmDelete('{{ student.bil_kemasukan }}')" class="btn btn-danger btn-lg"
             style="margin-left: 10px;">
-            <span class="glyphicon glyphicon-trash"></span> Padam Rekod
+            <span class="glyphicon glyphicon-trash"></span> Padam
         </button>
     </div>
 </div>

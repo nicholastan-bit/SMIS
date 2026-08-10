@@ -312,14 +312,13 @@ def submit_registration():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # The True UPSERT Query
     query = """
         INSERT INTO pelajar (
             nama_pelajar, email, no_kp_pelajar, jantina, bangsa, agama, 
             tarikh_lahir, alamat_rumah, telefonNo, sekolah_tamat, masalah_kesihatan, 
             cara_datang_sekolah, tempat_lahir, no_surat_beranak, masalah_penglihatan, 
-            aliran_ditawar, status_oku, kelas, status_study, tarikh_pendaftaran
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 1, %s)
+            aliran_ditawar, status_oku, kelas, status_study, tarikh_pendaftaran, semester
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 1, %s, 1)
         ON DUPLICATE KEY UPDATE 
             nama_pelajar=VALUES(nama_pelajar), email=VALUES(email), jantina=VALUES(jantina),
             bangsa=VALUES(bangsa), agama=VALUES(agama), tarikh_lahir=VALUES(tarikh_lahir),
@@ -333,7 +332,7 @@ def submit_registration():
     today = date.today().strftime('%Y-%m-%d')
 
     raw_nama = request.form.get('nama_pelajar', '')
-    nama_pelajar_upper = raw_nama.upper().strip() # .strip() removes accidental leading/trailing spaces
+    nama_pelajar_upper = raw_nama.upper().strip()
 
     sekolah_tamat = request.form.get('sekolah_tamat')
     if not sekolah_tamat:
@@ -1293,14 +1292,20 @@ def ubk_form():
 # =====================================================================# =====================================================================
 # =====================================================================# =====================================================================
 
-
 @app.route('/admin/students-list')
 def admin_view_students_list():
     if session.get('role') != 'admin':
-            flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
-            return redirect(url_for('gateway'))
+        flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
+        return redirect(url_for('gateway'))
     
-    page = int(request.args.get('page', 1))
+    # Safely handle page number to prevent crashes on invalid inputs
+    try:
+        page = int(request.args.get('page', 1))
+        if page < 1:
+            page = 1
+    except ValueError:
+        page = 1
+        
     per_page = 20
     offset = (page - 1) * per_page
 
@@ -1326,47 +1331,50 @@ def admin_view_students_list():
     params = []
     
     if search:
-        where_clause += " AND (nama_pelajar LIKE %s OR no_kp_pelajar LIKE %s)"
+        where_clause += " AND (p.nama_pelajar LIKE %s OR p.no_kp_pelajar LIKE %s)"
         params.extend([f"%{search}%", f"%{search}%"])
     
-    # Updated sort_filter logic (Keep your original logic)
     if sort_filter == 'unassigned':
         where_clause += " AND (p.id_pakej IS NULL OR pk.kod_pakej REGEXP '^[^0-9]+$')"
     elif sort_filter == 'assigned':
         where_clause += " AND pk.kod_pakej IS NOT NULL AND pk.kod_pakej REGEXP '[0-9]'"
     
-    # Specific Package Filter
     if pakej_filter:
         where_clause += " AND p.id_pakej = %s"
         params.append(pakej_filter)
         
     if class_filter:
-        where_clause += " AND kelas = %s"
+        where_clause += " AND p.kelas = %s"
         params.append(class_filter.strip())
 
     if status_filter != '':
-        where_clause += " AND status_study = %s"
+        where_clause += " AND p.status_study = %s"
         params.append(status_filter)
 
     if semester_filter:
         where_clause += " AND p.semester = %s"
         params.append(semester_filter)
 
-    # 3. Get total count for pagination
-    count_query = f"SELECT COUNT(*) as total FROM pelajar p LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej {where_clause}"
+    # 1. Get total count for pagination (using base tables matching the main query)
+    count_query = f"""
+        SELECT COUNT(p.bil_kemasukan) as total 
+        FROM pelajar p 
+        LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej 
+        {where_clause}
+    """
     cursor.execute(count_query, params)
     total_students = cursor.fetchone()['total']
     total_pages = (total_students + per_page - 1) // per_page
 
-
-
-    # 4. Fetch Paginated Data
+    # 2. Fetch Paginated Data using a LEFT JOIN + GROUP BY instead of a correlated subquery
     query = f"""
         SELECT p.*, pk.kod_pakej, 
-               (SELECT SUM(penjaga.pendapatan) FROM penjaga WHERE penjaga.bil_kemasukan = p.bil_kemasukan) as total_income
+               COALESCE(SUM(pg.pendapatan), 0) as total_income
         FROM pelajar p 
         LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej 
+        LEFT JOIN penjaga pg ON p.bil_kemasukan = pg.bil_kemasukan
         {where_clause}
+        GROUP BY p.bil_kemasukan
         LIMIT %s OFFSET %s
     """
     cursor.execute(query, params + [per_page, offset])
@@ -1654,74 +1662,112 @@ def admin_update_student_package():
     # Redirect back to the same page with current filters
     return redirect(request.referrer or url_for('admin_view_students_list'))
 
-@app.route('/admin/student-profile/<int:student_id>', methods=['GET'])
+@app.route('/admin/student-profile/<int:student_id>', methods=['GET']) # Or whatever your profile route name is
 def admin_view_profile(student_id):
-    """
-    Fetches every data point submitted by a specific student, 
-    including profile information, guardians, and academic results.
-    """
     if session.get('role') != 'admin':
         flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
         return redirect(url_for('gateway'))
+    
+    # Capture filter states passed from the list/navigation
+    search = request.args.get('search', '')
+    sort_filter = request.args.get('sort', '')
+    class_filter = request.args.get('class_filter', '')
+    pakej_filter = request.args.get('pakej_filter', '')
+    status_filter = request.args.get('status_filter', '')
+    semester_filter = request.args.get('semester_filter', '')
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True, buffered=True)
+
+    # 1. Rebuild the exact same WHERE clause used in the list view
+    where_clause = "WHERE 1=1"
+    params = []
     
+    if search:
+        where_clause += " AND (p.nama_pelajar LIKE %s OR p.no_kp_pelajar LIKE %s)"
+        params.extend([f"%{search}%", f"%{search}%"])
+    
+    if sort_filter == 'unassigned':
+        where_clause += " AND (p.id_pakej IS NULL OR pk.kod_pakej REGEXP '^[^0-9]+$')"
+    elif sort_filter == 'assigned':
+        where_clause += " AND pk.kod_pakej IS NOT NULL AND pk.kod_pakej REGEXP '[0-9]'"
+    
+    if pakej_filter:
+        where_clause += " AND p.id_pakej = %s"
+        params.append(pakej_filter)
+        
+    if class_filter:
+        where_clause += " AND p.kelas = %s"
+        params.append(class_filter.strip())
+
+    if status_filter != '':
+        where_clause += " AND p.status_study = %s"
+        params.append(status_filter)
+
+    if semester_filter:
+        where_clause += " AND p.semester = %s"
+        params.append(semester_filter)
+
+    # 2. Fetch current student details
     cursor.execute("""
-        SELECT bil_kemasukan, tempat_lahir, no_surat_beranak, masalah_penglihatan, id_pakej, aliran_ditawar 
-        FROM pelajar WHERE no_kp_pelajar = %s
+        SELECT p.*, pk.kod_pakej 
+        FROM pelajar p 
+        LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej 
+        WHERE p.bil_kemasukan = %s
     """, (student_id,))
-    
-    # Use fetchone() to get a single dictionary
-    student = cursor.fetchone() 
+    student = cursor.fetchone()
 
-    try:
-        # Fetch complete profile data from the pelajar table joined with the chosen package
-        student_query = """
-            SELECT p.*, k.kod_pakej, k.aliran 
-            FROM pelajar p
-            LEFT JOIN pakej k ON p.id_pakej = k.id_pakej
-            WHERE p.bil_kemasukan = %s
-        """
-        cursor.execute(student_query, (student_id,))
-        student_data = cursor.fetchone()
-
-        if not student_data:
-            flash("Rekod pelajar tidak ditemui dalam sistem.", "danger")
-            return redirect(url_for('admin_view_students_list'))
-
-        # Fetch all registered parents/guardians for this student
-        cursor.execute("""
-            SELECT * FROM penjaga 
-            WHERE bil_kemasukan = %s 
-            ORDER BY no_penjaga ASC
-        """, (student_id,))
-        guardians_data = cursor.fetchall()
-
-        # Fetch academic summary list from spm_hasil
-        cursor.execute("""
-            SELECT subjek, gred FROM spm_hasil 
-            WHERE bil_kemasukan = %s 
-            ORDER BY id_spm ASC
-        """, (student_id,))
-        spm_data = cursor.fetchall()
-
-    except mysql.connector.Error as err:
-        print(f"Administrative Profile Fetch Failure: {err}")
-        flash("Ralat pangkalan data berlaku ketika memuatkan profil.", "danger")
-        return redirect(url_for('admin_view_students_list'))
-    finally:
+    if not student:
         cursor.close()
         conn.close()
+        return "Student not found", 404
 
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True, buffered=True)
-    cursor.execute("SELECT * FROM pakej")
+    # 3. Find Previous and Next student IDs based on the filtered list order (ordered by bil_kemasukan)
+    nav_query = f"""
+        SELECT p.bil_kemasukan 
+        FROM pelajar p 
+        LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej 
+        {where_clause}
+        ORDER BY p.bil_kemasukan ASC
+    """
+    cursor.execute(nav_query, params)
+    filtered_students = cursor.fetchall()
+    
+    # Extract list of IDs and find current index
+    id_list = [row['bil_kemasukan'] for row in filtered_students]
+    prev_student_id = None
+    next_student_id = None
+    
+    if student_id in id_list:
+        current_index = id_list.index(student_id)
+        if current_index > 0:
+            prev_student_id = id_list[current_index - 1]
+        if current_index < len(id_list) - 1:
+            next_student_id = id_list[current_index + 1]
+
+    # Fetch other profile details (guardians, spm, packages, classes, etc.)
+    cursor.execute("SELECT id_pakej, kod_pakej, aliran FROM pakej ORDER BY kod_pakej")
     all_packages = cursor.fetchall()
     
-    return render_template('profile.html', student=student_data, 
-                           guardians=guardians_data, spm=spm_data, 
-                           all_packages=all_packages)
+    cursor.execute("SELECT * FROM penjaga WHERE bil_kemasukan = %s", (student_id,))
+    guardians = cursor.fetchall()
+
+    cursor.execute("SELECT * FROM spm_hasil WHERE bil_kemasukan = %s", (student_id,))
+    spm = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return render_template('profile.html', 
+                           student=student, 
+                           guardians=guardians,
+                           spm=spm,
+                           all_packages=all_packages,
+                           prev_student_id=prev_student_id,
+                           next_student_id=next_student_id,
+                           # Pass filter arguments back so links preserve them
+                           search=search, sort=sort_filter, class_filter=class_filter,
+                           pakej_filter=pakej_filter, status_filter=status_filter, semester_filter=semester_filter)
 
 #------------------------
 @app.route('/admin/update-field', methods=['POST'])

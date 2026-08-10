@@ -12,7 +12,9 @@ DROP TABLE IF EXISTS spm_hasil;
 SET FOREIGN_KEY_CHECKS = 1;
 
 # form_settings and pelajar_eligibility are left alone
-
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE pelajar;
+SET FOREIGN_KEY_CHECKS = 1;
 -- the code below resets the entire stpm package and subjects
 -- WARN: pelajar's id_pakej will be NULL if they picked
 SET FOREIGN_KEY_CHECKS = 0;
