@@ -2278,12 +2278,13 @@ def admin_koku_list():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # Base query components
+    # Base query components updated with LEFT JOIN on tugas_khas
     base_query = """
         FROM KokurikulumPelajar kp
         JOIN pelajar p ON kp.bil_kemasukan = p.bil_kemasukan
         JOIN UnitKokurikulum uk ON kp.unit_id = uk.unit_id
         LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej
+        LEFT JOIN tugas_khas tk ON p.bil_kemasukan = tk.bil_kemasukan
         WHERE 1=1
     """
     params = []
@@ -2297,7 +2298,6 @@ def admin_koku_list():
         params.append(act_filter)
     if rumah_filter:
         if rumah_filter == 'TIADA':
-            # Matches NULL, empty string, or variations of 'TIADA'
             base_query += " AND (p.rumah_sukan IS NULL OR p.rumah_sukan = '' OR UPPER(p.rumah_sukan) = 'TIADA')"
         else:
             base_query += " AND UPPER(p.rumah_sukan) = UPPER(%s)"
@@ -2306,7 +2306,8 @@ def admin_koku_list():
         base_query += " AND (p.nama_pelajar LIKE %s OR p.bil_kemasukan LIKE %s)"
         params.extend([f"%{search}%", f"%{search}%"])
     if tugas_filter:
-        base_query += " AND p.tugas_khas = %s"
+        # Filter matching specific multi-row tasks
+        base_query += " AND tk.tugas = %s"
         params.append(tugas_filter)
     if pakej_filter:
         base_query += " AND pk.id_pakej = %s"
@@ -2318,12 +2319,12 @@ def admin_koku_list():
     # Grouping to prevent duplicates
     group_by_clause = " GROUP BY p.bil_kemasukan"
     
-    # Sorting logic
+    # Sorting logic (Updated 'tugas' to map to tk.tugas or fallback)
     sort_map = {
         'nama': 'p.nama_pelajar',
         'id': 'p.bil_kemasukan',
         'rumah': 'p.rumah_sukan',
-        'tugas': 'p.tugas_khas',
+        'tugas': 'tk.tugas',
         'kelas': 'p.kelas'
     }
     order_column = sort_map.get(sort_by, 'p.nama_pelajar')
@@ -2334,10 +2335,11 @@ def admin_koku_list():
     cursor.execute(count_query, params)
     total = cursor.fetchone()['total_count']
     
-    # Fetch data (Aggregate units with GROUP_CONCAT)
+    # Fetch data (Aggregate both units and multiple tugas_khas using GROUP_CONCAT)
     data_query = f"""
-        SELECT p.nama_pelajar, p.bil_kemasukan, p.tugas_khas, p.rumah_sukan, p.kelas,
-               GROUP_CONCAT(uk.unit_name SEPARATOR ', ') as unit_names
+        SELECT p.nama_pelajar, p.bil_kemasukan, p.rumah_sukan, p.kelas,
+               GROUP_CONCAT(DISTINCT uk.unit_name SEPARATOR ', ') as unit_names,
+               GROUP_CONCAT(DISTINCT tk.tugas SEPARATOR ', ') as tugas_khas_names
         {base_query} 
         {group_by_clause} 
         {order_clause} 
@@ -2538,7 +2540,7 @@ def admin_export_koku():
     class_filter = request.args.get('class_filter')
     semester_filter = request.args.get('semester')
 
-    # Reuse filter logic
+    # Reuse filter logic with updated tables
     where_clause = "WHERE 1=1"
     params = []
     
@@ -2549,13 +2551,16 @@ def admin_export_koku():
         where_clause += " AND uk.unit_name = %s"
         params.append(act_filter)
     if rumah_filter:
-        where_clause += " AND LOWER(p.rumah_sukan) = LOWER(%s)"
-        params.append(rumah_filter)
+        if rumah_filter == 'TIADA':
+            where_clause += " AND (p.rumah_sukan IS NULL OR p.rumah_sukan = '' OR UPPER(p.rumah_sukan) = 'TIADA')"
+        else:
+            where_clause += " AND UPPER(p.rumah_sukan) = UPPER(%s)"
+            params.append(rumah_filter)
     if search:
         where_clause += " AND (p.nama_pelajar LIKE %s OR p.bil_kemasukan LIKE %s)"
         params.extend([f"%{search}%", f"%{search}%"])
     if tugas_filter:
-        where_clause += " AND p.tugas_khas = %s"
+        where_clause += " AND tk.tugas = %s"
         params.append(tugas_filter)
     if class_filter:
         where_clause += " AND p.kelas = %s"
@@ -2564,16 +2569,18 @@ def admin_export_koku():
         where_clause += " AND p.semester = %s"
         params.append(int(semester_filter))
 
-    # Query without LIMIT and OFFSET
+    # Query with LEFT JOIN on tugas_khas and grouped aggregation
     query = f"""
-        SELECT p.nama_pelajar, p.rumah_sukan, 
-               p.tugas_khas, uk.unit_name, uk.unit_type, kp.jawatan,
-               pk.kod_pakej
+        SELECT p.nama_pelajar, p.rumah_sukan, uk.unit_name, uk.unit_type, kp.jawatan,
+               pk.kod_pakej,
+               GROUP_CONCAT(DISTINCT tk.tugas SEPARATOR ', ') as tugas_khas_names
         FROM KokurikulumPelajar kp
         JOIN pelajar p ON kp.bil_kemasukan = p.bil_kemasukan
         JOIN UnitKokurikulum uk ON kp.unit_id = uk.unit_id
         LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej
+        LEFT JOIN tugas_khas tk ON p.bil_kemasukan = tk.bil_kemasukan
         {where_clause}
+        GROUP BY kp.kkplr_id
         ORDER BY p.nama_pelajar ASC
     """
     
@@ -2587,18 +2594,17 @@ def admin_export_koku():
     # Generate CSV in memory
     si = io.StringIO()
     cw = csv.writer(si)
-    cw.writerow(['Nama Pelajar', 'Kod Pakej', 'Unit', 'Kategori', 'Jawatan', 'Tugas Khas', 'Rumah Sukan',])
+    cw.writerow(['Nama Pelajar', 'Kod Pakej', 'Unit', 'Kategori', 'Jawatan', 'Tugas Khas', 'Rumah Sukan'])
     
-    # 3. Update the loop to include the new field
     for s in students:
         cw.writerow([
             s['nama_pelajar'],
-            s['kod_pakej'],
+            s['kod_pakej'] if s['kod_pakej'] else '-',
             s['unit_name'],
             s['unit_type'],
             s['jawatan'],
-            s['tugas_khas'],
-            s['rumah_sukan'],
+            s['tugas_khas_names'] if s['tugas_khas_names'] else '-',
+            s['rumah_sukan'] if s['rumah_sukan'] else 'TIADA',
         ])
     
     output = si.getvalue()
