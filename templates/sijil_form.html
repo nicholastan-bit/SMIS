@@ -123,22 +123,29 @@
                         <label>Tahun 1</label>
                         <select name="tahun_1" class="form-control">
                             {% for y in range(2020, 2031) %}
-                            <option value="{{ y }}" {% if y==2024 %}selected{% endif %}>{{ y }}</option>
+                            <option value="{{ y }}" {% if y==current_year - 2 %}selected{% endif %}>{{ y }}</option>
                             {% endfor %}
                         </select>
-                        <input type="text" name="kedatangan_1" class="form-control" placeholder="Cth: 190/200"
-                            style="margin-top: 5px;">
+                        <input type="text" name="kedatangan_1" class="form-control" placeholder="Cth: 190/200" style="margin-top: 5px;">
                     </div>
                     <div class="col-md-4 form-group">
                         <label>Tahun 2</label>
                         <select name="tahun_2" class="form-control">
                             {% for y in range(2020, 2031) %}
-                            <option value="{{ y }}" {% if y==2025 %}selected{% endif %}>{{ y }}</option>
+                            <option value="{{ y }}" {% if y==current_year - 1 %}selected{% endif %}>{{ y }}</option>
                             {% endfor %}
                         </select>
-                        <input type="text" name="kedatangan_2" class="form-control" placeholder="Cth: 195/200"
-                            style="margin-top: 5px;">
+                        <input type="text" name="kedatangan_2" class="form-control" placeholder="Cth: 195/200" style="margin-top: 5px;">
                     </div>
+                    <div class="col-md-4 form-group">
+                        <label>Tahun 3</label>
+                        <select name="tahun_3" class="form-control">
+                            {% for y in range(2020, 2031) %}
+                            <option value="{{ y }}" {% if y==current_year %}selected{% endif %}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="text" name="kedatangan_3" class="form-control" placeholder="Cth: 195/200" style="margin-top: 5px;">
+                    </div>          
                 </div>
             </div>
         </div>

@@ -12,7 +12,8 @@
 
         body {
             font-family: "Times New Roman", Times, serif;
-            font-size: 11px;
+            font-size: 13px;
+            /* Increased base font size */
             color: #000;
             line-height: 1.25;
             margin: 0;
@@ -22,16 +23,16 @@
         }
 
         .certificate-container {
-            background-image: url("{{ url_for('static', filename='sijil_berhenti.jpg') }}");
+            /*background-image: url("{{ url_for('static', filename='sijil_berhenti.jpg') }}");
             background-size: 100% 100%;
-            background-repeat: no-repeat;
+            background-repeat: no-repeat;*/
             width: 210mm;
             height: 297mm;
             box-sizing: border-box;
-            padding: 55mm 22mm 15mm 22mm;
+            padding: 50mm 22mm 15mm 22mm;
             position: relative;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+            /*-webkit-print-color-adjust: exact; 
+            print-color-adjust: exact; */
         }
 
         .text-center {
@@ -39,14 +40,16 @@
         }
 
         .header-title {
-            font-size: 15px;
+            font-size: 18px;
+            /* Increased header title */
             font-weight: bold;
             margin-bottom: 2px;
             text-transform: uppercase;
         }
 
         .sub-title {
-            font-size: 12px;
+            font-size: 14px;
+            /* Increased subtitle */
             font-weight: bold;
             margin-bottom: 10px;
         }
@@ -61,13 +64,16 @@
             padding: 2px 4px;
             vertical-align: top;
             text-align: left;
-            font-size: 12px;
+            font-size: 13px;
+            /* Increased table data font size */
             border: none;
         }
 
         th {
             border-bottom: 1px solid #000;
             padding-bottom: 4px;
+            font-size: 13px;
+            /* Increased table header font size */
         }
 
         table,
@@ -76,15 +82,16 @@
             page-break-inside: avoid;
         }
 
-        /* Plain text look for headings (removed background color and borders) */
+        /* Section Headings */
         .section-heading {
             font-weight: bold;
-            padding-bottom: 2px; /* Adds space between text and the line */
-            margin-top: 16px; 
-            margin-bottom: 6px; /* Adds a little space between the line and the table below it */
+            padding-bottom: 2px;
+            margin-top: 16px;
+            margin-bottom: 5px;
             font-size: 14px;
+            /* Scaled to match new layout */
             border: none;
-            border-bottom: 1px solid #000; /* Adds a clean thin black line */
+            border-bottom: 1px solid #000;
             background: none !important;
             text-transform: uppercase;
         }
@@ -113,7 +120,7 @@
         <!-- Header -->
         <div class="text-center">
             <div class="header-title">Sijil Berhenti</div>
-            <div class="sub-title">Leaving Certificate</div>
+            <div class="sub-title">LEAVING CERTIFICATE</div>
         </div>
 
         <!-- Maklumat Diri -->
@@ -149,73 +156,114 @@
         <!-- Maklumat Persekolahan -->
         <div class="section-heading">MAKLUMAT PERSEKOLAHAN / School Information</div>
         <table>
-            <tr>
-                <td style="width: 32%;"><strong>Bil Kemasukan / Reg No</strong></td>
+            <tr style="height: 24px;">
+                <td style="width: 38%; white-space: nowrap;"><strong>Bil Kemasukan / Reg No</strong></td>
                 <td style="width: 2%;">:</td>
                 <td>{{ student.bil_kemasukan }}</td>
             </tr>
-            <tr>
-                <td><strong>Tarikh Masuk / Date of Registration</strong></td>
+            <tr style="height: 24px;">
+                <td style="white-space: nowrap;"><strong>Tarikh Masuk / Date of Registration</strong></td>
                 <td>:</td>
                 <td>{{ student.tarikh_pendaftaran or '-' }}</td>
             </tr>
-            <tr>
-                <td><strong>Tarikh Berhenti / Date of Leaving</strong></td>
+            <tr style="height: 24px;">
+                <td style="white-space: nowrap;"><strong>Tarikh Berhenti / Date of Leaving</strong></td>
                 <td>:</td>
                 <td>{{ form_data.tarikh_berhenti or '-' }}</td>
             </tr>
-            <tr>
-                <td><strong>Sebab Berhenti / Reason of Leaving</strong></td>
+            <tr style="height: 24px;">
+                <td style="white-space: nowrap;"><strong>Sebab Berhenti / Reason of Leaving</strong></td>
                 <td>:</td>
                 <td>{{ form_data.sebab_berhenti }}</td>
             </tr>
-            <tr>
-                <td><strong>Kedatangan / Attendance</strong></td>
+            <tr style="height: 24px;">
+                <td style="white-space: nowrap;"><strong>Kedatangan / Attendance</strong></td>
                 <td>:</td>
                 <td>
                     {{ form_data.tahun_1 }}: {{ form_data.kedatangan_1 or '-' }} |
-                    {{ form_data.tahun_2 }}: {{ form_data.kedatangan_2 or '-' }}
+                    {{ form_data.tahun_2 }}: {{ form_data.kedatangan_2 or '-' }} |
+                    {{ form_data.tahun_3 }}: {{ form_data.kedatangan_3 or '-' }}
                 </td>
             </tr>
         </table>
 
         <!-- Kegiatan Kokurikulum & Tugas Khas -->
-        <div class="section-heading">KEGIATAN KOKURIKULUM & TUGAS KHAS / Co-Curricular Activities & Special Tasks</div>
-        <table style="margin-top: 2px;">
-            <thead>
-                <tr>
-                    <th style="font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 4px;">Persatuan / Kelab / Sukan
-                        / Badan Beruniform / Tugas Khas</th>
-                    <th style="width: 35%; font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 4px;">Jawatan /
-                        Position</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% if koku_activities %}
-                {% for koku in koku_activities %}
-                <tr>
-                    <td style="padding-top: 4px;">{{ koku.unit_type }} - {{ koku.unit_name }}</td>
-                    <td style="padding-top: 4px;">{{ koku.jawatan }}</td>
-                </tr>
-                {% endfor %}
-                {% endif %}
+        <!-- Kegiatan Kokurikulum & Tugas Khas -->
+        <div class="section-heading">
+            KEGIATAN KOKURIKULUM & TUGAS KHAS /<br>
+            Co-Curricular Activities & Special Tasks  </div>
         
-                {% if tugas_khas_records %}
-                {% for tk in tugas_khas_records %}
-                <tr>
-                    <td style="padding-top: 4px;">Tugas Khas: {{ tk.tugas }}</td>
-                    <td style="padding-top: 4px;">{{ tk.jawatan if tk.jawatan else '-' }}</td>
-                </tr>
-                {% endfor %}
-                {% endif %}
+        <!-- Independent Split Tables Container (Centered & Borderless) -->
+        <div style="display: flex; justify-content: left; gap: 40px; margin-top: 4px;">
         
-                {% if not koku_activities and not tugas_khas_records %}
-                <tr>
-                    <td colspan="2" class="text-center" style="padding-top: 4px;">Tiada rekod kokurikulum atau tugas khas</td>
-                </tr>
-                {% endif %}
-            </tbody>
-        </table>
+            <!-- Left Column Table: Activities / Tasks -->
+            <table style="width: auto; max-width: 55%;">
+                <thead>
+                    <tr>
+                        <th style="font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 4px; text-align: left;">
+                            Persatuan / Kelab / Sukan / Badan Beruniform / Tugas Khas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if koku_activities %}
+                    {% for koku in koku_activities %}
+                    <tr>
+                        <td style="padding-top: 4px; border: none;">{{ koku.unit_name }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+        
+                    {% if tugas_khas_records %}
+                    {% for tk in tugas_khas_records %}
+                    <tr>
+                        <td style="padding-top: 4px; border: none;">{{ tk.tugas }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+        
+                    {% if not koku_activities and not tugas_khas_records %}
+                    <tr>
+                        <td style="padding-top: 4px; border: none;" class="text-center">Tiada rekod kokurikulum atau tugas khas
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        
+            <!-- Right Column Table: Positions -->
+            <table style="width: auto; min-width: 150px;">
+                <thead>
+                    <tr>
+                        <th style="font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 4px; text-align: left;">
+                            Jawatan / Position</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if koku_activities %}
+                    {% for koku in koku_activities %}
+                    <tr>
+                        <td style="padding-top: 4px; border: none;">{{ koku.jawatan }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+        
+                    {% if tugas_khas_records %}
+                    {% for tk in tugas_khas_records %}
+                    <tr>
+                        <td style="padding-top: 4px; border: none;">{{ tk.jawatan if tk.jawatan else '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+        
+                    {% if not koku_activities and not tugas_khas_records %}
+                    <tr>
+                        <td style="padding-top: 4px; border: none;">-</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        
+        </div>
 
         <!-- Ulasan Guru -->
         <div class="section-heading">ULASAN GURU / Teacher's Comments</div>
@@ -233,7 +281,7 @@
         </table>
 
         <!-- Signature Section -->
-        <div style="margin: 100px auto 0 auto; text-align: center; width: 280px; font-size: 10px;">
+        <div style="margin: 90px auto 0 auto; text-align: center; width: 280px; font-size: 11px;">
             <p style="margin-bottom: 25px;">......................................................<br>
                 <strong>PN NORLIZA BINTI MOHD NOH</strong><br>
                 Penolong Kanan Pentadbiran<br>

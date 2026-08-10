@@ -1424,10 +1424,14 @@ def admin_sijil_berhenti(student_id):
     cursor.close()
     conn.close()
 
+    # Get the actual current year dynamically
+    current_year = datetime.now().year
+
     return render_template('sijil_form.html', 
                            student=student, 
                            koku_activities=koku_activities, 
-                           tugas_khas_records=tugas_khas_records)
+                           tugas_khas_records=tugas_khas_records,
+                           current_year=current_year)
 
 @app.route('/admin/sijil-berhenti/<int:student_id>/print', methods=['POST'])
 def admin_print_sijil_pdf(student_id):
