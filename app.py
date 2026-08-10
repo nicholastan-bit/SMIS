@@ -61,6 +61,9 @@ PERKARA_OPTIONS = [
         "Datang Lambat", "Kaunseling Individu", "Kaunseling Kelompok", "Perjumpaan PRS", "Kelas Ganti"
     ]
 
+SENARAI_JAWATAN = ['AHLI', 'PENGERUSI', 'NAIB PENGERUSI', 'SETIAUSAHA', 'NAIB SETIAUSAHA', 'BENDAHARI', 
+           'NAIB BENDAHARI', 'AHLI JAWATANKUASA', 'KETUA BIRO', 'KETUA KELAS', 'PENOLONG KETUA KELAS']
+
 def get_limits():
     # If the file doesn't exist, create it with your default dictionary
     if not os.path.exists(LIMITS_FILE):
@@ -174,8 +177,14 @@ def login():
     
             # Redirects safely to your main index dashboard page (index.html)
             return redirect(url_for('index'))
+        elif username == "adminkoko" and password == "8t0982h8092h0slzb1":
+            session['role'] = 'adminkoko'
+            session['verified_kp'] = 'ADMINKOKO'
+            flash("Selamat Datang Pentadbir Sistem (Access to Kokurikulum)!", "success")
+
+            return redirect(url_for('index'))
         else:
-            flash("Username atau Password salah!")
+            flash("Username atau Password salah!", "danger")
             # This sends them back to the login page to try again
             return redirect(url_for('login')) 
             
@@ -192,105 +201,85 @@ def logout():
 
 @app.route('/')
 def index():
-    if session.get('role') == 'admin':
+    role = session.get('role')
+    if role in ['admin', 'adminkoko']:
         return render_template('admin_dashboard.html')
-        
+
     kp = session.get('verified_kp')
     
     completion_status = {
-        'profil': False,
-        'spm': False,
-        'tambahan': False,
-        'pakej': False,
-        'penjaga': False, # Added key
-        'koku': False,
+        'profil': False, 'spm': False, 'tambahan': False,
+        'pakej': False, 'penjaga': False, 'koku': False
     }
     total_late = 0
-    studentName = None
+    student = None
     package_class = None
-    className = None
-    rumahSukan = None
     selected_units = []
+    tugas_khas_records = []
     
     if kp:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True, buffered=True)
         
-        # Fetch student details (includes joining for ID lookup efficiency)
-        cursor.execute("""
-            SELECT bil_kemasukan, nama_pelajar, surat_tawaran_path, ic_photo_path, id_pakej, kelas, rumah_sukan
-            FROM pelajar WHERE no_kp_pelajar = %s
-        """, (kp,))
+        # 1. Fetch Student Profile
+        cursor.execute("SELECT * FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
         student = cursor.fetchone()
         
         if student:
-            student_id = student['bil_kemasukan']
+            sid = student['bil_kemasukan']
             completion_status['profil'] = True
             
-
-            cursor.execute("SELECT COUNT(*) as total_late FROM late_arrivals WHERE bil_kemasukan = %s", (student_id,))
-            late_count_data = cursor.fetchone()
-            if late_count_data:
-                total_late = late_count_data['total_late']
-            # ----------------------
-            # 1. Check SPM
-            cursor.execute("SELECT COUNT(*) as total FROM spm_hasil WHERE bil_kemasukan = %s", (student_id,))
-            spm_count = cursor.fetchone()
-            if spm_count and spm_count['total'] > 0:
-                completion_status['spm'] = True
-                
-            # 2. Check Penjaga (New Logic)
-            cursor.execute("SELECT COUNT(*) as total FROM penjaga WHERE bil_kemasukan = %s", (student_id,))
-            penjaga_count = cursor.fetchone()
-            if penjaga_count and penjaga_count['total'] > 0:
-                completion_status['penjaga'] = True
+            # 2. Check counts & status flags in single queries
+            cursor.execute("SELECT COUNT(*) as cnt FROM late_arrivals WHERE bil_kemasukan = %s", (sid,))
+            total_late = cursor.fetchone()['cnt']
             
-            # 3. Step 3 (Tambahan)
-            if student['surat_tawaran_path'] and student['ic_photo_path']:
-                completion_status['tambahan'] = True
-                
-            bil_kemasukan = student['bil_kemasukan']
+            cursor.execute("SELECT COUNT(*) as cnt FROM spm_hasil WHERE bil_kemasukan = %s", (sid,))
+            completion_status['spm'] = cursor.fetchone()['cnt'] > 0
             
-            # 2. PREVENTION CHECK: Has the student already registered?
-            cursor.execute("SELECT COUNT(*) as registered_count FROM KokurikulumPelajar WHERE bil_kemasukan = %s", (bil_kemasukan,))
-            if cursor.fetchone()['registered_count'] > 0:
-                completion_status['koku'] = True
+            cursor.execute("SELECT COUNT(*) as cnt FROM penjaga WHERE bil_kemasukan = %s", (sid,))
+            completion_status['penjaga'] = cursor.fetchone()['cnt'] > 0
             
-            if student['id_pakej'] is not None and student['id_pakej'] != 0:
-                completion_status['pakej'] = True
-
-            if student['kelas'] is not None:
-                className = student['kelas']
+            cursor.execute("SELECT COUNT(*) as cnt FROM KokurikulumPelajar WHERE bil_kemasukan = %s", (sid,))
+            completion_status['koku'] = cursor.fetchone()['cnt'] > 0
             
-            if student['rumah_sukan'] is not None:
-                rumahSukan = student['rumah_sukan']
+            completion_status['tambahan'] = bool(student.get('surat_tawaran_path') and student.get('ic_photo_path'))
+            completion_status['pakej'] = bool(student.get('id_pakej'))
 
-            if student['nama_pelajar'] is not None:
-                studentName = student['nama_pelajar']
-
+            # 3. Fetch Tugas Khas Records
             cursor.execute("""
-                SELECT uk.unit_name, uk.unit_type 
+                SELECT tugas, jawatan 
+                FROM tugas_khas 
+                WHERE bil_kemasukan = %s
+            """, (sid,))
+            tugas_khas_records = cursor.fetchall()
+
+            # 4. Fetch Kokurikulum Units
+            cursor.execute("""
+                SELECT uk.unit_name, uk.unit_type, kp.jawatan 
                 FROM KokurikulumPelajar kp
                 JOIN UnitKokurikulum uk ON kp.unit_id = uk.unit_id
                 WHERE kp.bil_kemasukan = %s
-            """, (student['bil_kemasukan'],))
-            results = cursor.fetchall()
-            selected_units = [{'name': r['unit_name'], 'type': r['unit_type']} for r in results]
+            """, (sid,))
+            selected_units = [{
+                'name': r['unit_name'], 
+                'type': r['unit_type'], 
+                'jawatan': r['jawatan'] if r['jawatan'] else 'AHLI'
+            } for r in cursor.fetchall()]
 
-            cursor.execute("SELECT kod_pakej as name FROM pakej WHERE id_pakej = %s", (student['id_pakej'],))
-            pakej_name = cursor.fetchone()
-            package_class = pakej_name
+            # 5. Fetch Package Name
+            if student.get('id_pakej'):
+                cursor.execute("SELECT kod_pakej as name FROM pakej WHERE id_pakej = %s", (student['id_pakej'],))
+                package_class = cursor.fetchone()
 
         cursor.close()
         conn.close()
-  
+ 
     return render_template('index.html',
-                           studentName=studentName,
+                           student=student,
                            completion_status=completion_status, 
                            pkg_cls=package_class, 
-                           clsName=className,
-                           rumahSukan=rumahSukan,
                            selected_units=selected_units,
+                           tugas_khas_records=tugas_khas_records,
                            total_late=total_late)
 
 @app.route('/register')
@@ -1428,10 +1417,17 @@ def admin_sijil_berhenti(student_id):
     cursor.execute(query_koku, (student_id,))
     koku_activities = cursor.fetchall()
 
+    # 3. Fetch student tugas khas records from the new table
+    cursor.execute("SELECT tugas, jawatan FROM tugas_khas WHERE bil_kemasukan = %s", (student_id,))
+    tugas_khas_records = cursor.fetchall()
+
     cursor.close()
     conn.close()
 
-    return render_template('sijil_form.html', student=student, koku_activities=koku_activities)
+    return render_template('sijil_form.html', 
+                           student=student, 
+                           koku_activities=koku_activities, 
+                           tugas_khas_records=tugas_khas_records)
 
 @app.route('/admin/sijil-berhenti/<int:student_id>/print', methods=['POST'])
 def admin_print_sijil_pdf(student_id):
@@ -1450,14 +1446,25 @@ def admin_print_sijil_pdf(student_id):
     koku_names = request.form.getlist('koku_name[]')
     koku_jawatans = request.form.getlist('koku_jawatan[]')
 
-    # Reconstruct into a list of dictionaries for the template
     custom_koku_activities = []
     for i in range(len(koku_types)):
-        if koku_types[i].strip() or koku_names[i].strip(): # Only add if fields aren't completely blank
+        if koku_types[i].strip() or koku_names[i].strip():
             custom_koku_activities.append({
                 'unit_type': koku_types[i],
                 'unit_name': koku_names[i],
                 'jawatan': koku_jawatans[i]
+            })
+
+    # Capture dynamic tugas khas inputs from the form arrays
+    tugas_list = request.form.getlist('tugas_list[]')
+    tugas_jawatan_list = request.form.getlist('tugas_jawatan_list[]')
+
+    custom_tugas_khas = []
+    for i in range(len(tugas_list)):
+        if tugas_list[i].strip():
+            custom_tugas_khas.append({
+                'tugas': tugas_list[i],
+                'jawatan': tugas_jawatan_list[i] if i < len(tugas_jawatan_list) else ''
             })
 
     # 3. Handle certificate date formatting (Malay months)
@@ -1486,7 +1493,6 @@ def admin_print_sijil_pdf(student_id):
         'tarikh_pendaftaran': request.form.get('tarikh_pendaftaran'),
         'tarikh_berhenti': request.form.get('tarikh_berhenti'),
         'sebab_berhenti': request.form.get('sebab_berhenti'),
-        'tugas_khas': request.form.get('tugas_khas'),
         'tarikh_sijil': formatted_date,
         'tahun_1': request.form.get('tahun_1'),
         'kedatangan_1': request.form.get('kedatangan_1'),
@@ -1500,7 +1506,8 @@ def admin_print_sijil_pdf(student_id):
 
     return render_template('sijil_print_preview.html', 
                            student=student, 
-                           koku_activities=custom_koku_activities, # Passes customized list
+                           koku_activities=custom_koku_activities,
+                           tugas_khas_records=custom_tugas_khas, # Passes custom tugas khas list
                            form_data=form_data)
 
 @app.route('/admin/export-students')
@@ -2249,7 +2256,7 @@ def submit_eligibility():
 
 @app.route('/admin/koku-list', methods=['GET'])
 def admin_koku_list():
-    if session.get('role') != 'admin':
+    if session.get('role') not in ['admin', 'adminkoko']:
         flash("Akses Ditolak.", "danger")
         return redirect(url_for('gateway'))
 
@@ -2373,37 +2380,117 @@ def execute_db_update(query, params):
     cursor.close()
     conn.close()
 
-# Now your routes remain clean and simple:
-@app.route('/admin/update-jawatan', methods=['POST'])
-def update_jawatan_ajax():
-    if session.get('role') != 'admin':
-            flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
-            return redirect(url_for('gateway'))
-    kkplr_id = request.form.get('kkplr_id')
-    new_jawatan = request.form.get('jawatan')
+@app.route('/admin/edit-student/<bil>', methods=['GET', 'POST'])
+def edit_student_koku(bil):
+    if session.get('role') not in ['admin', 'adminkoko']:
+        return redirect(url_for('gateway'))
+        
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
     
-    if kkplr_id and new_jawatan:
-        execute_db_update("UPDATE KokurikulumPelajar SET jawatan = %s WHERE kkplr_id = %s", (new_jawatan, kkplr_id))
-        flash("Position updated successfully!", "success")
-    return redirect(request.referrer or url_for('admin_koku_list'))
+    if request.method == 'POST':
+        try:
+            # 1. Update Student Personal Info (Rumah Sukan)
+            raw_rumah_sukan = request.form.get('rumah_sukan')
+            rumah_sukan = raw_rumah_sukan if raw_rumah_sukan != "" else None
+            
+            raw_jawatan_rs = request.form.get('jawatan_rumah_sukan')
+            jawatan_rumah_sukan = raw_jawatan_rs.upper() if raw_jawatan_rs else None
 
-@app.route('/update_student_info/<int:bil>', methods=['POST'])
-def update_student_info(bil):
-    if session.get('role') != 'admin':
-            flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
-            return redirect(url_for('gateway'))
-    # Logic for updating both tables
-    execute_db_update("UPDATE pelajar SET tugas_khas = %s, rumah_sukan = %s WHERE bil_kemasukan = %s", 
-                      (request.form.get('tugas_khas'), request.form.get('rumah_sukan'), bil))
-    execute_db_update("UPDATE KokurikulumPelajar SET jawatan = %s WHERE bil_kemasukan = %s", 
-                      (request.form.get('jawatan'), bil))
+            cursor.execute("""
+                UPDATE pelajar 
+                SET rumah_sukan = %s, jawatan_rumah_sukan = %s 
+                WHERE bil_kemasukan = %s
+            """, (rumah_sukan, jawatan_rumah_sukan, bil))
+            
+            # 2. Update or Insert Multi-Row Tugas Khas Records
+            tk_ids = request.form.getlist('tk_id[]')
+            new_tugas_list = request.form.getlist('tugas[]')
+            tk_jawatans = [j.upper() if j else 'TIADA' for j in request.form.getlist('tk_jawatan[]')]
+            
+            for i in range(len(tk_ids)):
+                if tk_ids[i] == 'NEW':
+                    cursor.execute("""
+                        INSERT INTO tugas_khas (bil_kemasukan, tugas, jawatan) 
+                        VALUES (%s, %s, %s)
+                    """, (bil, new_tugas_list[i], tk_jawatans[i]))
+                else:
+                    cursor.execute("""
+                        UPDATE tugas_khas 
+                        SET tugas = %s, jawatan = %s 
+                        WHERE id = %s AND bil_kemasukan = %s
+                    """, (new_tugas_list[i], tk_jawatans[i], tk_ids[i], bil))
+
+            # 3. Update Koku Records
+            kkplr_ids = request.form.getlist('kkplr_id[]')
+            new_unit_ids = request.form.getlist('unit_id[]')
+            jawatans = [j.upper() if j else 'AHLI' for j in request.form.getlist('jawatan[]')]
+            merits = request.form.getlist('merit[]')
+            
+            for i in range(len(kkplr_ids)):
+                cursor.execute("""
+                    UPDATE KokurikulumPelajar 
+                    SET unit_id = %s, jawatan = %s, merit = %s 
+                    WHERE kkplr_id = %s AND bil_kemasukan = %s
+                """, (new_unit_ids[i], jawatans[i], merits[i], kkplr_ids[i], bil))
+            
+            conn.commit()
+            flash("Semua maklumat berjaya dikemaskini!", "success")
+            return redirect(url_for('admin_koku_list', **request.args))
+
+        except mysql.connector.errors.IntegrityError as e:
+            conn.rollback() # Revert any partial changes
+            if "1062" in str(e):
+                flash("Ralat: Pelajar ini sudah mempunyai rekod Tugas Khas yang sama. Sila semak semula pilihan anda.", "danger")
+            else:
+                flash(f"Ralat pangkalan data berlaku: {e}", "danger")
+            return redirect(url_for('edit_student_koku', bil=bil, **request.args))
+
+    # Fetch Data for GET request
+    cursor.execute("SELECT * FROM pelajar WHERE bil_kemasukan = %s", (bil,))
+    student = cursor.fetchone()
     
-    flash("Maklumat berjaya dikemaskini!", "success")
-    return redirect(url_for('admin_koku_list'))
+    cursor.execute("SELECT * FROM tugas_khas WHERE bil_kemasukan = %s", (bil,))
+    tugas_records = cursor.fetchall()
+
+    cursor.execute("SELECT unit_id, unit_name FROM UnitKokurikulum")
+    all_units = cursor.fetchall()
+    
+    cursor.execute("""
+        SELECT kp.*, uk.unit_name 
+        FROM KokurikulumPelajar kp
+        JOIN UnitKokurikulum uk ON kp.unit_id = uk.unit_id
+        WHERE kp.bil_kemasukan = %s
+    """, (bil,))
+    koku_records = cursor.fetchall()
+    
+    cursor.close(); conn.close()
+    return render_template('edit_student.html', 
+                           student=student, 
+                           tugas_records=tugas_records, 
+                           records=koku_records, 
+                           all_units=all_units, 
+                           query_params=request.args,
+                           positions=SENARAI_JAWATAN)
+
+@app.route('/admin/delete-tugas-khas/<int:tk_id>/<bil>', methods=['POST'])
+def delete_tugas_khas_record(tk_id, bil):
+    if session.get('role') not in ['admin', 'adminkoko']:
+        return redirect(url_for('gateway'))
+        
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM tugas_khas WHERE id = %s AND bil_kemasukan = %s", (tk_id, bil))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    flash("Rekod tugas khas berjaya dipadam.", "success")
+    return redirect(url_for('edit_student_koku', bil=bil, **request.args))
 
 @app.route('/admin/delete-koku-record/<int:kkplr_id>', methods=['POST'])
 def delete_koku_record(kkplr_id):
-    if session.get('role') != 'admin':
+    if session.get('role') not in ['admin', 'adminkoko']:
             flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
             return redirect(url_for('gateway'))
         
@@ -2420,7 +2507,7 @@ def delete_koku_record(kkplr_id):
 
 @app.route('/admin/delete-all-koku-records/<bil_kemasukan>', methods=['POST'])
 def delete_all_koku_records(bil_kemasukan):
-    if session.get('role') != 'admin':
+    if session.get('role') not in ['admin', 'adminkoko']:
         return redirect(url_for('gateway'))
     
     conn = get_db_connection()
@@ -2436,63 +2523,9 @@ def delete_all_koku_records(bil_kemasukan):
     flash("Semua rekod Kokurikulum pelajar telah dipadam.", "info")
     return redirect(url_for('edit_student_koku', bil=bil_kemasukan))
 
-@app.route('/admin/edit-student/<bil>', methods=['GET', 'POST'])
-def edit_student_koku(bil):
-    if session.get('role') != 'admin':
-        return redirect(url_for('gateway'))
-        
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    
-    if request.method == 'POST':
-        # 1. Update Student Personal Info (pelajar table)
-        tugas_khas = request.form.get('tugas_khas')
-        raw_rumah_sukan = request.form.get('rumah_sukan')
-        rumah_sukan = raw_rumah_sukan if raw_rumah_sukan != "" else None
-
-        cursor.execute("""
-            UPDATE pelajar SET tugas_khas = %s, rumah_sukan = %s 
-            WHERE bil_kemasukan = %s
-        """, (tugas_khas, rumah_sukan, bil))
-        
-        # 2. Update Koku Records (KokurikulumPelajar table)
-        kkplr_ids = request.form.getlist('kkplr_id[]')
-        new_unit_ids = request.form.getlist('unit_id[]')
-        jawatans = request.form.getlist('jawatan[]')
-        merits = request.form.getlist('merit[]')
-        
-        for i in range(len(kkplr_ids)):
-            cursor.execute("""
-                UPDATE KokurikulumPelajar 
-                SET unit_id = %s, jawatan = %s, merit = %s 
-                WHERE kkplr_id = %s AND bil_kemasukan = %s
-            """, (new_unit_ids[i], jawatans[i], merits[i], kkplr_ids[i], bil))
-        
-        conn.commit()
-        flash("Semua maklumat berjaya dikemaskini!", "success")
-        return redirect(url_for('admin_koku_list'))
-        
-    # Fetch Data
-    cursor.execute("SELECT * FROM pelajar WHERE bil_kemasukan = %s", (bil,))
-    student = cursor.fetchone()
-    
-    cursor.execute("SELECT unit_id, unit_name FROM UnitKokurikulum")
-    all_units = cursor.fetchall()
-    
-    cursor.execute("""
-        SELECT kp.*, uk.unit_name 
-        FROM KokurikulumPelajar kp
-        JOIN UnitKokurikulum uk ON kp.unit_id = uk.unit_id
-        WHERE kp.bil_kemasukan = %s
-    """, (bil,))
-    koku_records = cursor.fetchall()
-    
-    cursor.close(); conn.close()
-    return render_template('edit_student.html', student=student, records=koku_records, all_units=all_units)
-
 @app.route('/admin/export-koku')
 def admin_export_koku():
-    if session.get('role') != 'admin':
+    if session.get('role') not in ['admin', 'adminkoko']:
         flash("Akses Ditolak.", "danger")
         return redirect(url_for('gateway'))
 

@@ -6,14 +6,21 @@
     <h1 style="color: #8a6d3b;"><span class="glyphicon glyphicon-queen"></span> Admin Panel</h1>
     <p style="font-size: 16px; color: #666;">KTESI School Management Information System (SMIS)</p>
     <p style="font-size: 14px;">
-        <span class="label label-danger" style="padding: 5px 10px; font-weight: bold;">PENTADBIR SISTEM (ADMIN ACTIVE)</span>
+        <span class="label label-danger" style="padding: 5px 10px; font-weight: bold;">
+            {% if session.get('role') == 'admin' %}
+            PENTADBIR SISTEM (ADMIN ACTIVE)
+            {% else %}
+            ADMIN KOKURIKULUM
+            {% endif %}
+        </span>
     </p>
 </div>
 
 <div class="row">
     <div class="col-md-12">
 
-        <!-- ================= CATEGORY 1: MANAGEMENT & CONFIGURATION ================= -->
+        <!-- ================= CATEGORY 1: MANAGEMENT & CONFIGURATION (Full Admin Only) ================= -->
+        {% if session.get('role') == 'admin' %}
         <div style="margin-bottom: 20px;">
             <h3 style="border-bottom: 2px solid #ddd; padding-bottom: 8px; margin-bottom: 15px; color: #333;">
                 <span class="glyphicon glyphicon-cog"></span> Pengurusan &amp; Konfigurasi Sistem
@@ -32,7 +39,8 @@
                         </h3>
                     </div>
                     <div class="panel-body">
-                        <p class="text-muted" style="font-size: 13px;">Konfigurasi: Status borang, had kapasiti pakej dan unit kokurikulum</p>
+                        <p class="text-muted" style="font-size: 13px;">Konfigurasi: Status borang, had kapasiti pakej
+                            dan unit kokurikulum</p>
                         <a href="{{ url_for('admin_settings') }}" class="btn btn-danger btn-block"
                             style="margin-top: 15px; padding: 10px; font-weight: bold;">
                             <span class="glyphicon glyphicon-th-list"></span> Urus Tetapan &amp; Kriteria Aliran
@@ -50,7 +58,8 @@
                         </h3>
                     </div>
                     <div class="panel-body">
-                        <p class="text-muted" style="font-size: 13px;">Urus kelayakan pelajar untuk subjek Syariah atau Sains Sukan.</p>
+                        <p class="text-muted" style="font-size: 13px;">Urus kelayakan pelajar untuk subjek Syariah atau
+                            Sains Sukan.</p>
                         <a href="{{ url_for('eligible_subject_page') }}" class="btn btn-success btn-block"
                             style="margin-top: 15px; padding: 10px; font-weight: bold;">
                             <span class="glyphicon glyphicon-edit"></span> Urus Kelayakan Pelajar
@@ -67,35 +76,30 @@
                         </h3>
                     </div>
                     <div class="panel-body">
-                        <p class="text-muted" style="font-size: 13px;">TEMP
-                        </p>
+                        <p class="text-muted" style="font-size: 13px;">TEMP</p>
                         <a href="{{ url_for('eligible_subject_page') }}" class="btn btn-warning btn-block disabled"
-                            style="margin-top: 15px; padding: 10px; font-weight: bold; pointer-events: none; cursor: not-allowed;" tabindex="-1"
-                            aria-disabled="true">
+                            style="margin-top: 15px; padding: 10px; font-weight: bold; pointer-events: none; cursor: not-allowed;"
+                            tabindex="-1" aria-disabled="true">
                             <span class="glyphicon glyphicon-edit"></span> TEMP
                         </a>
-                        <!-- <a href="{{ url_for('eligible_subject_page') }}" class="btn btn-warning btn-block"
-
-                        style="margin-top: 15px; padding: 10px; font-weight: bold;">
-
-                        <span class="glyphicon glyphicon-edit"></span> TEMP
-
-                        </a> -->
                     </div>
                 </div>
             </div>
-
         </div>
+        {% endif %}
 
         <!-- ================= CATEGORY 2: STUDENT LISTS ================= -->
         <div style="margin-top: 30px; margin-bottom: 20px;">
             <h3 style="border-bottom: 2px solid #ddd; padding-bottom: 8px; margin-bottom: 15px; color: #333;">
-                <span class="glyphicon glyphicon-list-alt"></span> Senarai &amp; Direktori Pelajar
+                <span class="glyphicon glyphicon-list-alt"></span>
+                {% if session.get('role') == 'admin' %}Senarai &amp; Direktori Pelajar{% else %}Kokurikulum Pelajar{%
+                endif %}
             </h3>
         </div>
 
         <div class="row">
-            <!-- Direktori Pangkalan Pelajar -->
+            <!-- Direktori Pangkalan Pelajar (Full Admin Only) -->
+            {% if session.get('role') == 'admin' %}
             <div class="col-md-4">
                 <div class="panel panel-primary" style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                     <div class="panel-heading">
@@ -112,8 +116,10 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
 
-            <!-- Senarai Pelajar untuk Kokurikulum -->
+            <!-- Senarai Pelajar untuk Kokurikulum (Available to BOTH) -->
+            {% if session.get('role') in ['admin', 'adminkoko'] %}
             <div class="col-md-4">
                 <div class="panel panel-primary" style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                     <div class="panel-heading">
@@ -122,7 +128,8 @@
                         </h3>
                     </div>
                     <div class="panel-body">
-                        <p class="text-muted" style="font-size: 13px;">Senarai pelajar ikut unit-unit dalam kokurikulum</p>
+                        <p class="text-muted" style="font-size: 13px;">Senarai pelajar ikut unit-unit dalam kokurikulum
+                        </p>
                         <a href="{{ url_for('admin_koku_list') }}" class="btn btn-primary btn-block"
                             style="margin-top: 15px; padding: 10px; font-weight: bold; color: #fff;">
                             <span class="glyphicon glyphicon-list"></span> Akses Senarai Koku
@@ -130,8 +137,10 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
 
-            <!-- Senarai Pelajar Lambat -->
+            <!-- Senarai Pelajar Lambat (Full Admin Only) -->
+            {% if session.get('role') == 'admin' %}
             <div class="col-md-4">
                 <div class="panel panel-primary" style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                     <div class="panel-heading">
@@ -165,6 +174,7 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
 
         </div>
 

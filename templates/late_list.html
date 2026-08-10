@@ -19,74 +19,77 @@
         </div>
     </div>
 
-    <!-- Always Visible, Cleaned-Up Filter Card -->
-    <div class="card border-0 shadow-sm bg-light mb-4">
-        <div class="card-body p-4">
-            <h5 class="card-title mb-3 fw-bold text-secondary fs-6">
-                <i class="bi bi-funnel me-1"></i> Tapis &amp; Carian Rekod
-            </h5>
-            <form method="GET" class="row g-3 align-items-end">
-
-                <div class="col-xl-2 col-md-6">
-                    <label class="form-label text-muted small fw-bold">Cari Nama</label>
+    <div class="panel panel-default mb-4">
+        <div class="panel-heading">Carian &amp; Tapis Rekod</div>
+        <div class="panel-body">
+            <form method="GET" action="{{ url_for('late_list') }}" class="row">
+    
+                <!-- Row 1: Search Name & Date Mode Selection -->
+                <div class="col-md-3 form-group">
+                    <label>Cari Nama</label>
                     <input type="text" name="name" class="form-control" value="{{ search_name }}" placeholder="Nama...">
                 </div>
-
-                <div class="col-xl-2 col-md-6">
-                    <label class="form-label text-muted small fw-bold">Pilihan Tarikh</label>
-                    <select name="dateMode" id="dateMode" class="form-select" onchange="toggleDateInputs()">
+    
+                <div class="col-md-3 form-group">
+                    <label>Pilihan Tarikh</label>
+                    <select name="dateMode" id="dateMode" class="form-control" onchange="toggleDateInputs()">
                         <option value="today" {% if start_date==end_date %}selected{% endif %}>Hari Ini</option>
                         <option value="range" {% if start_date !=end_date %}selected{% endif %}>Julat Tarikh</option>
                     </select>
                 </div>
-
-                <div class="col-xl-2 col-md-6" id="startDateDiv">
-                    <label class="form-label text-muted small fw-bold">Tarikh Mula</label>
+    
+                <div class="col-md-3 form-group" id="startDateDiv">
+                    <label>Tarikh Mula</label>
                     <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
                 </div>
-
-                <div class="col-xl-2 col-md-6" id="endDateDiv">
-                    <label class="form-label text-muted small fw-bold">Tarikh Akhir</label>
+    
+                <div class="col-md-3 form-group" id="endDateDiv">
+                    <label>Tarikh Akhir</label>
                     <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
                 </div>
-
-                <div class="col-xl-2 col-md-6">
-                    <label class="form-label text-muted small fw-bold">Pakej</label>
-                    <select name="package" class="form-select">
-                        <option value="">Semua Pakej</option>
+    
+                <!-- Row 2: Package, Status, and Action Buttons -->
+                <div class="col-md-3 form-group">
+                    <label>Pakej</label>
+                    <select name="package" class="form-control">
+                        <option value="">-- Semua Pakej --</option>
                         {% for p in all_packages %}
-                        <option value="{{ p.id_pakej }}" {% if package_filter|string==p.id_pakej|string %}selected{% endif %}>
+                        <option value="{{ p.id_pakej }}" {% if package_filter|string==p.id_pakej|string %}selected{% endif
+                            %}>
                             {{ p.kod_pakej }}
                         </option>
                         {% endfor %}
                     </select>
                 </div>
-
-                <div class="col-xl-2 col-md-6">
-                    <label class="form-label text-muted small fw-bold">Status</label>
-                    <select name="status" class="form-select">
+    
+                <div class="col-md-3 form-group">
+                    <label>Status</label>
+                    <select name="status" class="form-control">
                         <option value="all" {% if status_filter=='all' %}selected{% endif %}>Semua Status</option>
                         <option value="late" {% if status_filter=='late' %}selected{% endif %}>Lewat</option>
-                        <option value="very_late" {% if status_filter=='very_late' %}selected{% endif %}>Sangat Lewat</option>
+                        <option value="very_late" {% if status_filter=='very_late' %}selected{% endif %}>Sangat Lewat
+                        </option>
                     </select>
                 </div>
-
-                <div class="col-12 d-flex justify-content-end gap-2 mt-3 pt-2 border-top">
-                    <a href="{{ url_for('late_list') }}" class="btn btn-outline-secondary px-4" title="Set Semula">
-                        Reset
-                    </a>
-                    <a href="{{ url_for('export_late_list', start_date=start_date, end_date=end_date, name=search_name, package=package_filter, status=status_filter) }}"
-                        class="btn btn-success px-4" title="Eksport ke CSV">
-                        <i class="bi bi-download me-1"></i> Export CSV
-                    </a>
-                    <button type="submit" class="btn btn-primary px-5" title="Tapis Hasil">
-                        Tapis
-                    </button>
+    
+                <div class="col-md-6 form-group text-right" style="margin-top: 24px;">
+                    <div class="btn-group" style="display: inline-flex; width: 100%;">
+                        <a href="{{ url_for('export_late_list', start_date=start_date, end_date=end_date, name=search_name, package=package_filter, status=status_filter) }}"
+                            class="btn btn-success" style="flex: 1;" title="Eksport ke CSV">
+                            Export CSV
+                        </a>
+                        <button type="submit" class="btn btn-primary" style="flex: 1;" title="Tapis Hasil">
+                            Cari
+                        </button>
+                        <a href="{{ url_for('late_list') }}" class="btn btn-default" style="flex: 1;" title="Set Semula">
+                            Reset
+                        </a>
+                    </div>
                 </div>
-
+    
             </form>
         </div>
-    </div>
+        </div>
 
     <!-- Main Data Table Card -->
     <div class="card border-0 shadow-sm">

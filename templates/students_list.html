@@ -70,8 +70,12 @@
                     </select>          
                 </div>
 
-                <div class="col-md-4 form-group" style="padding-top: 25px;">
-                    <button type="submit" class="btn btn-primary btn-block">Tapis</button>
+
+                <div class="col-md-12 form-group text-right" style="margin-top: 10px;">
+                    <div class="btn-group" style="display: inline-flex; width: 250px;">
+                        <button type="submit" class="btn btn-primary" style="flex: 1;">Cari</button>
+                        <a href="{{ url_for('admin_view_students_list') }}" class="btn btn-default" style="flex: 1;">Reset</a>
+                    </div>
                 </div>
             </div>
         </form>

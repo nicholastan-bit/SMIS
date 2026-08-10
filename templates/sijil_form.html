@@ -72,15 +72,49 @@
                             required>
                     </div>
                     <div class="col-md-6 form-group">
-                        <label>Tugas Khas (Jika ada) / Special Task</label>
-                        <input type="text" name="tugas_khas" class="form-control"
-                            value="{{ student.tugas_khas or '' }}">
-                    </div>
-                    <div class="col-md-6 form-group">
                         <label>Tarikh Sijil Dikeluarkan / Certificate Date</label>
                         <input type="date" name="tarikh_sijil" class="form-control" id="tarikh_sijil" required>
                     </div>
                 </div>
+
+                <hr>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h4 style="margin: 0;">Tugas Khas / Special Tasks</h4>
+                    <button type="button" class="btn btn-xs btn-primary" onclick="addTugasKhasRow()">+ Tambah
+                        Tugas</button>
+                </div>
+                <table class="table table-bordered" id="tugasKhasTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 55%;">Tugas</th>
+                            <th style="width: 40%;">Jawatan</th>
+                            <th style="width: 5%;">Tindakan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if tugas_khas_records %}
+                        {% for tk in tugas_khas_records %}
+                        <tr>
+                            <td><input type="text" name="tugas_list[]" class="form-control input-sm"
+                                    value="{{ tk.tugas }}"></td>
+                            <td><input type="text" name="tugas_jawatan_list[]" class="form-control input-sm"
+                                    value="{{ tk.jawatan }}"></td>
+                            <td class="text-center"><button type="button" class="btn btn-danger btn-xs"
+                                    onclick="removeRow(this)">&times;</button></td>
+                        </tr>
+                        {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td><input type="text" name="tugas_list[]" class="form-control input-sm"
+                                    placeholder="Cth: KOPERATOR"></td>
+                            <td><input type="text" name="tugas_jawatan_list[]" class="form-control input-sm"
+                                    placeholder="Cth: AHLI"></td>
+                            <td class="text-center"><button type="button" class="btn btn-danger btn-xs"
+                                    onclick="removeRow(this)">&times;</button></td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
 
                 <hr>
                 <h4>Kedatangan / Attendance (Pilih Tahun & Bilangan Hari Hadir)</h4>
@@ -146,7 +180,7 @@
                             <td><input type="text" name="koku_jawatan[]" class="form-control input-sm"
                                     value="{{ koku.jawatan }}"></td>
                             <td class="text-center"><button type="button" class="btn btn-danger btn-xs"
-                                    onclick="removeKokuRow(this)">&times;</button></td>
+                                    onclick="removeRow(this)">&times;</button></td>
                         </tr>
                         {% endfor %}
                         {% else %}
@@ -158,7 +192,7 @@
                             <td><input type="text" name="koku_jawatan[]" class="form-control input-sm"
                                     placeholder="Cth: Pengerusi"></td>
                             <td class="text-center"><button type="button" class="btn btn-danger btn-xs"
-                                    onclick="removeKokuRow(this)">&times;</button></td>
+                                    onclick="removeRow(this)">&times;</button></td>
                         </tr>
                         {% endif %}
                     </tbody>
@@ -211,11 +245,23 @@
             <td><input type="text" name="koku_type[]" class="form-control input-sm" placeholder="Cth: Sukan"></td>
             <td><input type="text" name="koku_name[]" class="form-control input-sm" placeholder="Cth: Bola Sepak"></td>
             <td><input type="text" name="koku_jawatan[]" class="form-control input-sm" placeholder="Cth: Ahli"></td>
-            <td class="text-center"><button type="button" class="btn btn-danger btn-xs" onclick="removeKokuRow(this)">&times;</button></td>
+            <td class="text-center"><button type="button" class="btn btn-danger btn-xs" onclick="removeRow(this)">&times;</button></td>
         `;
     }
 
-    function removeKokuRow(button) {
+    function addTugasKhasRow() {
+        const table = document.getElementById('tugasKhasTable');
+        if (!table) return;
+        const tbody = table.getElementsByTagName('tbody')[0];
+        const newRow = tbody.insertRow();
+        newRow.innerHTML = `
+            <td><input type="text" name="tugas_list[]" class="form-control input-sm" placeholder="Cth: PUSAT SUMBER SEKOLAH"></td>
+            <td><input type="text" name="tugas_jawatan_list[]" class="form-control input-sm" placeholder="Cth: AHLI JAWATANKUASA"></td>
+            <td class="text-center"><button type="button" class="btn btn-danger btn-xs" onclick="removeRow(this)">&times;</button></td>
+        `;
+    }
+
+    function removeRow(button) {
         const row = button.closest('tr');
         if (row) row.remove();
     }

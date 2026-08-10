@@ -134,32 +134,40 @@
             </tr>
         </table>
 
-        <!-- Kegiatan Kokurikulum -->
-        <div class="section-heading">KEGIATAN KOKURIKULUM / Co-Curricular Activities</div>
+        <!-- Kegiatan Kokurikulum & Tugas Khas -->
+        <div class="section-heading">KEGIATAN KOKURIKULUM & TUGAS KHAS / Co-Curricular Activities & Special Tasks</div>
         <table class="table-bordered" style="margin-top: 10px;">
             <thead>
                 <tr>
-                    <th>Persatuan/Kelab/Sukan/Badan Beruniform</th>
+                    <th>Persatuan / Kelab / Sukan / Badan Beruniform / Tugas Khas</th>
                     <th>Jawatan / Position</th>
                 </tr>
             </thead>
             <tbody>
+                <!-- Loop through Kokurikulum Activities -->
                 {% if koku_activities %}
-                    {% for koku in koku_activities %}
-                    <tr>
-                        <td>{{ koku.unit_type }} - {{ koku.unit_name }}</td>
-                        <td>{{ koku.jawatan }}</td>
-                    </tr>
-                    {% endfor %}
-                {% else %}
-                    <tr>
-                        <td colspan="2" class="text-center">Tiada rekod kokurikulum</td>
-                    </tr>
-                {% endif %}
-                {% if form_data.tugas_khas %}
+                {% for koku in koku_activities %}
                 <tr>
-                    <td>Tugas Khas: {{ form_data.tugas_khas }}</td>
-                    <td>-</td>
+                    <td>{{ koku.unit_type }} - {{ koku.unit_name }}</td>
+                    <td>{{ koku.jawatan }}</td>
+                </tr>
+                {% endfor %}
+                {% endif %}
+        
+                <!-- Loop through Tugas Khas Records -->
+                {% if tugas_khas_records %}
+                {% for tk in tugas_khas_records %}
+                <tr>
+                    <td>Tugas Khas: {{ tk.tugas }}</td>
+                    <td>{{ tk.jawatan if tk.jawatan else '-' }}</td>
+                </tr>
+                {% endfor %}
+                {% endif %}
+        
+                <!-- Fallback if both are empty -->
+                {% if not koku_activities and not tugas_khas_records %}
+                <tr>
+                    <td colspan="2" class="text-center">Tiada rekod kokurikulum atau tugas khas</td>
                 </tr>
                 {% endif %}
             </tbody>

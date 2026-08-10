@@ -6,49 +6,99 @@
         <p class="text-muted">ID Pelajar: {{ student.bil_kemasukan }} | No. KP: {{ student.no_kp_pelajar }}</p>
     </div>
 
-    <form method="POST">
+    <form method="POST" onsubmit="return validateForm();">
+        <!-- Rumah Sukan Section -->
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h4 class="panel-title">Maklumat Peribadi</h4>
+                <h4 class="panel-title">Maklumat Rumah Sukan</h4>
             </div>
             <div class="panel-body">
                 <div class="row">
                     <div class="col-md-6 form-group">
-                        <label>Tugas Khas</label>
-                        <select name="tugas_khas" class="form-control">
-                            {% for option in ['TIADA', 'KOPERATOR', 'MAJLIS KETUA TINGKATAN', 'MAJLIS PELAJAR TINGKATAN
-                            ENAM', 'ORGANISASI KELAS', 'PENGHAYATAN NILAI MURNI', 'KELAB PENCEGAHAN JENAYAH', 'PUSAT
-                            SUMBER SEKOLAH', 'QUARTER MASTER', 'SIDANG REDAKSI BULETIN SEKOLAH', 'KEMAJUAN ISLAM SURAU
-                            AL-MUTTAQIN'] %}
-                            <option value="{{ option }}" {% if student.tugas_khas==option %}selected{% endif %}>{{
-                                option }}</option>
+                        <label>Rumah Sukan</label>
+                        <select name="rumah_sukan" class="form-control">
+                            <option value="" {% if not student.rumah_sukan %}selected{% endif %}>TIADA</option>
+                            {% for color in ['MERAH', 'BIRU', 'KUNING', 'HIJAU', 'UNGU'] %}
+                            <option value="{{ color }}" {% if student.rumah_sukan and student.rumah_sukan | upper==color
+                                %}selected{% endif %}>
+                                {{ color }}
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="col-md-6 form-group">
-                        <label>Rumah Sukan</label>
-                        <select name="rumah_sukan" class="form-control">
-                            <option value="" {% if not student.rumah_sukan %}selected{% endif %}>Tiada</option>
-                    
-                            {% for color in ['Merah', 'Biru', 'Kuning', 'Hijau', 'Ungu'] %}
-                            <option value="{{ color }}" {% if student.rumah_sukan==color %}selected{% endif %}>
-                                {{ color }}
-                            </option>
+                        <label>Jawatan (Rumah Sukan)</label>
+                        <select name="jawatan_rumah_sukan" class="form-control">
+                            {% for j in positions %}
+                            <option value="{{ j }}" {% if (student.jawatan_rumah_sukan | upper)==j %}selected{% endif %}>{{
+                                j }}</option>
                             {% endfor %}
-                        </select>              </div>
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>
-
+    
+        <!-- Multi-Row Tugas Khas Panel -->
+        <div class="panel panel-info">
+            <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center;">
+                <h4 class="panel-title">Tugas Khas Pelajar</h4>
+                <button type="button" class="btn btn-success btn-xs" onclick="addTugasKhasRow()">
+                    <span class="glyphicon glyphicon-plus"></span> Tambah Tugas Khas
+                </button>
+            </div>
+            <table class="table table-hover mb-0" id="tugasKhasTable">
+                <thead>
+                    <tr class="active">
+                        <th style="width: 50%;">Tugas Khas</th>
+                        <th style="width: 40%;">Jawatan</th>
+                        <th style="width: 10%;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tk in tugas_records %}
+                    <tr>
+                        <td class="align-middle">
+                            <input type="hidden" name="tk_id[]" value="{{ tk.id }}">
+                            <select name="tugas[]" class="form-control">
+                                {% for option in ['TIADA', 'KOPERATOR', 'MAJLIS KETUA TINGKATAN', 'MAJLIS PELAJAR
+                                TINGKATAN ENAM', 'ORGANISASI KELAS', 'PENGHAYATAN NILAI MURNI', 'KELAB PENCEGAHAN
+                                JENAYAH', 'PUSAT SUMBER SEKOLAH', 'QUARTER MASTER', 'SIDANG REDAKSI BULETIN SEKOLAH',
+                                'KEMAJUAN ISLAM SURAU AL-MUTTAQIN'] %}
+                                <option value="{{ option }}" {% if tk.tugas==option %}selected{% endif %}>{{ option }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td class="align-middle">
+                            <select name="tk_jawatan[]" class="form-control">
+                                {% for j in positions %}
+                                <option value="{{ j }}" {% if tk.jawatan==j %}selected{% endif %}>{{ j }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td class="align-middle">
+                            <button type="button" class="btn btn-danger btn-sm"
+                                onclick="confirmDelete('{{ url_for('delete_tugas_khas_record', tk_id=tk.id, bil=student.bil_kemasukan, **query_params) }}')">
+                                <span class="glyphicon glyphicon-trash"></span>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    
+        <!-- Pendaftaran Kokurikulum Panel -->
         <div class="panel panel-primary">
             <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center;">
                 <h4 class="panel-title">Pendaftaran Kokurikulum</h4>
                 <button type="button" class="btn btn-danger btn-xs"
                     onclick="confirmDeleteAll('{{ url_for('delete_all_koku_records', bil_kemasukan=student.bil_kemasukan) }}')">
-                    <span class="glyphicon glyphicon-trash"></span> Padam Semua Rekod
+                    <span class="glyphicon glyphicon-trash"></span> Padam Semua Rekod Koku
                 </button>
             </div>
-            <table class="table table-hover mb-0">
+            <table class="table table-hover mb-0" id="kokuTable">
                 <thead>
                     <tr class="active">
                         <th style="width: 40%;">Unit</th>
@@ -71,9 +121,7 @@
                         </td>
                         <td class="align-middle">
                             <select name="jawatan[]" class="form-control">
-                                {% for j in ['AHLI', 'PENGERUSI', 'NAIB PENGERUSI', 'SETIAUSAHA', 'NAIB SETIAUSAHA',
-                                'BENDAHARI', 'NAIB BENDAHARI', 'AHLI JAWATANKUASA', 'KETUA BIRO', 'KETUA KELAS',
-                                'PENOLONG KETUA KELAS'] %}
+                                {% for j in positions %}
                                 <option value="{{ j }}" {% if r.jawatan==j %}selected{% endif %}>{{ j }}</option>
                                 {% endfor %}
                             </select>
@@ -92,35 +140,91 @@
                 </tbody>
             </table>
         </div>
-
+    
         <div class="text-right mt-4">
-            <a href="{{ url_for('admin_koku_list') }}" class="btn btn-default btn-lg">Batal</a>
+            <a href="{{ url_for('admin_koku_list', **query_params) }}" class="btn btn-default btn-lg">Batal</a>
             <button type="submit" class="btn btn-success btn-lg">Simpan Perubahan</button>
         </div>
     </form>
-</div>
+    </div>
+    
+    <script>
+        // Safely parse the python list array over to javascript
+        const positionsList = {{positions | tojson }};
 
-<script>
-    // Delete single record
-    function confirmDelete(url) {
-        if (confirm("Adakah anda pasti mahu memadam rekod ini?")) {
-            var form = document.createElement('form');
-            form.method = 'POST';
-            form.action = url;
-            document.body.appendChild(form);
-            form.submit();
+        function confirmDelete(url) {
+            if (confirm("Adakah anda pasti mahu memadam rekod ini?")) {
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = url;
+                document.body.appendChild(form);
+                form.submit();
+            }
         }
-    }
 
-    // Delete all records for student
-    function confirmDeleteAll(url) {
-        if (confirm("AMARAN: Adakah anda pasti mahu memadam SEMUA rekod kokurikulum pelajar ini? Tindakan ini tidak boleh diubah.")) {
-            var form = document.createElement('form');
-            form.method = 'POST';
-            form.action = url;
-            document.body.appendChild(form);
-            form.submit();
+        function confirmDeleteAll(url) {
+            if (confirm("AMARAN: Adakah anda pasti mahu memadam SEMUA rekod kokurikulum pelajar ini? Tindakan ini tidak boleh diubah.")) {
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = url;
+                document.body.appendChild(form);
+                form.submit();
+            }
         }
-    }
-</script>
-{% endblock %}
+
+        function addTugasKhasRow() {
+            var tbody = document.getElementById('tugasKhasTable').getElementsByTagName('tbody')[0];
+            var newRow = tbody.insertRow();
+
+            // Build options dropdown dynamically using javascript array mapping
+            var positionOptions = positionsList.map(j => `<option value="${j}">${j}</option>`).join('');
+
+            newRow.innerHTML = `
+                <td class="align-middle">
+                    <input type="hidden" name="tk_id[]" value="NEW">
+                    <select name="tugas[]" class="form-control">
+                        <option value="TIADA">TIADA</option>
+                        <option value="KOPERATOR">KOPERATOR</option>
+                        <option value="MAJLIS KETUA TINGKATAN">MAJLIS KETUA TINGKATAN</option>
+                        <option value="MAJLIS PELAJAR TINGKATAN ENAM">MAJLIS PELAJAR TINGKATAN ENAM</option>
+                        <option value="ORGANISASI KELAS">ORGANISASI KELAS</option>
+                        <option value="PENGHAYATAN NILAI MURNI">PENGHAYATAN NILAI MURNI</option>
+                        <option value="KELAB PENCEGAHAN JENAYAH">KELAB PENCEGAHAN JENAYAH</option>
+                        <option value="PUSAT SUMBER SEKOLAH">PUSAT SUMBER SEKOLAH</option>
+                        <option value="QUARTER MASTER">QUARTER MASTER</option>
+                        <option value="SIDANG REDAKSI BULETIN SEKOLAH">SIDANG REDAKSI BULETIN SEKOLAH</option>
+                        <option value="KEMAJUAN ISLAM SURAU AL-MUTTAQIN">KEMAJUAN ISLAM SURAU AL-MUTTAQIN</option>
+                    </select>
+                </td>
+                <td class="align-middle">
+                    <select name="tk_jawatan[]" class="form-control">
+                        ${positionOptions}
+                    </select>
+                </td>
+                <td class="align-middle">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove();">
+                        <span class="glyphicon glyphicon-trash"></span>
+                    </button>
+                </td>
+            `;
+        }
+
+        function validateForm() {
+                // Check for duplicate Tugas Khas selections per student
+                const tugasSelects = document.querySelectorAll('select[name="tugas[]"]');
+                const tugasValues = [];
+
+                for (let select of tugasSelects) {
+                    let val = select.value;
+                    // If you want to allow multiple 'TIADA', skip it, otherwise track all selections
+                    if (tugasValues.includes(val)) {
+                        alert("Ralat: Anda telah memilih Tugas Khas yang sama ('" + val + "') lebih daripada sekali. Sila pilih tugas yang berbeza.");
+                        select.focus();
+                        return false; // Stops form submission
+                    }
+                    tugasValues.push(val);
+                }
+                return true;
+            }
+    </script>
+    {% endblock %}
