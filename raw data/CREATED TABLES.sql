@@ -54,7 +54,7 @@ CREATE TABLE pelajar (
 	agama ENUM('ISLAM', 'BUDDHA', 'HINDU', 'KRISTIAN', 'SIKH', 'LAIN-LAIN') DEFAULT NULL,
 	tarikh_lahir DATE DEFAULT NULL,
 	alamat_rumah TEXT,
-	telefonNo VARCHAR(20) DEFAULT NULL,
+	telefonNo VARCHAR(50) DEFAULT NULL,
 	sekolah_tamat DATE DEFAULT NULL, -- SEKOLAH TAMAT UNTUK STPM
 	masalah_kesihatan TEXT,
 	cara_datang_sekolah ENUM('JALAN', 'KERETA', 'MOTOR', 'BASIKAL', 'BAS', 'LAIN-LAIN') DEFAULT NULL,

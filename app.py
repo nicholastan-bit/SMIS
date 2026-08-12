@@ -18,6 +18,7 @@ def get_db_connection():
 
 LIMITS_FILE = 'limits.json'
 
+#koko -----------------
 PACKAGE_LIMITS = {
     'BK': 60, 'BK1': 15, 'BK2': 15, 'BK3': 15, 'BK4': 15,
     'FK': 60, 'FK1': 20, 'FK2': 20, 'FK3': 20,
@@ -53,16 +54,35 @@ PACKAGE_LIMITS = {
 }
 DEFAULT_LIMIT = 40
 
+SENARAI_RUMAH_SUKAN = ['MERAH', 'BIRU', 'KUNING', 'HIJAU', 'UNGU']
+
+SENARAI_TUGAS_KHAS = [
+    'TIADA',
+    'KOPERATOR',
+    'MAJLIS KETUA TINGKATAN',
+    'MAJLIS PELAJAR TINGKATAN ENAM',
+    'ORGANISASI KELAS',
+    'PENGHAYATAN NILAI MURNI',
+    'KELAB PENCEGAHAN JENAYAH',
+    'PUSAT SUMBER SEKOLAH',
+    'QUARTER MASTER',
+    'SIDANG REDAKSI BULETIN SEKOLAH',
+    'KEMAJUAN ISLAM SURAU AL-MUTTAQIN',
+    'PEMBIMBING RAKAN SEBAYA'
+]
+
+SENARAI_JAWATAN = ['AHLI', 'PENGERUSI', 'NAIB PENGERUSI', 'SETIAUSAHA', 'NAIB SETIAUSAHA', 'BENDAHARI', 
+           'NAIB BENDAHARI', 'AHLI JAWATANKUASA', 'KETUA BIRO', 'KETUA KELAS', 'PENOLONG KETUA KELAS']
+
+#UBK -----------------
 COUNSELLORS = ["Noraizan Binti Mohd Noh" , "Nurul Hisham Bin Zakaria"]
+
 PERKARA_OPTIONS = [
         "Konsultasi", "Amalan Baik", "Individu", "Kelompok", "IMK", 
         "Kesejahteraan Emosi", "Kerjaya", "Komunikasi", "Hilang Kad Matrik", 
         "Program Kaunseling", "kehadiran Perjumpaan Bola Jaring", "Pameran Kerjaya", 
         "Datang Lambat", "Kaunseling Individu", "Kaunseling Kelompok", "Perjumpaan PRS", "Kelas Ganti"
     ]
-
-SENARAI_JAWATAN = ['AHLI', 'PENGERUSI', 'NAIB PENGERUSI', 'SETIAUSAHA', 'NAIB SETIAUSAHA', 'BENDAHARI', 
-           'NAIB BENDAHARI', 'AHLI JAWATANKUASA', 'KETUA BIRO', 'KETUA KELAS', 'PENOLONG KETUA KELAS']
 
 def get_limits():
     # If the file doesn't exist, create it with your default dictionary
@@ -326,7 +346,8 @@ def submit_registration():
             sekolah_tamat=VALUES(sekolah_tamat), masalah_kesihatan=VALUES(masalah_kesihatan),
             cara_datang_sekolah=VALUES(cara_datang_sekolah), tempat_lahir=VALUES(tempat_lahir),
             no_surat_beranak=VALUES(no_surat_beranak), masalah_penglihatan=VALUES(masalah_penglihatan),
-            aliran_ditawar=VALUES(aliran_ditawar), status_oku=VALUES(status_oku), kelas=VALUES(kelas)
+            aliran_ditawar=VALUES(aliran_ditawar), status_oku=VALUES(status_oku), kelas=VALUES(kelas),
+            semester = COALESCE(semester, 1)
     """
 
     today = date.today().strftime('%Y-%m-%d')
@@ -1140,19 +1161,18 @@ def late_arrival_page():
         flash("Sila masukkan No. KP anda terlebih dahulu.", "danger")
         return redirect(url_for('gateway'))
 
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
     cursor.execute("SELECT bil_kemasukan, telefonNo FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
     student = cursor.fetchone()
         
     if not student:
         flash("Maklumat pelajar tidak dijumpai.", "danger")
         return redirect(url_for('index'))
-    
+
     today = date.today().strftime('%Y-%m-%d')
     existing_record = None
-
-    conn = get_db_connection()
-    # Explicitly use a dictionary cursor
-    cursor = conn.cursor(dictionary=True)
     
     try:
         query = """
@@ -2328,11 +2348,11 @@ def admin_koku_list():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # Base query components updated with LEFT JOIN on tugas_khas
+    # Base query components updated: Start from 'pelajar p' and use LEFT JOIN for koku tables
     base_query = """
-        FROM KokurikulumPelajar kp
-        JOIN pelajar p ON kp.bil_kemasukan = p.bil_kemasukan
-        JOIN UnitKokurikulum uk ON kp.unit_id = uk.unit_id
+        FROM pelajar p
+        LEFT JOIN KokurikulumPelajar kp ON p.bil_kemasukan = kp.bil_kemasukan
+        LEFT JOIN UnitKokurikulum uk ON kp.unit_id = uk.unit_id
         LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej
         LEFT JOIN tugas_khas tk ON p.bil_kemasukan = tk.bil_kemasukan
         WHERE 1=1
@@ -2356,7 +2376,6 @@ def admin_koku_list():
         base_query += " AND (p.nama_pelajar LIKE %s OR p.bil_kemasukan LIKE %s)"
         params.extend([f"%{search}%", f"%{search}%"])
     if tugas_filter:
-        # Filter matching specific multi-row tasks
         base_query += " AND tk.tugas = %s"
         params.append(tugas_filter)
     if pakej_filter:
@@ -2369,7 +2388,7 @@ def admin_koku_list():
     # Grouping to prevent duplicates
     group_by_clause = " GROUP BY p.bil_kemasukan"
     
-    # Sorting logic (Updated 'tugas' to map to tk.tugas or fallback)
+    # Sorting logic
     sort_map = {
         'nama': 'p.nama_pelajar',
         'id': 'p.bil_kemasukan',
@@ -2380,12 +2399,12 @@ def admin_koku_list():
     order_column = sort_map.get(sort_by, 'p.nama_pelajar')
     order_clause = f" ORDER BY {order_column} ASC"
 
-    # Count total (Corrected for grouping)
+    # Count total
     count_query = f"SELECT COUNT(*) as total_count FROM (SELECT p.bil_kemasukan {base_query} {group_by_clause}) as sub"
     cursor.execute(count_query, params)
     total = cursor.fetchone()['total_count']
     
-    # Fetch data (Aggregate both units and multiple tugas_khas using GROUP_CONCAT)
+    # Fetch data
     data_query = f"""
         SELECT p.nama_pelajar, p.bil_kemasukan, p.rumah_sukan, p.kelas,
                GROUP_CONCAT(DISTINCT uk.unit_name SEPARATOR ', ') as unit_names,
@@ -2421,7 +2440,9 @@ def admin_koku_list():
                            rumah=rumah_filter,
                            pakej_filter=pakej_filter,
                            semester=semester_filter,
-                           sort=sort_by)
+                           sort=sort_by,
+                           rumah_sukan_list=SENARAI_RUMAH_SUKAN,
+                           tugas_list=SENARAI_TUGAS_KHAS)
 
 # A helper function to keep your routes clean
 def execute_db_update(query, params):
@@ -2473,18 +2494,24 @@ def edit_student_koku(bil):
                         WHERE id = %s AND bil_kemasukan = %s
                     """, (new_tugas_list[i], tk_jawatans[i], tk_ids[i], bil))
 
-            # 3. Update Koku Records
+            # 3. Update or Insert Koku Records
             kkplr_ids = request.form.getlist('kkplr_id[]')
             new_unit_ids = request.form.getlist('unit_id[]')
             jawatans = [j.upper() if j else 'AHLI' for j in request.form.getlist('jawatan[]')]
             merits = request.form.getlist('merit[]')
             
             for i in range(len(kkplr_ids)):
-                cursor.execute("""
-                    UPDATE KokurikulumPelajar 
-                    SET unit_id = %s, jawatan = %s, merit = %s 
-                    WHERE kkplr_id = %s AND bil_kemasukan = %s
-                """, (new_unit_ids[i], jawatans[i], merits[i], kkplr_ids[i], bil))
+                if kkplr_ids[i] == 'NEW':
+                    cursor.execute("""
+                        INSERT INTO KokurikulumPelajar (bil_kemasukan, unit_id, jawatan, merit) 
+                        VALUES (%s, %s, %s, %s)
+                    """, (bil, new_unit_ids[i], jawatans[i], merits[i]))
+                else:
+                    cursor.execute("""
+                        UPDATE KokurikulumPelajar 
+                        SET unit_id = %s, jawatan = %s, merit = %s 
+                        WHERE kkplr_id = %s AND bil_kemasukan = %s
+                    """, (new_unit_ids[i], jawatans[i], merits[i], kkplr_ids[i], bil))
             
             conn.commit()
             flash("Semua maklumat berjaya dikemaskini!", "success")
@@ -2523,6 +2550,8 @@ def edit_student_koku(bil):
                            records=koku_records, 
                            all_units=all_units, 
                            query_params=request.args,
+                           rumah_sukan_list=SENARAI_RUMAH_SUKAN,
+                           tugas_list=SENARAI_TUGAS_KHAS,
                            positions=SENARAI_JAWATAN)
 
 @app.route('/admin/delete-tugas-khas/<int:tk_id>/<bil>', methods=['POST'])

@@ -54,7 +54,7 @@
                         <select name="rumah" class="form-control">
                             <option value="">-- Semua Rumah --</option>
                             <option value="TIADA" {% if rumah=='TIADA' %}selected{% endif %}>TIADA / KOSONG</option>
-                            {% for r in ['MERAH', 'BIRU', 'KUNING', 'HIJAU', 'UNGU'] %}
+                            {% for r in rumah_sukan_list %}
                             <option value="{{ r }}" {% if rumah==r %}selected{% endif %}>{{ r }}</option>
                             {% endfor %}
                         </select>
@@ -74,10 +74,7 @@
                         <label>Tugas Khas</label>
                         <select name="tugas" class="form-control">
                             <option value="">-- Semua Tugas --</option>
-                            {% for t in ['KOPERATOR', 'MAJLIS KETUA TINGKATAN', 'MAJLIS PELAJAR TINGKATAN ENAM',
-                            'ORGANISASI KELAS', 'PENGHAYATAN NILAI MURNI', 'KELAB PENCEGAHAN JENAYAH', 'PUSAT SUMBER
-                            SEKOLAH',
-                            'QUARTER MASTER', 'SIDANG REDAKSI BULETIN SEKOLAH', 'KEMAJUAN ISLAM SURAU AL-MUTTAQIN'] %}
+                            {% for t in tugas_list %}
                             <option value="{{ t }}" {% if tugas==t %}selected{% endif %}>{{ t }}</option>
                             {% endfor %}
                         </select>

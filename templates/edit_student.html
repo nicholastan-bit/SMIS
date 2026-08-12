@@ -18,7 +18,7 @@
                         <label>Rumah Sukan</label>
                         <select name="rumah_sukan" class="form-control">
                             <option value="" {% if not student.rumah_sukan %}selected{% endif %}>TIADA</option>
-                            {% for color in ['MERAH', 'BIRU', 'KUNING', 'HIJAU', 'UNGU'] %}
+                            {% for color in rumah_sukan_list %}
                             <option value="{{ color }}" {% if student.rumah_sukan and student.rumah_sukan | upper==color
                                 %}selected{% endif %}>
                                 {{ color }}
@@ -61,12 +61,8 @@
                         <td class="align-middle">
                             <input type="hidden" name="tk_id[]" value="{{ tk.id }}">
                             <select name="tugas[]" class="form-control">
-                                {% for option in ['TIADA', 'KOPERATOR', 'MAJLIS KETUA TINGKATAN', 'MAJLIS PELAJAR
-                                TINGKATAN ENAM', 'ORGANISASI KELAS', 'PENGHAYATAN NILAI MURNI', 'KELAB PENCEGAHAN
-                                JENAYAH', 'PUSAT SUMBER SEKOLAH', 'QUARTER MASTER', 'SIDANG REDAKSI BULETIN SEKOLAH',
-                                'KEMAJUAN ISLAM SURAU AL-MUTTAQIN'] %}
-                                <option value="{{ option }}" {% if tk.tugas==option %}selected{% endif %}>{{ option }}
-                                </option>
+                                {% for option in tugas_list %}
+                                <option value="{{ option }}" {% if tk.tugas==option %}selected{% endif %}>{{ option }}</option>
                                 {% endfor %}
                             </select>
                         </td>
@@ -93,9 +89,8 @@
         <div class="panel panel-primary">
             <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center;">
                 <h4 class="panel-title">Pendaftaran Kokurikulum</h4>
-                <button type="button" class="btn btn-danger btn-xs"
-                    onclick="confirmDeleteAll('{{ url_for('delete_all_koku_records', bil_kemasukan=student.bil_kemasukan) }}')">
-                    <span class="glyphicon glyphicon-trash"></span> Padam Semua Rekod Koku
+                <button type="button" class="btn btn-success btn-xs" onclick="addKokuRow()">
+                    <span class="glyphicon glyphicon-plus"></span> Tambah Rekod Koku
                 </button>
             </div>
             <table class="table table-hover mb-0" id="kokuTable">
@@ -151,6 +146,38 @@
     <script>
         // Safely parse the python list array over to javascript
         const positionsList = {{positions | tojson }};
+        const unitsList = {{all_units | tojson }};
+        const tugasList = {{tugas_list | tojson }};
+
+        function addKokuRow() {
+            var tbody = document.getElementById('kokuTable').getElementsByTagName('tbody')[0];
+            var newRow = tbody.insertRow();
+
+            var unitOptions = unitsList.map(u => `<option value="${u.unit_id}">${u.unit_name}</option>`).join('');
+            var positionOptions = positionsList.map(j => `<option value="${j}">${j}</option>`).join('');
+
+            newRow.innerHTML = `
+                <td class="align-middle">
+                    <input type="hidden" name="kkplr_id[]" value="NEW">
+                    <select name="unit_id[]" class="form-control">
+                        ${unitOptions}
+                    </select>
+                </td>
+                <td class="align-middle">
+                    <select name="jawatan[]" class="form-control">
+                        ${positionOptions}
+                    </select>
+                </td>
+                <td class="align-middle">
+                    <input type="number" name="merit[]" class="form-control" value="0">
+                </td>
+                <td class="align-middle">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove();">
+                        <span class="glyphicon glyphicon-trash"></span>
+                    </button>
+                </td>
+            `;
+        }
 
         function confirmDelete(url) {
             if (confirm("Adakah anda pasti mahu memadam rekod ini?")) {
@@ -176,24 +203,14 @@
             var tbody = document.getElementById('tugasKhasTable').getElementsByTagName('tbody')[0];
             var newRow = tbody.insertRow();
 
-            // Build options dropdown dynamically using javascript array mapping
             var positionOptions = positionsList.map(j => `<option value="${j}">${j}</option>`).join('');
+            var tugasOptions = tugasList.map(t => `<option value="${t}">${t}</option>`).join(''); // Map options dynamically
 
             newRow.innerHTML = `
                 <td class="align-middle">
                     <input type="hidden" name="tk_id[]" value="NEW">
                     <select name="tugas[]" class="form-control">
-                        <option value="TIADA">TIADA</option>
-                        <option value="KOPERATOR">KOPERATOR</option>
-                        <option value="MAJLIS KETUA TINGKATAN">MAJLIS KETUA TINGKATAN</option>
-                        <option value="MAJLIS PELAJAR TINGKATAN ENAM">MAJLIS PELAJAR TINGKATAN ENAM</option>
-                        <option value="ORGANISASI KELAS">ORGANISASI KELAS</option>
-                        <option value="PENGHAYATAN NILAI MURNI">PENGHAYATAN NILAI MURNI</option>
-                        <option value="KELAB PENCEGAHAN JENAYAH">KELAB PENCEGAHAN JENAYAH</option>
-                        <option value="PUSAT SUMBER SEKOLAH">PUSAT SUMBER SEKOLAH</option>
-                        <option value="QUARTER MASTER">QUARTER MASTER</option>
-                        <option value="SIDANG REDAKSI BULETIN SEKOLAH">SIDANG REDAKSI BULETIN SEKOLAH</option>
-                        <option value="KEMAJUAN ISLAM SURAU AL-MUTTAQIN">KEMAJUAN ISLAM SURAU AL-MUTTAQIN</option>
+                        ${tugasOptions}
                     </select>
                 </td>
                 <td class="align-middle">
