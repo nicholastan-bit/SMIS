@@ -8,9 +8,11 @@
     <p style="font-size: 14px;">
         <span class="label label-danger" style="padding: 5px 10px; font-weight: bold;">
             {% if session.get('role') == 'admin' %}
-            PENTADBIR SISTEM (ADMIN ACTIVE)
+            ADMINISTRATIVE ACCESS
+            {% elif session.get('role') == 'adminkoko' %}
+            KOKURIKULUM ACCESS
             {% else %}
-            ADMIN KOKURIKULUM
+            TEACHER ACCESS
             {% endif %}
         </span>
     </p>
@@ -19,16 +21,22 @@
 <div class="row">
     <div class="col-md-12">
 
-        <!-- ================= CATEGORY 1: MANAGEMENT & CONFIGURATION (Full Admin Only) ================= -->
-        {% if session.get('role') == 'admin' %}
+        <!-- ================= CATEGORY 1: MANAGEMENT & CONFIGURATION ================= -->
+        {% if session.get('role') in ['admin', 'admincikgu'] %}
         <div style="margin-bottom: 20px;">
             <h3 style="border-bottom: 2px solid #ddd; padding-bottom: 8px; margin-bottom: 15px; color: #333;">
-                <span class="glyphicon glyphicon-cog"></span> Pengurusan &amp; Konfigurasi Sistem
+                <span class="glyphicon glyphicon-cog"></span>
+                {% if session.get('role') == 'admincikgu' %}
+                Pengurusan &amp; Konfigurasi Guru
+                {% else %}
+                Pengurusan &amp; Konfigurasi Sistem
+                {% endif %}
             </h3>
         </div>
 
         <div class="row">
-            <!-- Konfigurasi Utama Sistem -->
+            <!-- Konfigurasi Utama Sistem (Admin Only) -->
+            {% if session.get('role') == 'admin' %}
             <div class="col-md-6">
                 <div class="panel panel-danger"
                     style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-color: #ebccd1;">
@@ -49,7 +57,7 @@
                 </div>
             </div>
 
-            <!-- Kelayakan Subjek Khas -->
+            <!-- Kelayakan Subjek Khas (Admin Only) -->
             <div class="col-md-6">
                 <div class="panel panel-success" style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                     <div class="panel-heading">
@@ -67,20 +75,23 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
 
+            <!-- Tambah Maklumat Cikgu (Admin & AdminCikgu) -->
             <div class="col-md-6">
-                <div class="panel panel-warning" style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div class="panel panel-info" style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                     <div class="panel-heading">
                         <h3 class="panel-title" style="font-weight: bold;">
-                            <span class="glyphicon glyphicon-book"></span> TEMP
+                            <span class="glyphicon glyphicon-education"></span> Maklumat Cikgu
                         </h3>
                     </div>
                     <div class="panel-body">
-                        <p class="text-muted" style="font-size: 13px;">TEMP</p>
-                        <a href="{{ url_for('eligible_subject_page') }}" class="btn btn-warning btn-block disabled"
-                            style="margin-top: 15px; padding: 10px; font-weight: bold; pointer-events: none; cursor: not-allowed;"
-                            tabindex="-1" aria-disabled="true">
-                            <span class="glyphicon glyphicon-edit"></span> TEMP
+                        <p class="text-muted" style="font-size: 13px;">Daftar maklumat dan profil guru baharu ke dalam
+                            sistem.
+                        </p>
+                        <a href="{{ url_for('add_cikgu') }}" class="btn btn-info btn-block"
+                            style="margin-top: 15px; padding: 10px; font-weight: bold; color: #fff;">
+                            <span class="glyphicon glyphicon-plus-sign"></span> Tambah Maklumat Cikgu
                         </a>
                     </div>
                 </div>
@@ -88,7 +99,8 @@
         </div>
         {% endif %}
 
-        <!-- ================= CATEGORY 2: STUDENT LISTS ================= -->
+        <!-- ================= CATEGORY 2: STUDENT LISTS / KOKURIKULUM ================= -->
+        {% if session.get('role') in ['admin', 'adminkoko'] %}
         <div style="margin-top: 30px; margin-bottom: 20px;">
             <h3 style="border-bottom: 2px solid #ddd; padding-bottom: 8px; margin-bottom: 15px; color: #333;">
                 <span class="glyphicon glyphicon-list-alt"></span>
@@ -118,8 +130,7 @@
             </div>
             {% endif %}
 
-            <!-- Senarai Pelajar untuk Kokurikulum (Available to BOTH) -->
-            {% if session.get('role') in ['admin', 'adminkoko'] %}
+            <!-- Senarai Pelajar untuk Kokurikulum (Admin & AdminKoko) -->
             <div class="col-md-4">
                 <div class="panel panel-primary" style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                     <div class="panel-heading">
@@ -137,9 +148,8 @@
                     </div>
                 </div>
             </div>
-            {% endif %}
 
-            <!-- Senarai Pelajar Lambat (Full Admin Only) -->
+            <!-- Senarai Pelajar Lambat & UBK (Full Admin Only) -->
             {% if session.get('role') == 'admin' %}
             <div class="col-md-4">
                 <div class="panel panel-primary" style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
@@ -175,8 +185,36 @@
                 </div>
             </div>
             {% endif %}
-
         </div>
+        {% endif %}
+
+        <!-- ================= CATEGORY 3: TEACHER DIRECTORY ================= -->
+        {% if session.get('role') == 'admin' %}
+        <div style="margin-top: 30px; margin-bottom: 20px;">
+            <h3 style="border-bottom: 2px solid #ddd; padding-bottom: 8px; margin-bottom: 15px; color: #333;">
+                <span class="glyphicon glyphicon-list-alt"></span> Senarai &amp; Direktori Guru
+            </h3>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="panel panel-success" style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="panel-heading">
+                        <h3 class="panel-title" style="font-weight: bold;">
+                            <span class="glyphicon glyphicon-education"></span> Maklumat Cikgu
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                        <p class="text-muted" style="font-size: 13px;">Senarai maklumat cikgu</p>
+                        <a href="{{ url_for('admin_list_cikgu') }}" class="btn btn-success btn-block"
+                            style="margin-top: 15px; padding: 10px; font-weight: bold; color: #fff;">
+                            <span class="glyphicon glyphicon-list"></span> Lihat Senarai Cikgu
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
 
     </div>
 </div>

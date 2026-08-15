@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; margin-top: 20px; margin-bottom: 50px;">
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>Profil Guru</h2>
+        <a href="{{ url_for('admin_list_cikgu') }}" class="btn btn-default">
+            <span class="glyphicon glyphicon-chevron-left"></span> Kembali ke Senarai
+        </a>
+    </div>
+
+    <div class="panel panel-primary" style="box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+        <div class="panel-heading" style="font-size: 16px; font-weight: bold;">
+            <span class="glyphicon glyphicon-user"></span> Maklumat Peribadi &amp; Perkhidmatan: {{ cikgu.nama }}
+        </div>
+        <div class="panel-body">
+            <table class="table table-bordered table-striped" style="background-color: #fff; margin-bottom: 0;">
+                <tbody>
+                    <tr>
+                        <th style="width: 30%; background-color: #f9f9f9;">ID Cikgu</th>
+                        <td>{{ cikgu.id_cikgu }}</td>
+                    </tr>
+                    <tr>
+                        <th style="background-color: #f9f9f9;">Nama Penuh</th>
+                        <td><strong>{{ cikgu.nama }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th style="background-color: #f9f9f9;">No. Kad Pengenalan (IC)</th>
+                        <td>{{ cikgu.IC }}</td>
+                    </tr>
+                    <tr>
+                        <th style="background-color: #f9f9f9;">Jawatan</th>
+                        <td><span class="label label-info" style="font-size: 13px;">{{ cikgu.jawatan or '-' }}</span></td>
+                    </tr>
+                    <tr>
+                        <th style="background-color: #f9f9f9;">Gred Jawatan Hakiki</th>
+                        <td>{{ cikgu.gred_jawatan_hakiki or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th style="background-color: #f9f9f9;">Gred Jawatan Semasa</th>
+                        <td>{{ cikgu.gred_jawatan_semasa or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th style="background-color: #f9f9f9;">Kaum</th>
+                        <td><span class="label label-warning" style="color: #000;">{{ cikgu.kaum or '-' }}</span></td>
+                    </tr>
+                    <tr>
+                        <th style="background-color: #f9f9f9;">Agama</th>
+                        <td>{{ cikgu.agama or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th style="background-color: #f9f9f9;">Jantina</th>
+                        <td>{{ cikgu.jantina or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th style="background-color: #f9f9f9;">Subjek Utama Diajar</th>
+                        <td><span class="label label-default" style="font-size: 12px;">{{ cikgu.subjek_diajar or '-' }}</span></td>
+                    </tr>
+                    <tr>
+                        <th style="background-color: #f9f9f9;">No. Telefon (Phone No)</th>
+                        <td>{{ cikgu.phoneNo or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th style="background-color: #f9f9f9;">Emel</th>
+                        <td>
+                            {% if cikgu.email %}
+                                <a href="mailto:{{ cikgu.email }}">{{ cikgu.email }}</a>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th style="background-color: #f9f9f9;">Alamat Rumah</th>
+                        <td><div style="white-space: pre-line;">{{ cikgu.alamat_rumah or '-' }}</div></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="panel-footer text-right">
+            <a href="{{ url_for('admin_list_cikgu') }}" class="btn btn-primary">Kembali</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+
+            <!-- Header Section -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><span class="glyphicon glyphicon-user"></span> Tambah Maklumat Cikgu Baharu</h2>
+                    <p class="text-muted" style="font-size: 14px;">Lengkapkan maklumat profil guru di bawah untuk
+                        didaftarkan ke dalam sistem.</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('index') }}" class="btn btn-default">
+                        <span class="glyphicon glyphicon-arrow-left"></span> Kembali ke Dashboard
+                    </a>
+                </div>
+            </div>
+
+            <form action="{{ url_for('add_cikgu') }}" method="POST">
+
+                <!-- SECTION 1: MAKLUMAT PERIBADI -->
+                <div class="panel panel-primary" style="box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 20px;">
+                    <div class="panel-heading" style="font-weight: bold;">
+                        <span class="glyphicon glyphicon-info-sign"></span> 1. Maklumat Peribadi
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-md-12 mb-3" style="margin-bottom: 15px;">
+                                <label for="nama" class="form-label font-weight-bold">Nama Penuh <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="nama" name="nama"
+                                    placeholder="Nama penuh ikut IC" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3" style="margin-bottom: 15px;">
+                                <label for="IC" class="form-label font-weight-bold">No. Kad Pengenalan (IC) <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="IC" name="IC"
+                                    placeholder="Cth: 900101-01-1234" required>
+                            </div>
+                            <div class="col-md-6 mb-3" style="margin-bottom: 15px;">
+                                <label for="jantina" class="form-label font-weight-bold">Jantina <span
+                                        class="text-danger">*</span></label>
+                                <select class="form-control" id="jantina" name="jantina" required>
+                                    <option value="">-- Pilih Jantina --</option>
+                                    <option value="LELAKI">LELAKI</option>
+                                    <option value="PEREMPUAN">PEREMPUAN</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="kaum" class="form-label font-weight-bold">Kaum <span
+                                        class="text-danger">*</span></label>
+                                <select class="form-control" id="kaum" name="kaum" required>
+                                    <option value="">-- Pilih Kaum --</option>
+                                    <option value="MELAYU">MELAYU</option>
+                                    <option value="CINA">CINA</option>
+                                    <option value="INDIA">INDIA</option>
+                                    <option value="SABAH/SARAWAK">SABAH/SARAWAK</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="agama" class="form-label font-weight-bold">Agama <span
+                                        class="text-danger">*</span></label>
+                                <select class="form-control" id="agama" name="agama" required>
+                                    <option value="">-- Pilih Agama --</option>
+                                    <option value="MUSLIM">MUSLIM</option>
+                                    <option value="NON-MUSLIM">NON-MUSLIM</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: JAWATAN & AKADEMIK -->
+                <div class="panel panel-info" style="box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 20px;">
+                    <div class="panel-heading" style="font-weight: bold;">
+                        <span class="glyphicon glyphicon-briefcase"></span> 2. Maklumat Jawatan &amp; Akademik
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-md-12 mb-3" style="margin-bottom: 15px;">
+                                <label for="jawatan" class="form-label font-weight-bold">Jawatan <span
+                                        class="text-danger">*</span></label>
+                                <select class="form-control" id="jawatan" name="jawatan" required>
+                                    <option value="">-- Pilih Jawatan --</option>
+                                    <option value="PENOLONG KANAN">PENOLONG KANAN</option>
+                                    <option value="GURU KOKURIKULUM TINGKATAN ENAM">GURU KOKURIKULUM TINGKATAN ENAM
+                                    </option>
+                                    <option value="GURU AKADEMIK TNGKATAN ENAM">GURU AKADEMIK TNGKATAN ENAM</option>
+                                    <option value="GURU AMALI TINGKATAN ENAM">GURU AMALI TINGKATAN ENAM</option>
+                                    <option value="GURU AKADEMIK">GURU AKADEMIK</option>
+                                    <option value="KETUA JABATAN">KETUA JABATAN</option>
+                                    <option value="PEMBANTU OPERASI">PEMBANTU OPERASI</option>
+                                    <option value="PEMBANTU MAKMAL">PEMBANTU MAKMAL</option>
+                                    <option value="PEMBANTU TADBIR">PEMBANTU TADBIR</option>
+                                    <option value="KETUA PEMBANTU TADBIR">KETUA PEMBANTU TADBIR</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3" style="margin-bottom: 15px;">
+                                <label for="gred_jawatan_hakiki" class="form-label font-weight-bold">Gred Jawatan Hakiki
+                                    <span class="text-danger">*</span></label>
+                                <select class="form-control" id="gred_jawatan_hakiki" name="gred_jawatan_hakiki"
+                                    required>
+                                    <option value="">-- Pilih Gred Hakiki --</option>
+                                    <option value="DG9">DG9</option>
+                                    <option value="DG10">DG10</option>
+                                    <option value="DG12">DG12</option>
+                                    <option value="DG14">DG14</option>
+                                    <option value="C1">C1</option>
+                                    <option value="C2">C2</option>
+                                    <option value="N1">N1</option>
+                                    <option value="N2">N2</option>
+                                    <option value="N11">N11</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3" style="margin-bottom: 15px;">
+                                <label for="gred_jawatan_semasa" class="form-label font-weight-bold">Gred Jawatan Semasa
+                                    <span class="text-danger">*</span></label>
+                                <select class="form-control" id="gred_jawatan_semasa" name="gred_jawatan_semasa"
+                                    required>
+                                    <option value="">-- Pilih Gred Semasa --</option>
+                                    <option value="DG9">DG9</option>
+                                    <option value="DG10">DG10</option>
+                                    <option value="DG12">DG12</option>
+                                    <option value="DG14">DG14</option>
+                                    <option value="C1">C1</option>
+                                    <option value="C2">C2</option>
+                                    <option value="N1">N1</option>
+                                    <option value="N2">N2</option>
+                                    <option value="N11">N11</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="subjek_diajar" class="form-label font-weight-bold">Subjek Diajar <span
+                                        class="text-danger">*</span></label>
+                                <select class="form-control" id="subjek_diajar" name="subjek_diajar" required>
+                                    <option value="">-- Pilih Subjek Utama --</option>
+                                    <option value="PENGAJIAN AM">PENGAJIAN AM</option>
+                                    <option value="BAHASA MELAYU">BAHASA MELAYU</option>
+                                    <option value="BAHASA TAMIL">BAHASA TAMIL</option>
+                                    <option value="SYARIAH">SYARIAH</option>
+                                    <option value="SEJARAH">SEJARAH</option>
+                                    <option value="GEOGRAFI">GEOGRAFI</option>
+                                    <option value="EKONOMI">EKONOMI</option>
+                                    <option value="PENGAJIAN PERNIAGAAN">PENGAJIAN PERNIAGAAN</option>
+                                    <option value="PERAKAUNAN">PERAKAUNAN</option>
+                                    <option value="MANAGEMENT MATHEMATICS">MANAGEMENT MATHEMATICS</option>
+                                    <option value="MATHEMATICS">MATHEMATICS</option>
+                                    <option value="ICT">ICT</option>
+                                    <option value="PHYSICS">PHYSICS</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 3: KONTAK & ALAMAT -->
+                <div class="panel panel-warning" style="box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 25px;">
+                    <div class="panel-heading"
+                        style="font-weight: bold; background-color: #fcf8e3; color: #8a6d3b; border-color: #faebcc;">
+                        <span class="glyphicon glyphicon-envelope"></span> 3. Maklumat Kontak &amp; Alamat
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3" style="margin-bottom: 15px;">
+                                <label for="phoneNo" class="form-label font-weight-bold">No. Telefon <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="phoneNo" name="phoneNo"
+                                    placeholder="Cth: 012-3456789" required>
+                            </div>
+                            <div class="col-md-6 mb-3" style="margin-bottom: 15px;">
+                                <label for="email" class="form-label font-weight-bold">Emel Rasmi <span
+                                        class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="email" name="email"
+                                    placeholder="Cth: cikgu@moe.edu.my" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="alamat_rumah" class="form-label font-weight-bold">Alamat Rumah <span
+                                        class="text-danger">*</span></label>
+                                <textarea class="form-control" id="alamat_rumah" name="alamat_rumah" rows="3"
+                                    placeholder="Masukkan alamat lengkap kediaman" required></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="form-group text-right" style="margin-bottom: 40px;">
+                    <a href="{{ url_for('index') }}" class="btn btn-default btn-lg"
+                        style="margin-right: 10px;">Batal</a>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <span class="glyphicon glyphicon-floppy-disk"></span> Simpan Rekod Cikgu
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

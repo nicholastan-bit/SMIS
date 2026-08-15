@@ -129,3 +129,19 @@ CREATE TABLE ubk_records (
     perkara TEXT,
     nama_kaunselor VARCHAR(100)
 );
+
+CREATE TABLE cikgu (
+    id_cikgu INT AUTO_INCREMENT PRIMARY KEY,
+    nama VARCHAR(100) NOT NULL,
+    jawatan VARCHAR(50) DEFAULT NULL,
+    gred_jawatan_hakiki VARCHAR(10) DEFAULT NULL,
+    gred_jawatan_semasa VARCHAR(10) DEFAULT NULL,
+    IC VARCHAR(20) UNIQUE DEFAULT NULL,
+    kaum VARCHAR(20) DEFAULT NULL,
+    phoneNo VARCHAR(50) DEFAULT NULL,
+    email VARCHAR(100) DEFAULT NULL,
+    alamat_rumah TEXT DEFAULT NULL,
+    jantina ENUM('LELAKI', 'PEREMPUAN') DEFAULT NULL,
+    agama ENUM('MUSLIM', 'NON-MUSLIM') DEFAULT NULL,
+    subjek_diajar VARCHAR(100) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -203,6 +203,12 @@ def login():
             flash("Selamat Datang Pentadbir Sistem (Access to Kokurikulum)!", "success")
 
             return redirect(url_for('index'))
+        elif username == "admincikgu" and password == "1d7e1faafvhFgaXchp":
+            session['role'] = 'admincikgu'
+            session['verified_kp'] = 'ADMINCIKGU'
+            flash("Selamat Datang Pentadbir Sistem (Access as teacher)!", "success")
+        
+            return redirect(url_for('index'))
         else:
             flash("Username atau Password salah!", "danger")
             # This sends them back to the login page to try again
@@ -222,7 +228,7 @@ def logout():
 @app.route('/')
 def index():
     role = session.get('role')
-    if role in ['admin', 'adminkoko']:
+    if role in ['admin', 'adminkoko', 'admincikgu']:
         return render_template('admin_dashboard.html')
 
     kp = session.get('verified_kp')
@@ -1547,13 +1553,14 @@ def admin_export_students():
     if session.get('role') != 'admin':
         flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
         return redirect(url_for('gateway'))
-    # 1. Capture filters, including the new semester_filter
+        
+    # 1. Capture filters
     search = request.args.get('search', '')
     sort_filter = request.args.get('sort', '')
     class_filter = request.args.get('class_filter', '')
     pakej_filter = request.args.get('pakej_filter', '')
     status_filter = request.args.get('status_filter', '')
-    semester_filter = request.args.get('semester_filter', '') # Added this
+    semester_filter = request.args.get('semester_filter', '')
 
     # 2. Base Query
     where_clause = "WHERE 1=1"
@@ -1580,15 +1587,21 @@ def admin_export_students():
         where_clause += " AND p.status_study = %s"
         params.append(status_filter)
 
-    # 3. ADDED SEMESTER FILTER LOGIC
     if semester_filter:
         where_clause += " AND p.semester = %s"
         params.append(semester_filter)
 
-    # 4. Query
+    # 3. Query selecting all columns except the excluded ones
     query = f"""
-        SELECT p.*, pk.kod_pakej, 
-               (SELECT SUM(penjaga.pendapatan) FROM penjaga WHERE penjaga.bil_kemasukan = p.bil_kemasukan) as total_income
+        SELECT 
+            p.bil_kemasukan, p.nama_pelajar, p.email, p.no_kp_pelajar, p.jantina, 
+            p.bangsa, p.agama, p.tarikh_lahir, p.alamat_rumah, p.telefonNo, 
+            p.sekolah_tamat, p.masalah_kesihatan, p.cara_datang_sekolah, p.tempat_lahir, 
+            p.no_surat_beranak, p.masalah_penglihatan, p.status_study, 
+            p.id_pakej, p.aliran_ditawar, p.status_oku, p.kelas, p.tarikh_pendaftaran, 
+            p.rumah_sukan, p.semester, p.jawatan_rumah_sukan,
+            pk.kod_pakej, 
+            (SELECT SUM(penjaga.pendapatan) FROM penjaga WHERE penjaga.bil_kemasukan = p.bil_kemasukan) as total_income
         FROM pelajar p 
         LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej 
         {where_clause}
@@ -1601,30 +1614,60 @@ def admin_export_students():
     cursor.close()
     conn.close()
 
-    # 5. Generate CSV
+    # 4. Generate CSV
     si = io.StringIO()
     cw = csv.writer(si)
-    cw.writerow(['Bil Kemasukan', 'Nama Pelajar', 'No KP', 'Jantina', 'Status', 'Kelas', 'Pakej', 'Pendapatan'])
+    
+    # Define CSV headers corresponding to the selected fields
+    headers = [
+        'Bil Kemasukan', 'Nama Pelajar', 'Email', 'No KP Pelajar', 'Jantina', 
+        'Bangsa', 'Agama', 'Tarikh Lahir', 'Alamat Rumah', 'Telefon No', 
+        'Sekolah Tamat', 'Masalah Kesihatan', 'Cara Datang Sekolah', 'Tempat Lahir', 
+        'No Surat Beranak', 'Masalah Penglihatan', 'Status Study', 
+        'ID Pakej', 'Aliran Ditawar', 'Status OKU', 'Kelas', 'Tarikh Pendaftaran', 
+        'Rumah Sukan', 'Semester', 'Jawatan Rumah Sukan', 'Kod Pakej', 'Total Income'
+    ]
+    cw.writerow(headers)
     
     for s in students:
+        # Format specific fields cleanly for CSV output
         no_kp = f"'{s['no_kp_pelajar']}" if s['no_kp_pelajar'] else ""
         pendapatan = s['total_income'] if s['total_income'] is not None else 0
         
         cw.writerow([
             s['bil_kemasukan'], 
             s['nama_pelajar'], 
+            s['email'],
             no_kp,
             s['jantina'],
-            'Aktif' if s.get('status_study') else 'Tidak Aktif', 
-            s['kelas'] or 'TIADA', 
-            s['kod_pakej'] or 'TIADA', 
+            s['bangsa'],
+            s['agama'],
+            s['tarikh_lahir'],
+            s['alamat_rumah'],
+            s['telefonNo'],
+            s['sekolah_tamat'],
+            s['masalah_kesihatan'],
+            s['cara_datang_sekolah'],
+            s['tempat_lahir'],
+            s['no_surat_beranak'],
+            s['masalah_penglihatan'],
+            s['status_study'],
+            s['id_pakej'],
+            s['aliran_ditawar'],
+            s['status_oku'],
+            s['kelas'],
+            s['tarikh_pendaftaran'],
+            s['rumah_sukan'],
+            s['semester'],
+            s['jawatan_rumah_sukan'],
+            s['kod_pakej'],
             pendapatan
         ])
     
     return Response(
         si.getvalue(),
         mimetype="text/csv",
-        headers={"Content-Disposition": "attachment;filename=senarai_pelajar.csv"}
+        headers={"Content-Disposition": "attachment;filename=senarai_pelajar_semua.csv"}
     )
 
 @app.route('/admin/update-student-package', methods=['POST'])
@@ -3264,7 +3307,246 @@ def export_ubk_records():
         headers={"Content-Disposition": "attachment;filename=rekod_ubk.csv"}
     )
 
+@app.route('/add-cikgu', methods=['GET', 'POST'])
+def add_cikgu():
+    if session.get('role') not in ['admin', 'admincikgu']:
+        flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
+        return redirect(url_for('gateway'))
 
+    if request.method == 'POST':
+        # Retrieve data from form
+        nama = request.form.get('nama')
+        jawatan = request.form.get('jawatan')
+        gred_hakiki = request.form.get('gred_jawatan_hakiki')
+        gred_semasa = request.form.get('gred_jawatan_semasa')
+        ic = request.form.get('IC')
+        kaum = request.form.get('kaum')
+        phone = request.form.get('phoneNo')
+        email = request.form.get('email')
+        alamat = request.form.get('alamat_rumah')
+        jantina = request.form.get('jantina')
+        agama = request.form.get('agama')
+        subjek = request.form.get('subjek_diajar')
 
+        # Insert into MySQL database using your connection pattern
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        try:
+            query = """
+                INSERT INTO cikgu (nama, jawatan, gred_jawatan_hakiki, gred_jawatan_semasa, 
+                                   IC, kaum, phoneNo, email, alamat_rumah, jantina, agama, subjek_diajar) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(query, (nama, jawatan, gred_hakiki, gred_semasa, ic, kaum, phone, email, alamat, jantina, agama, subjek))
+            conn.commit()
+            flash('Maklumat cikgu berjaya ditambah!', 'success')
+        except Exception as e:
+            conn.rollback()
+            flash(f'Ralat semasa menyimpan data: {str(e)}', 'danger')
+        finally:
+            cursor.close()
+            conn.close()
+
+        return redirect(url_for('add_cikgu'))
+
+    # Render the HTML form page
+    return render_template('add_cikgu.html')
+
+@app.route('/admin/cikgu-list')
+def admin_list_cikgu():
+    if session.get('role') != 'admin':
+        flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
+        return redirect(url_for('gateway'))
+    
+    # Safely handle page number to prevent crashes on invalid inputs
+    try:
+        page = int(request.args.get('page', 1))
+        if page < 1:
+            page = 1
+    except ValueError:
+        page = 1
+        
+    per_page = 20
+    offset = (page - 1) * per_page
+
+    search = request.args.get('search', '').strip()
+    jawatan_filter = request.args.get('jawatan_filter', '')
+    gred_filter = request.args.get('gred_filter', '')
+    kaum_filter = request.args.get('kaum_filter', '')
+    agama_filter = request.args.get('agama_filter', '')
+    subjek_filter = request.args.get('subjek_filter', '')
+    jantina_filter = request.args.get('jantina_filter', '')
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True, buffered=True)
+
+    # Base Query with WHERE 1=1
+    where_clause = "WHERE 1=1"
+    params = []
+    
+    if search:
+        where_clause += " AND (nama LIKE %s OR IC LIKE %s)"
+        params.extend([f"%{search}%", f"%{search}%"])
+    
+    if jawatan_filter:
+        where_clause += " AND jawatan = %s"
+        params.append(jawatan_filter)
+        
+    if gred_filter:
+        where_clause += " AND (gred_jawatan_hakiki = %s OR gred_jawatan_semasa = %s)"
+        params.extend([gred_filter, gred_filter])
+
+    if kaum_filter:
+        where_clause += " AND kaum = %s"
+        params.append(kaum_filter)
+
+    if agama_filter:
+        where_clause += " AND agama = %s"
+        params.append(agama_filter)
+
+    if subjek_filter:
+        where_clause += " AND subjek_diajar = %s"
+        params.append(subjek_filter)
+
+    if jantina_filter:
+        where_clause += " AND jantina = %s"
+        params.append(jantina_filter)
+
+    # 1. Get total count for pagination
+    count_query = f"SELECT COUNT(*) as total FROM cikgu {where_clause}"
+    cursor.execute(count_query, params)
+    total_cikgu = cursor.fetchone()['total']
+    total_pages = (total_cikgu + per_page - 1) // per_page
+
+    # 2. Fetch Paginated Data
+    query = f"""
+        SELECT * FROM cikgu 
+        {where_clause}
+        LIMIT %s OFFSET %s
+    """
+    cursor.execute(query, params + [per_page, offset])
+    cikgu_list = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template('admin_list_cikgu.html', 
+                           cikgu_list=cikgu_list, 
+                           page=page, 
+                           total_pages=total_pages,
+                           total_cikgu=total_cikgu,
+                           search=search, 
+                           jawatan_filter=jawatan_filter, 
+                           gred_filter=gred_filter,
+                           kaum_filter=kaum_filter,
+                           agama_filter=agama_filter,
+                           subjek_filter=subjek_filter,
+                           jantina_filter=jantina_filter)
+
+@app.route('/admin/cikgu-profile/<int:id_cikgu>')
+def admin_cikgu_profile(id_cikgu):
+    if session.get('role') != 'admin':
+        flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
+        return redirect(url_for('gateway'))
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True, buffered=True)
+    try:
+        cursor.execute("SELECT * FROM cikgu WHERE id_cikgu = %s", (id_cikgu,))
+        cikgu = cursor.fetchone()
+        
+        if not cikgu:
+            flash("Rekod guru tidak ditemui.", "danger")
+            return redirect(url_for('admin_list_cikgu'))
+            
+    except Exception as e:
+        flash(f'Ralat semasa memuatkan profil guru: {str(e)}', 'danger')
+        return redirect(url_for('admin_list_cikgu'))
+    finally:
+        cursor.close()
+        conn.close()
+
+    return render_template('admin_cikgu_profile.html', cikgu=cikgu)
+
+@app.route('/admin/cikgu-list/export')
+def admin_export_cikgu():
+    if session.get('role') != 'admin':
+        flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
+        return redirect(url_for('gateway'))
+
+    search = request.args.get('search', '').strip()
+    jawatan_filter = request.args.get('jawatan_filter', '')
+    gred_filter = request.args.get('gred_filter', '')
+    kaum_filter = request.args.get('kaum_filter', '')
+    agama_filter = request.args.get('agama_filter', '')
+    subjek_filter = request.args.get('subjek_filter', '')
+    jantina_filter = request.args.get('jantina_filter', '')
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True, buffered=True)
+
+    where_clause = "WHERE 1=1"
+    params = []
+    
+    if search:
+        where_clause += " AND (nama LIKE %s OR IC LIKE %s)"
+        params.extend([f"%{search}%", f"%{search}%"])
+    if jawatan_filter:
+        where_clause += " AND jawatan = %s"
+        params.append(jawatan_filter)
+    if gred_filter:
+        where_clause += " AND (gred_jawatan_hakiki = %s OR gred_jawatan_semasa = %s)"
+        params.extend([gred_filter, gred_filter])
+    if kaum_filter:
+        where_clause += " AND kaum = %s"
+        params.append(kaum_filter)
+    if agama_filter:
+        where_clause += " AND agama = %s"
+        params.append(agama_filter)
+    if subjek_filter:
+        where_clause += " AND subjek_diajar = %s"
+        params.append(subjek_filter)
+    if jantina_filter:
+        where_clause += " AND jantina = %s"
+        params.append(jantina_filter)
+
+    query = f"SELECT * FROM cikgu {where_clause}"
+    cursor.execute(query, params)
+    cikgu_list = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+
+    # Generate CSV response
+    def generate():
+        data = []
+        # Header row
+        data.append(['ID', 'Nama Penuh', 'No. IC', 'Jawatan', 'Gred Hakiki', 'Gred Semasa', 'Kaum', 'Agama', 'Jantina', 'Subjek Diajar', 'No. Telefon', 'Emel', 'Alamat Rumah'])
+        
+        for c in cikgu_list:
+            data.append([
+                c.get('id_cikgu'),
+                c.get('nama'),
+                c.get('IC'),
+                c.get('jawatan'),
+                c.get('gred_jawatan_hakiki'),
+                c.get('gred_jawatan_semasa'),
+                c.get('kaum'),
+                c.get('agama'),
+                c.get('jantina'),
+                c.get('subjek_diajar'),
+                c.get('phoneNo'),
+                c.get('email'),
+                c.get('alamat_rumah')
+            ])
+            
+        for row in data:
+            yield ','.join([f'"{str(val)}"' if val is not None else '""' for val in row]) + '\n'
+
+    return Response(
+        generate(),
+        mimetype='text/csv',
+        headers={"Content-Disposition": "attachment; filename=senarai_cikgu.csv"}
+    )
 if __name__ == '__main__':
     app.run(debug=True)
