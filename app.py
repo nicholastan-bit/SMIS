@@ -183,38 +183,74 @@ def gateway():
     return render_template('gateway.html')
 
 # --- ADMIN AUTHENTICATION ---
+ADMIN_USERS = {
+    "admin": {
+        "password": "3n9gf01masp38vna24an1",
+        "role": "admin",
+        "verified_kp": "ADMIN",
+        "flash_msg": "Selamat Datang Pentadbir Sistem!"
+    },
+    "adminpelajar": {
+        "password": "amf0180vqa12hf8sg1f",
+        "role": "adminpelajar",
+        "verified_kp": "ADMINPELAJAR",
+        "flash_msg": "Selamat Datang Pentadbir Sistem (Access to Maklumat Pelajar)!"
+    },
+    "adminkoko": {
+        "password": "8t0982h8092h0slzb1",
+        "role": "adminkoko",
+        "verified_kp": "ADMINKOKO",
+        "flash_msg": "Selamat Datang Pentadbir Sistem (Access to Kokurikulum)!"
+    },
+    "admincikgu": {
+        "password": "1d7e1faafvhFgaXchp",
+        "role": "admincikgu",
+        "verified_kp": "ADMINCIKGU",
+        "flash_msg": "Selamat Datang Pentadbir Sistem (Access as teacher)!"
+    }
+}
+
+admin_password_versions = {
+    "admin": 1,
+    "adminpelajar": 1,
+    "adminkoko": 1,
+    "admincikgu": 1
+}
+
+@app.before_request
+def check_password_validity():
+    # Only check if a user is logged in and has a username tracked
+    if 'username' in session and session['username'] in admin_password_versions:
+        current_version = admin_password_versions[session['username']]
+        
+        # If the code version is higher than what's stored in their session cookie
+        if session.get('password_version') != current_version:
+            session.clear()
+            flash("Kata laluan telah dikemas kini. Sila log masuk semula.", "warning")
+            return redirect(url_for('login'))
 
 @app.route('/adminlogin', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        username = request.form.get('username')
+        password = request.form.get('password')
         
-        if username == "admin" and password == "2pi8sndlo47HIjwne726p": # (or whatever your admin check is)
-            session['role'] = 'admin'
-            session['verified_kp'] = 'ADMIN' # Standardizes administrative privilege sessions
-            flash("Selamat Datang Pentadbir Sistem!", "success")
-    
-            # Redirects safely to your main index dashboard page (index.html)
-            return redirect(url_for('index'))
-        elif username == "adminkoko" and password == "8t0982h8092h0slzb1":
-            session['role'] = 'adminkoko'
-            session['verified_kp'] = 'ADMINKOKO'
-            flash("Selamat Datang Pentadbir Sistem (Access to Kokurikulum)!", "success")
-
-            return redirect(url_for('index'))
-        elif username == "admincikgu" and password == "1d7e1faafvhFgaXchp":
-            session['role'] = 'admincikgu'
-            session['verified_kp'] = 'ADMINCIKGU'
-            flash("Selamat Datang Pentadbir Sistem (Access as teacher)!", "success")
-        
+        # Check if username exists and password matches
+        if username in ADMIN_USERS and ADMIN_USERS[username]["password"] == password:
+            user_data = ADMIN_USERS[username]
+            
+            # Set session variables dynamically
+            session['username'] = username
+            session['role'] = user_data['role']
+            session['verified_kp'] = user_data['verified_kp']
+            session['password_version'] = admin_password_versions[username]
+            
+            flash(user_data['flash_msg'], "success")
             return redirect(url_for('index'))
         else:
             flash("Username atau Password salah!", "danger")
-            # This sends them back to the login page to try again
-            return redirect(url_for('login')) 
+            return redirect(url_for('login'))
             
-    # This handles the 'GET' request (when you click a link to go to the page)
     return render_template('adminlogin.html')
 
 @app.route('/logout')
@@ -228,7 +264,7 @@ def logout():
 @app.route('/')
 def index():
     role = session.get('role')
-    if role in ['admin', 'adminkoko', 'admincikgu']:
+    if role in ['admin', 'adminpelajar', 'adminkoko', 'admincikgu']:
         return render_template('admin_dashboard.html')
 
     kp = session.get('verified_kp')
@@ -1320,7 +1356,7 @@ def ubk_form():
 
 @app.route('/admin/students-list')
 def admin_view_students_list():
-    if session.get('role') != 'admin':
+    if session.get('role') not in ['admin', 'adminpelajar']:
         flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
         return redirect(url_for('gateway'))
     
@@ -1425,7 +1461,7 @@ def admin_view_students_list():
 
 @app.route('/admin/sijil-berhenti/<int:student_id>', methods=['GET'])
 def admin_sijil_berhenti(student_id):
-    if session.get('role') != 'admin':
+    if session.get('role') not in ['admin', 'adminpelajar']:
         flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
         return redirect(url_for('gateway'))
     
@@ -1550,7 +1586,7 @@ def admin_print_sijil_pdf(student_id):
 
 @app.route('/admin/export-students')
 def admin_export_students():
-    if session.get('role') != 'admin':
+    if session.get('role') not in ['admin', 'adminpelajar']:
         flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
         return redirect(url_for('gateway'))
         
@@ -1672,7 +1708,7 @@ def admin_export_students():
 
 @app.route('/admin/update-student-package', methods=['POST'])
 def admin_update_student_package():
-    if session.get('role') != 'admin':
+    if session.get('role') not in ['admin', 'adminpelajar']:
         flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
         return redirect(url_for('gateway'))    
     student_id = request.form.get('student_id')
@@ -1727,7 +1763,7 @@ def admin_update_student_package():
 
 @app.route('/admin/student-profile/<int:student_id>', methods=['GET']) # Or whatever your profile route name is
 def admin_view_profile(student_id):
-    if session.get('role') != 'admin':
+    if session.get('role') not in ['admin', 'adminpelajar']:
         flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
         return redirect(url_for('gateway'))
     
@@ -1835,7 +1871,7 @@ def admin_view_profile(student_id):
 #------------------------
 @app.route('/admin/update-field', methods=['POST'])
 def update_field():
-    if session.get('role') != 'admin':
+    if session.get('role') not in ['admin', 'adminpelajar']:
         flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
         return redirect(url_for('gateway'))
     data = request.json
@@ -1920,7 +1956,7 @@ def update_field():
         
 @app.route('/admin/delete-student/<int:student_id>', methods=['POST'])
 def delete_student(student_id):
-    if session.get('role') != 'admin':
+    if session.get('role') not in ['admin', 'adminpelajar']:
             flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
             return redirect(url_for('gateway'))
     conn = None
@@ -1941,6 +1977,18 @@ def delete_student(student_id):
         if cursor: cursor.close()
         if conn: conn.close()
 
+#------------------------
+#------------------------
+#------------------------
+#------------------------
+#------------------------
+#------------------------
+# UPPER ADMIN ADMINISTRATION or ADMINISTRATIVE LEVEL/ NON RESTRICTED ONLY
+#------------------------
+#------------------------
+#------------------------
+#------------------------
+#------------------------
 #------------------------
 
 @app.route('/admin/settings', methods=['GET', 'POST'])
@@ -2314,7 +2362,7 @@ def admin_export_subjects_statistics():
 
 @app.route('/admin/eligible-subjects', methods=['GET'])
 def eligible_subject_page():
-    if session.get('role') != 'admin':
+    if session.get('role') not in ['admin', 'adminpelajar']:
         return redirect(url_for('login'))
     
     # Removed page and offset variables
@@ -2344,7 +2392,7 @@ def eligible_subject_page():
 
 @app.route('/admin/submit_eligibility', methods=['POST'])
 def submit_eligibility():
-    if session.get('role') != 'admin':
+    if session.get('role') not in ['admin', 'adminpelajar']:
         flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
         return redirect(url_for('gateway'))
     action = request.form.get('action')
@@ -2367,9 +2415,16 @@ def submit_eligibility():
         conn.close()
     return redirect(url_for('eligible_subject_page'))
 
+#------------------------
+#------------------------
+#------------------------
+#------------------------
+#------------------------
+#------------------------
+
 @app.route('/admin/koku-list', methods=['GET'])
 def admin_koku_list():
-    if session.get('role') not in ['admin', 'adminkoko']:
+    if session.get('role') not in ['admin', 'adminkoko', 'adminpelajar']:
         flash("Akses Ditolak.", "danger")
         return redirect(url_for('gateway'))
 
@@ -2498,7 +2553,7 @@ def execute_db_update(query, params):
 
 @app.route('/admin/edit-student/<bil>', methods=['GET', 'POST'])
 def edit_student_koku(bil):
-    if session.get('role') not in ['admin', 'adminkoko']:
+    if session.get('role') not in ['admin', 'adminkoko', 'adminpelajar']:
         return redirect(url_for('gateway'))
         
     conn = get_db_connection()
@@ -2599,7 +2654,7 @@ def edit_student_koku(bil):
 
 @app.route('/admin/delete-tugas-khas/<int:tk_id>/<bil>', methods=['POST'])
 def delete_tugas_khas_record(tk_id, bil):
-    if session.get('role') not in ['admin', 'adminkoko']:
+    if session.get('role') not in ['admin', 'adminkoko', 'adminpelajar']:
         return redirect(url_for('gateway'))
         
     conn = get_db_connection()
@@ -2614,7 +2669,7 @@ def delete_tugas_khas_record(tk_id, bil):
 
 @app.route('/admin/delete-koku-record/<int:kkplr_id>', methods=['POST'])
 def delete_koku_record(kkplr_id):
-    if session.get('role') not in ['admin', 'adminkoko']:
+    if session.get('role') not in ['admin', 'adminkoko', 'adminpelajar']:
             flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
             return redirect(url_for('gateway'))
         
@@ -2631,7 +2686,7 @@ def delete_koku_record(kkplr_id):
 
 @app.route('/admin/delete-all-koku-records/<bil_kemasukan>', methods=['POST'])
 def delete_all_koku_records(bil_kemasukan):
-    if session.get('role') not in ['admin', 'adminkoko']:
+    if session.get('role') not in ['admin', 'adminkoko', 'adminpelajar']:
         return redirect(url_for('gateway'))
     
     conn = get_db_connection()
@@ -2649,7 +2704,7 @@ def delete_all_koku_records(bil_kemasukan):
 
 @app.route('/admin/export-koku')
 def admin_export_koku():
-    if session.get('role') not in ['admin', 'adminkoko']:
+    if session.get('role') not in ['admin', 'adminkoko', 'adminpelajar']:
         flash("Akses Ditolak.", "danger")
         return redirect(url_for('gateway'))
 
@@ -2875,7 +2930,7 @@ def export_koku_stats():
 
 @app.route('/late_list', methods=['GET'])
 def late_list():
-    if session.get('role') != 'admin':
+    if session.get('role') not in ['admin', 'adminpelajar']:
             flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
             return redirect(url_for('gateway'))
     # Get all filter parameters from the form
@@ -2946,7 +3001,7 @@ def late_list():
 
 @app.route('/delete_late/<int:arrival_id>', methods=['POST'])
 def delete_late(arrival_id):
-    if session.get('role') != 'admin':
+    if session.get('role') not in ['admin', 'adminpelajar']:
             flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
             return redirect(url_for('gateway'))
     conn = get_db_connection()
@@ -2961,7 +3016,7 @@ def delete_late(arrival_id):
 
 @app.route('/export_late_list', methods=['GET'])
 def export_late_list():
-    if session.get('role') != 'admin':
+    if session.get('role') not in ['admin', 'adminpelajar']:
             flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
             return redirect(url_for('gateway'))
     # 1. Update to match the new filters
@@ -3176,7 +3231,7 @@ def export_late_statistics():
 
 @app.route('/ubk_list', methods=['GET'])
 def ubk_list():
-    if session.get('role') != 'admin':
+    if session.get('role') not in ['admin', 'adminpelajar']:
             flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
             return redirect(url_for('gateway'))
     # Get filter parameters from query arguments
@@ -3238,7 +3293,7 @@ def ubk_list():
 
 @app.route('/export_ubk_records', methods=['GET'])
 def export_ubk_records():
-    if session.get('role') != 'admin':
+    if session.get('role') not in ['admin', 'adminpelajar']:
            flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
            return redirect(url_for('gateway'))
 

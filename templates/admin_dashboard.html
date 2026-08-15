@@ -22,14 +22,14 @@
     <div class="col-md-12">
 
         <!-- ================= CATEGORY 1: MANAGEMENT & CONFIGURATION ================= -->
-        {% if session.get('role') in ['admin', 'admincikgu'] %}
+        {% if session.get('role') in ['admin', 'admincikgu', 'adminpelajar'] %}
         <div style="margin-bottom: 20px;">
             <h3 style="border-bottom: 2px solid #ddd; padding-bottom: 8px; margin-bottom: 15px; color: #333;">
                 <span class="glyphicon glyphicon-cog"></span>
-                {% if session.get('role') == 'admincikgu' %}
-                Pengurusan &amp; Konfigurasi Guru
-                {% else %}
+                {% if session.get('role') == 'admin' %}
                 Pengurusan &amp; Konfigurasi Sistem
+                {% else %}
+                Pengurusan &amp; Lain
                 {% endif %}
             </h3>
         </div>
@@ -56,7 +56,9 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
 
+            {% if session.get('role') in ['admin', 'adminpelajar'] %}
             <!-- Kelayakan Subjek Khas (Admin Only) -->
             <div class="col-md-6">
                 <div class="panel panel-success" style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
@@ -77,6 +79,7 @@
             </div>
             {% endif %}
 
+            {% if session.get('role') in ['admin', 'admincikgu'] %}
             <!-- Tambah Maklumat Cikgu (Admin & AdminCikgu) -->
             <div class="col-md-6">
                 <div class="panel panel-info" style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
@@ -96,22 +99,23 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
         </div>
         {% endif %}
 
         <!-- ================= CATEGORY 2: STUDENT LISTS / KOKURIKULUM ================= -->
-        {% if session.get('role') in ['admin', 'adminkoko'] %}
+        {% if session.get('role') in ['admin', 'adminkoko', 'adminpelajar'] %}
         <div style="margin-top: 30px; margin-bottom: 20px;">
             <h3 style="border-bottom: 2px solid #ddd; padding-bottom: 8px; margin-bottom: 15px; color: #333;">
                 <span class="glyphicon glyphicon-list-alt"></span>
-                {% if session.get('role') == 'admin' %}Senarai &amp; Direktori Pelajar{% else %}Kokurikulum Pelajar{%
-                endif %}
+                {% if session.get('role') == 'adminkoko' %}Kokurikulum Pelajar{% else %}Senarai &amp; Direktori
+                Pelajar{% endif %}
             </h3>
         </div>
 
         <div class="row">
-            <!-- Direktori Pangkalan Pelajar (Full Admin Only) -->
-            {% if session.get('role') == 'admin' %}
+            <!-- Direktori Pangkalan Pelajar (Visible to admin & adminpelajar) -->
+            {% if session.get('role') in ['admin', 'adminpelajar'] %}
             <div class="col-md-4">
                 <div class="panel panel-primary" style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                     <div class="panel-heading">
@@ -131,6 +135,7 @@
             {% endif %}
 
             <!-- Senarai Pelajar untuk Kokurikulum (Admin & AdminKoko) -->
+            {% if session.get('role') in ['admin', 'adminpelajar', 'adminkoko'] %}
             <div class="col-md-4">
                 <div class="panel panel-primary" style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                     <div class="panel-heading">
@@ -148,9 +153,10 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
 
             <!-- Senarai Pelajar Lambat & UBK (Full Admin Only) -->
-            {% if session.get('role') == 'admin' %}
+            {% if session.get('role') in ['admin', 'adminpelajar'] %}
             <div class="col-md-4">
                 <div class="panel panel-primary" style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                     <div class="panel-heading">
