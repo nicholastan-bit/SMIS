@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container" style="margin-top: 30px; margin-bottom: 50px;">
+
+    <div class="page-header">
+        <h2><span class="glyphicon glyphicon-education"></span> Senarai Tawaran Universiti Pelajar</h2>
+    </div>
+
+    <!-- Filter Form -->
+    <div class="well">
+        <form action="{{ url_for('list_offered_uni') }}" method="GET" class="form">
+            <div class="row">
+                <!-- Search by Name, IC, or Bil Kemasukan -->
+                <div class="col-md-4 form-group">
+                    <label>Cari Nama, No. KP / Bil Kemasukan</label>
+                    <input type="text" name="search" class="form-control" value="{{ search }}"
+                        placeholder="Taip nama / KP / ID...">
+                </div>
+
+                <!-- Filter by Package -->
+                <div class="col-md-4 form-group">
+                    <label>Tapisan Pakej</label>
+                    <select name="pakej_filter" class="form-control">
+                        <option value="">Semua Pakej</option>
+                        {% for p in all_packages %}
+                        <option value="{{ p.id_pakej }}" {% if pakej_filter==p.id_pakej|string %}selected{% endif %}>
+                            {{ p.kod_pakej }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Filter by University -->
+                <div class="col-md-4 form-group">
+                    <label>Tapisan Universiti</label>
+                    <select name="uni_filter" class="form-control">
+                        <option value="">Semua Universiti</option>
+                        {% for u in all_universities %}
+                        <option value="{{ u.uni_code }}" {% if uni_filter==u.uni_code %}selected{% endif %}>
+                            {{ u.uni_code }} - {{ u.uni_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="col-md-12 form-group text-right" style="margin-top: 10px;">
+                    <div class="btn-group" style="display: inline-flex; width: 220px;">
+                        <button type="submit" class="btn btn-primary" style="flex: 1;">
+                            <span class="glyphicon glyphicon-search"></span> Cari
+                        </button>
+                        <a href="{{ url_for('list_offered_uni') }}" class="btn btn-default" style="flex: 1;">Reset</a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Counter & Pagination Header Bar -->
+    <div class="row" style="margin-bottom: 20px; align-items: center; display: flex;">
+        <!-- Left: Total Counter -->
+        <div class="col-md-4">
+            <div class="alert alert-info" style="margin-bottom: 0; padding: 10px 15px;">
+                <strong>Jumlah Rekod:</strong> {{ total_records }}
+            </div>
+        </div>
+
+        <!-- Center/Right: Pagination -->
+        <div class="col-md-8 text-right" style="display: flex; justify-content: flex-end;">
+            <nav style="margin: 0;">
+                <ul class="pagination" style="margin: 0;">
+                    {% if page > 1 %}
+                    <li>
+                        <a
+                            href="{{ url_for('list_offered_uni', page=page-1, search=search, pakej_filter=pakej_filter, uni_filter=uni_filter) }}">
+                            &laquo; Previous
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <li class="active"><span>Page {{ page }} of {{ total_pages if total_pages > 0 else 1 }}</span></li>
+
+                    {% if page < total_pages %} <li>
+                        <a
+                            href="{{ url_for('list_offered_uni', page=page+1, search=search, pakej_filter=pakej_filter, uni_filter=uni_filter) }}">
+                            Next &raquo;
+                        </a>
+                        </li>
+                        {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Records Table with Updated Columns -->
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered table-hover" style="background-color: white;">
+            <thead>
+                <tr class="bg-primary">
+                    <th style="text-align: center; width: 5%;">bil_kemasukan</th>
+                    <th>Nama Pelajar</th>
+                    <th>No. KP</th>
+                    <th style="text-align: center; width: 12%;">Kod Uni</th>
+                    <th>Nama Universiti (Tawaran)</th>
+                    <th style="text-align: right; width: 18%;">Jumlah Tawaran (RM)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in records %}
+                <tr>
+                    <td style="text-align: center; vertical-align: middle;">{{ row.bil_kemasukan or 'NULL' }}</td>
+                    <td style="vertical-align: middle;"><strong>{{ row.nama_pelajar or 'NULL' }}</strong></td>
+                    <td style="vertical-align: middle;">{{ row.no_kp_pelajar or '-' }}</td>
+                    <td style="text-align: center; vertical-align: middle;"><span class="label label-info">{{
+                            row.uni_code }}</span></td>
+                    <td style="vertical-align: middle;">{{ row.uni_name }}</td>
+                    <td style="text-align: right; vertical-align: middle; color: #28a745; font-weight: bold;">
+                        RM {{ "{:,.2f}".format(row.offer_amt or 0) }}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted" style="padding: 25px;">
+                        <span class="glyphicon glyphicon-info-sign"></span> Tiada rekod tawaran universiti ditemui
+                        mengikut kriteria tapisan tersebut.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Bottom Pagination -->
+    <div class="row" style="margin-top: 20px; margin-bottom: 30px;">
+        <div class="col-md-12 text-center" style="display: flex; justify-content: center;">
+            <nav style="margin: 0;">
+                <ul class="pagination" style="margin: 0;">
+                    {% if page > 1 %}
+                    <li>
+                        <a
+                            href="{{ url_for('list_offered_uni', page=page-1, search=search, pakej_filter=pakej_filter, uni_filter=uni_filter) }}">
+                            &laquo; Previous
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <li class="active"><span>Page {{ page }} of {{ total_pages if total_pages > 0 else 1 }}</span></li>
+
+                    {% if page < total_pages %} <li>
+                        <a
+                            href="{{ url_for('list_offered_uni', page=page+1, search=search, pakej_filter=pakej_filter, uni_filter=uni_filter) }}">
+                            Next &raquo;
+                        </a>
+                        </li>
+                        {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <div style="margin-bottom: 50px;">
+        <a href="{{ url_for('gateway') }}" class="btn btn-default">
+            <span class="glyphicon glyphicon-chevron-left"></span> Kembali ke Halaman Utama
+        </a>
+    </div>
+
+</div>
+{% endblock %}

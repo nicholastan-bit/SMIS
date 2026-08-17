@@ -65,15 +65,17 @@
 
                     <li><a href="{{ url_for('late_statistics') }}">Jadual Kehadiran Lewat</a></li>
 
-                    {% if session.get('admin_logged') %}
-                    <li><a href="{{ url_for('view_students') }}">Senarai Pelajar</a></li>
+                    <!-- FIXED: Check session role instead of non-existent session['admin'] -->
+                    {% if session.get('role') in ['admin'] %}
+                    <li><a href="{{ url_for('cikgu_statistics') }}">Jadual Cikgu</a></li>
                     {% endif %}
                 </ul>
-    
+                
                 <ul class="nav navbar-nav navbar-right">
-                    {% if session.get('admin_logged') %}
+                    <!-- FIXED: Check session role / verified_kp accurately -->
+                    {% if session.get('role') == 'admin' %}
                     <li>
-                        <p class="navbar-text">Admin Mode Enabled</p>
+                        <p class="navbar-text">Administrative Access</p>
                     </li>
                     <li><a href="{{ url_for('logout') }}"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
     
@@ -89,7 +91,7 @@
                 </ul>
             </div>
         </div>
-        </nav>
+    </nav>
 
     <!-- Wrap your content in this new div -->
     <div class="content-wrapper">

@@ -60,10 +60,9 @@
                                         class="text-danger">*</span></label>
                                 <select class="form-control" id="kaum" name="kaum" required>
                                     <option value="">-- Pilih Kaum --</option>
-                                    <option value="MELAYU">MELAYU</option>
-                                    <option value="CINA">CINA</option>
-                                    <option value="INDIA">INDIA</option>
-                                    <option value="SABAH/SARAWAK">SABAH/SARAWAK</option>
+                                    {% for k in kaum_list %}
+                                    <option value="{{ k }}">{{ k }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
@@ -71,8 +70,9 @@
                                         class="text-danger">*</span></label>
                                 <select class="form-control" id="agama" name="agama" required>
                                     <option value="">-- Pilih Agama --</option>
-                                    <option value="MUSLIM">MUSLIM</option>
-                                    <option value="NON-MUSLIM">NON-MUSLIM</option>
+                                    {% for ag in agama_list %}
+                                    <option value="{{ ag }}">{{ ag }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                         </div>
@@ -91,17 +91,9 @@
                                         class="text-danger">*</span></label>
                                 <select class="form-control" id="jawatan" name="jawatan" required>
                                     <option value="">-- Pilih Jawatan --</option>
-                                    <option value="PENOLONG KANAN">PENOLONG KANAN</option>
-                                    <option value="GURU KOKURIKULUM TINGKATAN ENAM">GURU KOKURIKULUM TINGKATAN ENAM
-                                    </option>
-                                    <option value="GURU AKADEMIK TNGKATAN ENAM">GURU AKADEMIK TNGKATAN ENAM</option>
-                                    <option value="GURU AMALI TINGKATAN ENAM">GURU AMALI TINGKATAN ENAM</option>
-                                    <option value="GURU AKADEMIK">GURU AKADEMIK</option>
-                                    <option value="KETUA JABATAN">KETUA JABATAN</option>
-                                    <option value="PEMBANTU OPERASI">PEMBANTU OPERASI</option>
-                                    <option value="PEMBANTU MAKMAL">PEMBANTU MAKMAL</option>
-                                    <option value="PEMBANTU TADBIR">PEMBANTU TADBIR</option>
-                                    <option value="KETUA PEMBANTU TADBIR">KETUA PEMBANTU TADBIR</option>
+                                    {% for j in jawatan_list %}
+                                    <option value="{{ j }}">{{ j }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                         </div>
@@ -113,15 +105,9 @@
                                 <select class="form-control" id="gred_jawatan_hakiki" name="gred_jawatan_hakiki"
                                     required>
                                     <option value="">-- Pilih Gred Hakiki --</option>
-                                    <option value="DG9">DG9</option>
-                                    <option value="DG10">DG10</option>
-                                    <option value="DG12">DG12</option>
-                                    <option value="DG14">DG14</option>
-                                    <option value="C1">C1</option>
-                                    <option value="C2">C2</option>
-                                    <option value="N1">N1</option>
-                                    <option value="N2">N2</option>
-                                    <option value="N11">N11</option>
+                                    {% for g in gred_list %}
+                                    <option value="{{ g }}">{{ g }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3" style="margin-bottom: 15px;">
@@ -130,15 +116,9 @@
                                 <select class="form-control" id="gred_jawatan_semasa" name="gred_jawatan_semasa"
                                     required>
                                     <option value="">-- Pilih Gred Semasa --</option>
-                                    <option value="DG9">DG9</option>
-                                    <option value="DG10">DG10</option>
-                                    <option value="DG12">DG12</option>
-                                    <option value="DG14">DG14</option>
-                                    <option value="C1">C1</option>
-                                    <option value="C2">C2</option>
-                                    <option value="N1">N1</option>
-                                    <option value="N2">N2</option>
-                                    <option value="N11">N11</option>
+                                    {% for g in gred_list %}
+                                    <option value="{{ g }}">{{ g }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                         </div>
@@ -149,19 +129,9 @@
                                         class="text-danger">*</span></label>
                                 <select class="form-control" id="subjek_diajar" name="subjek_diajar" required>
                                     <option value="">-- Pilih Subjek Utama --</option>
-                                    <option value="PENGAJIAN AM">PENGAJIAN AM</option>
-                                    <option value="BAHASA MELAYU">BAHASA MELAYU</option>
-                                    <option value="BAHASA TAMIL">BAHASA TAMIL</option>
-                                    <option value="SYARIAH">SYARIAH</option>
-                                    <option value="SEJARAH">SEJARAH</option>
-                                    <option value="GEOGRAFI">GEOGRAFI</option>
-                                    <option value="EKONOMI">EKONOMI</option>
-                                    <option value="PENGAJIAN PERNIAGAAN">PENGAJIAN PERNIAGAAN</option>
-                                    <option value="PERAKAUNAN">PERAKAUNAN</option>
-                                    <option value="MANAGEMENT MATHEMATICS">MANAGEMENT MATHEMATICS</option>
-                                    <option value="MATHEMATICS">MATHEMATICS</option>
-                                    <option value="ICT">ICT</option>
-                                    <option value="PHYSICS">PHYSICS</option>
+                                    {% for sub in subjek_list %}
+                                    <option value="{{ sub }}">{{ sub }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                         </div>

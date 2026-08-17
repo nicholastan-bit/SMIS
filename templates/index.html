@@ -321,17 +321,33 @@
                 </div>
             </div>
 
-            <!-- Placeholder Alongside Lateness -->
+            <!-- UBK -->
             <div class="col-md-6">
                 <div class="panel panel-warning" style="min-height: 180px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                     <div class="panel-heading">
                         <h3 class="panel-title" style="font-weight: bold;">
-                            <span class="glyphicon glyphicon-warning-sign"></span> Rekod Lawatan ke UBK
+                            <span class="glyphicon glyphicon-envelope"></span> Rekod Lawatan ke UBK
                         </h3>
                     </div>
                     <div class="panel-body" style="min-height: 115px;">
-                        <p class="text-muted" style="font-size: 13px;"> - </p>
+                        <p class="text-muted" style="font-size: 13px;"> Isi maklumat bagi lawatan ke UBK </p>
                         <a class="btn btn-warning btn-block" href="{{ url_for('ubk_form') }}"
+                            style="margin-top: 15px; font-weight: bold;">Masuk Rekod</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Placeholder Alongside Lateness -->
+            <div class="col-md-6">
+                <div class="panel panel-info" style="min-height: 180px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="panel-heading">
+                        <h3 class="panel-title" style="font-weight: bold;">
+                            <span class="glyphicon glyphicon-education"></span> Laluan Selepas STPM
+                        </h3>
+                    </div>
+                    <div class="panel-body" style="min-height: 115px;">
+                        <p class="text-muted" style="font-size: 13px;"> Simpan rekod tawaran dari IPTA </p>
+                        <a class="btn btn-info btn-block" href="{{ url_for('add_offered_uni') }}"
                             style="margin-top: 15px; font-weight: bold;">Masuk Rekod</a>
                     </div>
                 </div>

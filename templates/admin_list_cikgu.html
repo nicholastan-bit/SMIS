@@ -23,16 +23,13 @@
                             %}selected{% endif %}>PENOLONG KANAN</option>
                         <option value="GURU KOKURIKULUM TINGKATAN ENAM" {% if
                             request.args.get('jawatan_filter')=='GURU KOKURIKULUM TINGKATAN ENAM' %}selected{% endif %}>
-                            GURU
-                            KOKURIKULUM TINGKATAN ENAM</option>
+                            GURU KOKURIKULUM TINGKATAN ENAM</option>
                         <option value="GURU AKADEMIK TNGKATAN ENAM" {% if
                             request.args.get('jawatan_filter')=='GURU AKADEMIK TNGKATAN ENAM' %}selected{% endif %}>GURU
-                            AKADEMIK
-                            TINGKATAN ENAM</option>
+                            AKADEMIK TINGKATAN ENAM</option>
                         <option value="GURU AMALI TINGKATAN ENAM" {% if
                             request.args.get('jawatan_filter')=='GURU AMALI TINGKATAN ENAM' %}selected{% endif %}>GURU
-                            AMALI
-                            TINGKATAN ENAM</option>
+                            AMALI TINGKATAN ENAM</option>
                         <option value="GURU AKADEMIK" {% if request.args.get('jawatan_filter')=='GURU AKADEMIK'
                             %}selected{% endif %}>GURU AKADEMIK</option>
                         <option value="KETUA JABATAN" {% if request.args.get('jawatan_filter')=='KETUA JABATAN'
@@ -110,11 +107,23 @@
                     </select>
                 </div>
 
-                <div class="col-md-8 form-group text-right" style="margin-top: 24px;">
+                <!-- New Status Filter Dropdown -->
+                <div class="col-md-4 form-group">
+                    <label>Tapisan Status</label>
+                    <select name="status_filter" class="form-control">
+                        <option value="">Semua Status</option>
+                        <option value="aktif" {% if request.args.get('status_filter')=='aktif' %}selected{% endif %}>
+                            AKTIF</option>
+                        <option value="tidak aktif" {% if request.args.get('status_filter')=='tidak aktif' %}selected{%
+                            endif %}>TIDAK AKTIF</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4 form-group text-right" style="margin-top: 24px;">
                     <div class="btn-group" style="display: inline-flex; width: 370px;">
                         <button type="submit" class="btn btn-primary" style="flex: 1;">Cari</button>
                         <a href="{{ url_for('admin_list_cikgu') }}" class="btn btn-default" style="flex: 1;">Reset</a>
-                        <a href="{{ url_for('admin_export_cikgu', search=search, jawatan_filter=jawatan_filter, gred_filter=gred_filter, kaum_filter=kaum_filter, agama_filter=agama_filter, subjek_filter=subjek_filter, jantina_filter=jantina_filter) }}"
+                        <a href="{{ url_for('admin_export_cikgu', search=search, jawatan_filter=jawatan_filter, gred_filter=gred_filter, kaum_filter=kaum_filter, agama_filter=agama_filter, subjek_filter=subjek_filter, jantina_filter=jantina_filter, status_filter=status_filter) }}"
                             class="btn btn-success" style="flex: 1;">
                             <span class="glyphicon glyphicon-download-alt"></span> Export CSV
                         </a>
@@ -145,7 +154,8 @@
                                                 gred_filter=gred_filter, 
                                                 kaum_filter=kaum_filter,
                                                 subjek_filter=subjek_filter,
-                                                jantina_filter=jantina_filter) }}">
+                                                jantina_filter=jantina_filter,
+                                                status_filter=status_filter) }}">
                             &laquo; Previous
                         </a>
                     </li>
@@ -161,7 +171,8 @@
                                                 gred_filter=gred_filter, 
                                                 kaum_filter=kaum_filter,
                                                 subjek_filter=subjek_filter,
-                                                jantina_filter=jantina_filter) }}">
+                                                jantina_filter=jantina_filter,
+                                                status_filter=status_filter) }}">
                             Next &raquo;
                         </a>
                         </li>
@@ -181,6 +192,7 @@
                 <th>No. IC</th>
                 <th>Jawatan</th>
                 <th>Gred Hakiki / Semasa</th>
+                <th>Status</th>
                 <th>Kaum</th>
                 <th>Subjek Diajar</th>
                 <th>Jantina</th>
@@ -195,6 +207,16 @@
                 <td>{{ c.IC }}</td>
                 <td><span class="label label-info">{{ c.jawatan }}</span></td>
                 <td>{{ c.gred_jawatan_hakiki }} / {{ c.gred_jawatan_semasa }}</td>
+                <td>
+                    {% if c.status == 'aktif' %}
+                    <span class="label label-success">AKTIF</span>
+                    {% else %}
+                    <span class="label label-danger">TIDAK AKTIF</span>
+                    {% if c.sebabStatus %}
+                    <br><small class="text-muted">({{ c.sebabStatus }})</small>
+                    {% endif %}
+                    {% endif %}
+                </td>
                 <td><span class="label label-warning" style="color: #000;">{{ c.kaum }}</span></td>
                 <td><span class="label label-default">{{ c.subjek_diajar }}</span></td>
                 <td>{{ c.jantina }}</td>
@@ -211,7 +233,8 @@
             </tr>
             {% else %}
             <tr>
-                <td colspan="9" class="text-center text-muted" style="padding: 20px;">Tiada rekod cikgu ditemui mengikut
+                <td colspan="10" class="text-center text-muted" style="padding: 20px;">Tiada rekod cikgu ditemui
+                    mengikut
                     kriteria tapisan tersebut.</td>
             </tr>
             {% endfor %}
@@ -231,7 +254,8 @@
                                                 gred_filter=gred_filter, 
                                                 kaum_filter=kaum_filter,
                                                 subjek_filter=subjek_filter,
-                                                jantina_filter=jantina_filter) }}">
+                                                jantina_filter=jantina_filter,
+                                                status_filter=status_filter) }}">
                             &laquo; Previous
                         </a>
                     </li>
@@ -247,7 +271,8 @@
                                                 gred_filter=gred_filter, 
                                                 kaum_filter=kaum_filter,
                                                 subjek_filter=subjek_filter,
-                                                jantina_filter=jantina_filter) }}">
+                                                jantina_filter=jantina_filter,
+                                                status_filter=status_filter) }}">
                             Next &raquo;
                         </a>
                         </li>

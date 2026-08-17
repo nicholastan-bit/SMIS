@@ -960,7 +960,7 @@ def kokurikulum_page():
     if not student or student['status_study'] != 1:
         cursor.close()
         conn.close()
-        flash("Sila lengkapkan borang pendaftaran diri terlebih dahulu.", "warning")
+        flash("Sila lengkapkan borang pendaftaran diri terlebih dahulu.", "danger")
         return redirect(url_for('index'))
 
     bil_kemasukan = student['bil_kemasukan']
@@ -1331,6 +1331,148 @@ def ubk_form():
                            telefon_pelajar=telefon_pelajar, 
                            perkara_options=PERKARA_OPTIONS, 
                            kaunselor_options=COUNSELLORS)
+
+@app.route('/offered-uni/add', methods=['GET', 'POST'])
+def add_offered_uni():
+    # Ensure user is logged in / session has verified_kp (which is the IC/No. KP)
+    kp = session.get('verified_kp')
+    if not kp:
+        flash("Sila log masuk / sahkan KP terlebih dahulu.", "warning")
+        return redirect(url_for('gateway'))
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True, buffered=True)
+
+    try:
+        # 1. Query the 'pelajar' table using the IC/No. KP to find the correct student's primary key (bil_kemasukan)
+        cursor.execute("SELECT bil_kemasukan FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
+        student = cursor.fetchone()
+
+        if not student:
+            flash("Maklumat pelajar tidak dijumpai dengan No. KP ini.", "danger")
+            return redirect(url_for('gateway'))
+
+        # This is the actual integer primary key from the 'pelajar' table
+        bil_kemasukan = student['bil_kemasukan']
+
+        # 2. Check if this bil_kemasukan has already submitted an entry in offered_uni
+        cursor.execute("SELECT * FROM offered_uni WHERE bil_kemasukan = %s", (bil_kemasukan,))
+        existing_entry = cursor.fetchone()
+
+        if existing_entry:
+            flash("Anda telah mendaftarkan maklumat tawaran universiti sebelum ini.", "warning")
+            return redirect(url_for('index'))
+
+    except Exception as e:
+        flash(f"Ralat pangkalan data: {str(e)}", "danger")
+        return redirect(url_for('index'))
+    finally:
+        cursor.close()
+        conn.close()
+
+    # Hardcoded university list
+    universities_list = [
+        # Universiti Awam
+        {'code': 'UM', 'name': 'Universiti Malaya', 'category': 'Universiti Awam'},
+        {'code': 'USM', 'name': 'Universiti Sains Malaysia', 'category': 'Universiti Awam'},
+        {'code': 'UKM', 'name': 'Universiti Kebangsaan Malaysia', 'category': 'Universiti Awam'},
+        {'code': 'UPM', 'name': 'Universiti Putra Malaysia', 'category': 'Universiti Awam'},
+        {'code': 'UTM', 'name': 'Universiti Teknologi Malaysia', 'category': 'Universiti Awam'},
+        {'code': 'UiTM', 'name': 'Universiti Teknologi MARA', 'category': 'Universiti Awam'},
+        {'code': 'UIAM / IIUM', 'name': 'Universiti Islam Antarabangsa Malaysia', 'category': 'Universiti Awam'},
+        {'code': 'UUM', 'name': 'Universiti Utara Malaysia', 'category': 'Universiti Awam'},
+        {'code': 'UNIMAS', 'name': 'Universiti Malaysia Sarawak', 'category': 'Universiti Awam'},
+        {'code': 'UMS', 'name': 'Universiti Malaysia Sabah', 'category': 'Universiti Awam'},
+        {'code': 'UPSI', 'name': 'Universiti Pendidikan Sultan Idris', 'category': 'Universiti Awam'},
+        {'code': 'USIM', 'name': 'Universiti Sains Islam Malaysia', 'category': 'Universiti Awam'},
+        {'code': 'UTHM', 'name': 'Universiti Tun Hussein Onn Malaysia', 'category': 'Universiti Awam'},
+        {'code': 'UTeM', 'name': 'Universiti Teknikal Malaysia Melaka', 'category': 'Universiti Awam'},
+        {'code': 'UniMAP', 'name': 'Universiti Malaysia Perlis', 'category': 'Universiti Awam'},
+        {'code': 'UMT', 'name': 'Universiti Malaysia Terengganu', 'category': 'Universiti Awam'},
+        {'code': 'UMK', 'name': 'Universiti Malaysia Kelantan', 'category': 'Universiti Awam'},
+        {'code': 'UPNM', 'name': 'Universiti Pertahanan Nasional Malaysia', 'category': 'Universiti Awam'},
+        {'code': 'UMPSA', 'name': 'Universiti Malaysia Pahang Al-Sultan Abdullah', 'category': 'Universiti Awam'},
+        {'code': 'UniSZA', 'name': 'Universiti Sultan Zainal Abidin', 'category': 'Universiti Awam'},
+        
+        # Universiti Swasta
+        {'code': 'UNITEN', 'name': 'Universiti Tenaga Nasional', 'category': 'Universiti SWASTA'},
+        {'code': 'MMU', 'name': 'Multimedia University', 'category': 'Universiti SWASTA'},
+        {'code': 'UTP', 'name': 'Universiti Teknologi PETRONAS', 'category': 'Universiti SWASTA'},
+        {'code': 'UTAR', 'name': 'Universiti Tunku Abdul Rahman', 'category': 'Universiti SWASTA'},
+        {'code': 'UCSI', 'name': 'UCSI University', 'category': 'Universiti SWASTA'},
+        {'code': 'Taylor’s', 'name': 'Taylor’s University', 'category': 'Universiti SWASTA'},
+        {'code': 'Sunway', 'name': 'Sunway University', 'category': 'Universiti SWASTA'},
+        {'code': 'APU', 'name': 'Asia Pacific University of Technology & Innovation', 'category': 'Universiti SWASTA'},
+        {'code': 'HELP', 'name': 'HELP University', 'category': 'Universiti SWASTA'},
+        {'code': 'MSU', 'name': 'Management and Science University', 'category': 'Universiti SWASTA'},
+        {'code': 'SEGi', 'name': 'SEGi University', 'category': 'Universiti SWASTA'},
+        {'code': 'INTI', 'name': 'INTI International University', 'category': 'Universiti SWASTA'},
+        {'code': 'UNISEL', 'name': 'Universiti Selangor', 'category': 'Universiti SWASTA'},
+        {'code': 'UniKL', 'name': 'Universiti Kuala Lumpur', 'category': 'Universiti SWASTA'},
+        {'code': 'UNITAR', 'name': 'UNITAR International University', 'category': 'Universiti SWASTA'},
+        {'code': 'OUM', 'name': 'Open University Malaysia', 'category': 'Universiti SWASTA'},
+        {'code': 'WOU', 'name': 'Wawasan Open University', 'category': 'Universiti SWASTA'},
+        {'code': 'AIMST', 'name': 'AIMST University', 'category': 'Universiti SWASTA'},
+        {'code': 'MAHSA', 'name': 'MAHSA University', 'category': 'Universiti SWASTA'},
+        {'code': 'IMU', 'name': 'IMU University', 'category': 'Universiti SWASTA'},
+        {'code': 'Perdana', 'name': 'Perdana University', 'category': 'Universiti SWASTA'},
+        {'code': 'Quest', 'name': 'Quest International University', 'category': 'Universiti SWASTA'},
+        {'code': 'City University', 'name': 'City University Malaysia', 'category': 'Universiti SWASTA'},
+        {'code': 'Lincoln', 'name': 'Lincoln University College', 'category': 'Universiti SWASTA'},
+        {'code': 'Infrastructure University', 'name': 'Infrastructure University Kuala Lumpur (IUKL)', 'category': 'Universiti SWASTA'},
+        {'code': 'Nilai', 'name': 'Nilai University', 'category': 'Universiti SWASTA'},
+        {'code': 'Raffles', 'name': 'Raffles University', 'category': 'Universiti SWASTA'},
+        {'code': 'Xiamen', 'name': 'Xiamen University Malaysia', 'category': 'Universiti SWASTA'},
+        {'code': 'Heriot-Watt', 'name': 'Heriot-Watt University Malaysia', 'category': 'Universiti SWASTA'},
+        {'code': 'Nottingham', 'name': 'University of Nottingham Malaysia', 'category': 'Universiti SWASTA'},
+        {'code': 'Southampton', 'name': 'University of Southampton Malaysia', 'category': 'Universiti SWASTA'},
+        {'code': 'Reading', 'name': 'University of Reading Malaysia', 'category': 'Universiti SWASTA'},
+        {'code': 'Curtin', 'name': 'Curtin University Malaysia', 'category': 'Universiti SWASTA'},
+        {'code': 'Swinburne', 'name': 'Swinburne University of Technology Sarawak Campus', 'category': 'Universiti SWASTA'},
+        {'code': 'Monash', 'name': 'Monash University Malaysia', 'category': 'Universiti SWASTA'}
+    ]
+
+    if request.method == 'POST':
+        selected_code = request.form.get('uni_code')
+        offer_amt = request.form.get('offer_amt')
+        
+        selected_uni = next((u for u in universities_list if u['code'] == selected_code), None)
+        uni_name = selected_uni['name'] if selected_uni else "Lain-lain"
+
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True, buffered=True)
+        try:
+            # Re-fetch the proper bil_kemasukan securely inside the POST request
+            cursor.execute("SELECT bil_kemasukan FROM pelajar WHERE no_kp_pelajar = %s", (kp,))
+            student_check = cursor.fetchone()
+            if not student_check:
+                flash("Ralat: Sesi tidak sah.", "danger")
+                return redirect(url_for('gateway'))
+            
+            real_bil_kemasukan = student_check['bil_kemasukan']
+
+            # Double check inside POST block to prevent duplicate race conditions
+            cursor.execute("SELECT * FROM offered_uni WHERE bil_kemasukan = %s", (real_bil_kemasukan,))
+            if cursor.fetchone():
+                flash("Ralat: Rekod untuk pelajar ini sudah wujud.", "danger")
+                return redirect(url_for('add_offered_uni'))
+
+            query = """
+                INSERT INTO offered_uni (bil_kemasukan, uni_name, uni_code, offer_amt)
+                VALUES (%s, %s, %s, %s)
+            """
+            cursor.execute(query, (real_bil_kemasukan, uni_name, selected_code, offer_amt))
+            conn.commit()
+            flash("Maklumat tawaran universiti berjaya disimpan!", "success")
+            return redirect(url_for('index'))
+        except Exception as e:
+            conn.rollback()
+            flash(f"Ralat menyimpan ke pangkalan data: {str(e)}", "danger")
+        finally:
+            cursor.close()
+            conn.close()
+
+    return render_template('offered_uni_form.html', universities=universities_list)
 
 # =====================================================================# =====================================================================
 # =====================================================================# =====================================================================
@@ -3368,6 +3510,30 @@ def add_cikgu():
         flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
         return redirect(url_for('gateway'))
 
+    # Define options lists to pass to the template
+    jawatan_list = [
+        "PENOLONG KANAN", 
+        "GURU KOKURIKULUM TINGKATAN ENAM", 
+        "GURU AKADEMIK TNGKATAN ENAM", 
+        "GURU AMALI TINGKATAN ENAM", 
+        "GURU AKADEMIK", 
+        "KETUA JABATAN", 
+        "PEMBANTU OPERASI", 
+        "PEMBANTU MAKMAL", 
+        "PEMBANTU TADBIR",
+        "KETUA PEMBANTU TADBIR"
+    ]
+    
+    gred_list = ['DG9', 'DG10', 'DG12', 'DG13', 'DG14', 'C1', 'C2', 'N1', 'N2', 'N11']
+    kaum_list = ['MELAYU', 'CINA', 'INDIA', 'SABAH/SARAWAK']
+    agama_list = ['MUSLIM', 'NON-MUSLIM']
+    
+    subjek_list = [
+        'PENGAJIAN AM', 'BAHASA MELAYU', 'BAHASA TAMIL', 'SYARIAH', 
+        'SEJARAH', 'GEOGRAFI', 'EKONOMI', 'PENGAJIAN PERNIAGAAN', 
+        'PERAKAUNAN', 'MANAGEMENT MATHEMATICS', 'MATHEMATICS', 'ICT', 'PHYSICS'
+    ]
+
     if request.method == 'POST':
         # Retrieve data from form
         nama = request.form.get('nama')
@@ -3404,8 +3570,15 @@ def add_cikgu():
 
         return redirect(url_for('add_cikgu'))
 
-    # Render the HTML form page
-    return render_template('add_cikgu.html')
+    # Render the HTML form page and pass the list variables
+    return render_template(
+        'add_cikgu.html',
+        jawatan_list=jawatan_list,
+        gred_list=gred_list,
+        kaum_list=kaum_list,
+        agama_list=agama_list,
+        subjek_list=subjek_list
+    )
 
 @app.route('/admin/cikgu-list')
 def admin_list_cikgu():
@@ -3431,6 +3604,7 @@ def admin_list_cikgu():
     agama_filter = request.args.get('agama_filter', '')
     subjek_filter = request.args.get('subjek_filter', '')
     jantina_filter = request.args.get('jantina_filter', '')
+    status_filter = request.args.get('status_filter', '')
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True, buffered=True)
@@ -3467,6 +3641,10 @@ def admin_list_cikgu():
         where_clause += " AND jantina = %s"
         params.append(jantina_filter)
 
+    if status_filter:
+        where_clause += " AND `status` = %s"
+        params.append(status_filter)
+
     # 1. Get total count for pagination
     count_query = f"SELECT COUNT(*) as total FROM cikgu {where_clause}"
     cursor.execute(count_query, params)
@@ -3496,16 +3674,87 @@ def admin_list_cikgu():
                            kaum_filter=kaum_filter,
                            agama_filter=agama_filter,
                            subjek_filter=subjek_filter,
-                           jantina_filter=jantina_filter)
+                           jantina_filter=jantina_filter,
+                           status_filter=status_filter)
 
-@app.route('/admin/cikgu-profile/<int:id_cikgu>')
+@app.route('/admin/cikgu-profile/<int:id_cikgu>', methods=['GET', 'POST'])
 def admin_cikgu_profile(id_cikgu):
     if session.get('role') != 'admin':
         flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
         return redirect(url_for('gateway'))
 
+    # Define dropdown lists from system schema definitions[cite: 2]
+    jawatan_list = [
+        "PENOLONG KANAN", 
+        "GURU KOKURIKULUM TINGKATAN ENAM", 
+        "GURU AKADEMIK TNGKATAN ENAM", 
+        "GURU AMALI TINGKATAN ENAM", 
+        "GURU AKADEMIK", 
+        "KETUA JABATAN", 
+        "PEMBANTU OPERASI", 
+        "PEMBANTU MAKMAL", 
+        "PEMBANTU TADBIR", 
+        "KETUA PEMBANTU TADBIR"
+    ]
+    
+    gred_list = ['DG9', 'DG10', 'DG12', 'DG14', 'C1', 'C2', 'N1', 'N2', 'N11']
+    kaum_list = ['MELAYU', 'CINA', 'INDIA', 'SABAH/SARAWAK']
+    agama_list = ['MUSLIM', 'NON-MUSLIM']
+    jantina_list = ['LELAKI', 'PEREMPUAN']
+    
+    subjek_list = [
+        'PENGAJIAN AM', 'BAHASA MELAYU', 'BAHASA TAMIL', 'SYARIAH', 
+        'SEJARAH', 'GEOGRAFI', 'EKONOMI', 'PENGAJIAN PERNIAGAAN', 
+        'PERAKAUNAN', 'MANAGEMENT MATHEMATICS', 'MATHEMATICS', 'ICT', 'PHYSICS'
+    ]
+
+    # New dropdown option lists for teacher status tracking
+    status_list = ['aktif', 'tidak aktif']
+    sebab_status_list = ['pindah sekolah', 'bersara', 'meninggal dunia']
+
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True, buffered=True)
+
+    if request.method == 'POST':
+        try:
+            # Retrieve updated form values including the 3 new columns
+            nama = request.form.get('nama')
+            jawatan = request.form.get('jawatan')
+            gred_hakiki = request.form.get('gred_jawatan_hakiki')
+            gred_semasa = request.form.get('gred_jawatan_semasa')
+            ic = request.form.get('IC')
+            kaum = request.form.get('kaum')
+            phone = request.form.get('phoneNo')
+            email = request.form.get('email')
+            alamat = request.form.get('alamat_rumah')
+            jantina = request.form.get('jantina')
+            agama = request.form.get('agama')
+            subjek = request.form.get('subjek_diajar')
+            status = request.form.get('status')
+            sebab_status = request.form.get('sebabStatus') or None
+            tarikh_status = request.form.get('tarikhStatus') or None
+
+            # Update database record (using backticks for `status` to prevent MySQL keyword issues)
+            query = """
+                UPDATE cikgu 
+                SET nama = %s, jawatan = %s, gred_jawatan_hakiki = %s, gred_jawatan_semasa = %s, 
+                    IC = %s, kaum = %s, phoneNo = %s, email = %s, alamat_rumah = %s, 
+                    jantina = %s, agama = %s, subjek_diajar = %s,
+                    `status` = %s, sebabStatus = %s, tarikhStatus = %s
+                WHERE id_cikgu = %s
+            """
+            cursor.execute(query, (
+                nama, jawatan, gred_hakiki, gred_semasa, ic, kaum, phone, email, 
+                alamat, jantina, agama, subjek, status, sebab_status, tarikh_status, id_cikgu
+            ))
+            conn.commit()
+            flash("Profil guru berjaya dikemaskini!", "success")
+            return redirect(url_for('admin_cikgu_profile', id_cikgu=id_cikgu))
+
+        except Exception as e:
+            conn.rollback()
+            flash(f'Ralat semasa mengemaskini profil: {str(e)}', 'danger')
+
     try:
         cursor.execute("SELECT * FROM cikgu WHERE id_cikgu = %s", (id_cikgu,))
         cikgu = cursor.fetchone()
@@ -3521,7 +3770,18 @@ def admin_cikgu_profile(id_cikgu):
         cursor.close()
         conn.close()
 
-    return render_template('admin_cikgu_profile.html', cikgu=cikgu)
+    return render_template(
+        'admin_cikgu_profile.html', 
+        cikgu=cikgu,
+        jawatan_list=jawatan_list,
+        gred_list=gred_list,
+        kaum_list=kaum_list,
+        agama_list=agama_list,
+        jantina_list=jantina_list,
+        subjek_list=subjek_list,
+        status_list=status_list,
+        sebab_status_list=sebab_status_list
+    )
 
 @app.route('/admin/cikgu-list/export')
 def admin_export_cikgu():
@@ -3603,5 +3863,196 @@ def admin_export_cikgu():
         mimetype='text/csv',
         headers={"Content-Disposition": "attachment; filename=senarai_cikgu.csv"}
     )
+
+@app.route('/cikgu-statistics')
+def cikgu_statistics():
+    if session.get('role') != 'admin':
+        flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
+        return redirect(url_for('gateway'))
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        # 1. GURU: Kaum breakdown
+        cursor.execute("""
+            SELECT kaum, COUNT(*) as total 
+            FROM cikgu 
+            WHERE jawatan NOT LIKE '%PEMBANTU%' AND jawatan NOT LIKE '%AKP%'
+            GROUP BY kaum
+        """)
+        guru_kaum = cursor.fetchall()
+        
+        # 2. AKP: Kaum breakdown (Assuming AKP roles include 'PEMBANTU')
+        cursor.execute("""
+            SELECT kaum, COUNT(*) as total 
+            FROM cikgu 
+            WHERE jawatan LIKE '%PEMBANTU%'
+            GROUP BY kaum
+        """)
+        akp_kaum = cursor.fetchall()
+        
+        # 3. GURU MUSLIM count
+        cursor.execute("""
+            SELECT COUNT(*) as total 
+            FROM cikgu 
+            WHERE agama = 'MUSLIM' AND jawatan NOT LIKE '%PEMBANTU%'
+        """)
+        guru_muslim = cursor.fetchone()['total']
+        
+        # 4. AKP MUSLIM count
+        cursor.execute("""
+            SELECT COUNT(*) as total 
+            FROM cikgu 
+            WHERE agama = 'MUSLIM' AND jawatan LIKE '%PEMBANTU%'
+        """)
+        akp_muslim = cursor.fetchone()['total']
+        
+        # 5. GURU DAN AKP combined kaum breakdown
+        cursor.execute("""
+            SELECT kaum, COUNT(*) as total 
+            FROM cikgu 
+            GROUP BY kaum
+        """)
+        combined_kaum = cursor.fetchall()
+        
+        # 6. GURU IKUT GRED (Gred Jawatan Semasa)
+        cursor.execute("""
+            SELECT gred_jawatan_semasa, COUNT(*) as total 
+            FROM cikgu 
+            WHERE jawatan NOT LIKE '%PEMBANTU%'
+            GROUP BY gred_jawatan_semasa
+        """)
+        guru_gred = cursor.fetchall()
+        
+        # 7. AKP IKUT GRED (Gred Jawatan Semasa)
+        cursor.execute("""
+            SELECT gred_jawatan_semasa, COUNT(*) as total 
+            FROM cikgu 
+            WHERE jawatan LIKE '%PEMBANTU%'
+            GROUP BY gred_jawatan_semasa
+        """)
+        akp_gred = cursor.fetchall()
+
+    except Exception as e:
+        flash(f"Ralat memuatkan statistik: {str(e)}", "danger")
+        guru_kaum, akp_kaum, combined_kaum, guru_gred, akp_gred = [], [], [], [], []
+        guru_muslim, akp_muslim = 0, 0
+    finally:
+        cursor.close()
+        conn.close()
+
+    return render_template(
+        'cikgu_statistics.html',
+        guru_kaum=guru_kaum,
+        akp_kaum=akp_kaum,
+        guru_muslim=guru_muslim,
+        akp_muslim=akp_muslim,
+        combined_kaum=combined_kaum,
+        guru_gred=guru_gred,
+        akp_gred=akp_gred
+    )
+
+@app.route('/admin/offered-uni-list', methods=['GET'])
+def list_offered_uni():
+    # 1. Role-based access control (RBAC)
+    if session.get('role') not in ['admin', 'adminpelajar']:
+        flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
+        return redirect(url_for('gateway'))
+    
+    # 2. Safely handle page number to prevent crashes on invalid inputs
+    try:
+        page = int(request.args.get('page', 1))
+        if page < 1:
+            page = 1
+    except ValueError:
+        page = 1
+        
+    per_page = 20
+    offset = (page - 1) * per_page
+
+    # 3. Get filter parameters
+    search = request.args.get('search', '').strip()
+    pakej_filter = request.args.get('pakej_filter', '').strip()
+    uni_filter = request.args.get('uni_filter', '').strip()
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True, buffered=True)
+
+    try:
+        # 4. Fetch choices for dropdowns
+        cursor.execute("SELECT id_pakej, kod_pakej FROM pakej ORDER BY kod_pakej")
+        all_packages = cursor.fetchall()
+        
+        cursor.execute("SELECT DISTINCT uni_code, uni_name FROM offered_uni WHERE uni_code IS NOT NULL ORDER BY uni_name")
+        all_universities = cursor.fetchall()
+
+        # 5. Base Query and Dynamic Where Clause Builder
+        where_clause = "WHERE 1=1"
+        params = []
+        
+        if search:
+            where_clause += " AND (p.nama_pelajar LIKE %s OR p.no_kp_pelajar LIKE %s OR ou.bil_kemasukan LIKE %s)"
+            search_param = f"%{search}%"
+            params.extend([search_param, search_param, search_param])
+        
+        if pakej_filter:
+            where_clause += " AND p.id_pakej = %s"
+            params.append(pakej_filter)
+            
+        if uni_filter:
+            where_clause += " AND ou.uni_code = %s"
+            params.append(uni_filter)
+
+        # 6. Get total count for pagination
+        count_query = f"""
+            SELECT COUNT(ou.id) as total 
+            FROM offered_uni ou
+            LEFT JOIN pelajar p ON ou.bil_kemasukan = p.bil_kemasukan
+            LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej
+            {where_clause}
+        """
+        cursor.execute(count_query, params)
+        total_records = cursor.fetchone()['total']
+        total_pages = max(1, (total_records + per_page - 1) // per_page)
+
+        # 7. Fetch Paginated Data
+        query = f"""
+            SELECT ou.*, ou.bil_kemasukan, p.nama_pelajar, p.no_kp_pelajar, pk.kod_pakej 
+            FROM offered_uni ou
+            LEFT JOIN pelajar p ON ou.bil_kemasukan = p.bil_kemasukan
+            LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej
+            {where_clause}
+            ORDER BY ou.id DESC
+            LIMIT %s OFFSET %s
+        """
+        cursor.execute(query, params + [per_page, offset])
+        records = cursor.fetchall()
+
+    except Exception as e:
+        flash(f"Ralat sistem: {str(e)}", "danger")
+        records = []
+        all_packages = []
+        all_universities = []
+        total_records = 0
+        total_pages = 1
+    finally:
+        cursor.close()
+        conn.close()
+    
+    # 8. Render Template with necessary parameters
+    return render_template(
+        'offered_uni_list.html',
+        records=records,
+        page=page,
+        total_pages=total_pages,
+        total_records=total_records,
+        search=search,
+        pakej_filter=pakej_filter,
+        uni_filter=uni_filter,
+        all_packages=all_packages,
+        all_universities=all_universities
+    )
+
 if __name__ == '__main__':
     app.run(debug=True)

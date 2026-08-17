@@ -143,5 +143,16 @@ CREATE TABLE cikgu (
     alamat_rumah TEXT DEFAULT NULL,
     jantina ENUM('LELAKI', 'PEREMPUAN') DEFAULT NULL,
     agama ENUM('MUSLIM', 'NON-MUSLIM') DEFAULT NULL,
-    subjek_diajar VARCHAR(100) DEFAULT NULL
+    subjek_diajar VARCHAR(100) DEFAULT NULL,
+    status VARCHAR(20) DEFAULT 'aktif',
+	sebabStatus VARCHAR(100) DEFAULT NULL,
+	tarikhStatus DATE DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE offered_uni (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    bil_kemasukan INT DEFAULT NULL,
+    uni_name VARCHAR(100) NOT NULL,
+    uni_code VARCHAR(10) UNIQUE DEFAULT NULL,
+    offer_amt DECIMAL(10, 2) DEFAULT 0.00
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

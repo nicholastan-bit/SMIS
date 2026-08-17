@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Include Select2 CSS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+
+<div class="container" style="max-width: 700px; margin-top: 40px; margin-bottom: 50px;">
+
+    <div class="panel panel-primary" style="box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 6px;">
+        <div class="panel-heading" style="font-size: 16px; font-weight: bold; padding: 15px;">
+            <span class="glyphicon glyphicon-education"></span> Pendaftaran Tawaran Universiti
+        </div>
+        <div class="panel-body" style="padding: 30px;">
+
+            <form action="{{ url_for('add_offered_uni') }}" method="POST">
+
+                <!-- 1st Input: Searchable University Dropdown -->
+                <div class="form-group" style="margin-bottom: 25px;">
+                    <label for="uni_code" style="font-weight: bold; color: #555;">Pilih Universiti (Kod atau Nama) <span
+                            class="text-danger">*</span></label>
+                    <select class="form-control select2-univ" id="uni_code" name="uni_code" required
+                        style="width: 100%;">
+                        <option value="">-- Taip atau Pilih Universiti --</option>
+                        {% for u in universities %}
+                        <option value="{{ u.code }}">{{ u.code }} - {{ u.name }} ({{ u.category }})</option>
+                        {% endfor %}
+                    </select>
+                    <span class="help-block" style="font-size: 12px; color: #777; margin-top: 5px;">Taip kod (cth: UM,
+                        UTM) atau nama universiti untuk carian pantas.</span>
+                </div>
+
+                <!-- 2nd Input: Offer Amount -->
+                <div class="form-group" style="margin-bottom: 30px;">
+                    <label for="offer_amt" style="font-weight: bold; color: #555;">Jumlah Tawaran (Offer Amount - RM)
+                        <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-addon">RM</span>
+                        <input type="number" step="0.01" min="0" class="form-control" id="offer_amt" name="offer_amt"
+                            placeholder="0.00" required>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="form-group text-right" style="margin-bottom: 0;">
+                    <a href="{{ url_for('index') }}" class="btn btn-default" style="margin-right: 10px;">
+                        <span class="glyphicon glyphicon-chevron-left"></span> Kembali
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-lg" style="padding: 10px 25px; font-size: 15px;">
+                        <span class="glyphicon glyphicon-floppy-disk"></span> Simpan Tawaran
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<!-- Include jQuery and Select2 JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('.select2-univ').select2({
+            placeholder: "-- Taip atau Pilih Universiti --",
+            allowClear: true
+        });
+    });
+</script>
+{% endblock %}

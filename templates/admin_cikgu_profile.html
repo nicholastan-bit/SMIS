@@ -1,85 +1,193 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container" style="max-width: 800px; margin-top: 20px; margin-bottom: 50px;">
+<div class="container" style="max-width: 900px; margin-top: 20px; margin-bottom: 50px;">
     <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
-        <h2>Profil Guru</h2>
+        <h2>Kemaskini Profil Guru</h2>
         <a href="{{ url_for('admin_list_cikgu') }}" class="btn btn-default">
             <span class="glyphicon glyphicon-chevron-left"></span> Kembali ke Senarai
         </a>
     </div>
 
-    <div class="panel panel-primary" style="box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-        <div class="panel-heading" style="font-size: 16px; font-weight: bold;">
-            <span class="glyphicon glyphicon-user"></span> Maklumat Peribadi &amp; Perkhidmatan: {{ cikgu.nama }}
+    <form action="{{ url_for('admin_cikgu_profile', id_cikgu=cikgu.id_cikgu) }}" method="POST">
+        <div class="panel panel-primary" style="box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            <div class="panel-heading" style="font-size: 16px; font-weight: bold;">
+                <span class="glyphicon glyphicon-edit"></span> Maklumat Peribadi &amp; Perkhidmatan: {{ cikgu.nama }}
+            </div>
+            <div class="panel-body">
+                <table class="table table-bordered" style="background-color: #fff; margin-bottom: 0;">
+                    <tbody>
+                        <tr>
+                            <th style="width: 30%; background-color: #f9f9f9; vertical-align: middle;">ID Cikgu</th>
+                            <td>
+                                <input type="text" class="form-control" value="{{ cikgu.id_cikgu }}" disabled>
+                                <span class="help-block" style="margin-bottom: 0; font-size: 11px;">ID Dijana Automatik
+                                    oleh Sistem</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="background-color: #f9f9f9; vertical-align: middle;">Nama Penuh <span
+                                    class="text-danger">*</span></th>
+                            <td><input type="text" class="form-control" name="nama" value="{{ cikgu.nama }}" required>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="background-color: #f9f9f9; vertical-align: middle;">No. Kad Pengenalan (IC) <span
+                                    class="text-danger">*</span></th>
+                            <td><input type="text" class="form-control" name="IC" value="{{ cikgu.IC }}" required></td>
+                        </tr>
+                        <tr>
+                            <th style="background-color: #f9f9f9; vertical-align: middle;">Jawatan <span
+                                    class="text-danger">*</span></th>
+                            <td>
+                                <select class="form-control" name="jawatan" required>
+                                    <option value="">-- Pilih Jawatan --</option>
+                                    {% for j in jawatan_list %}
+                                    <option value="{{ j }}" {% if cikgu.jawatan==j %}selected{% endif %}>{{ j }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="background-color: #f9f9f9; vertical-align: middle;">Gred Jawatan Hakiki <span
+                                    class="text-danger">*</span></th>
+                            <td>
+                                <select class="form-control" name="gred_jawatan_hakiki" required>
+                                    <option value="">-- Pilih Gred Hakiki --</option>
+                                    {% for g in gred_list %}
+                                    <option value="{{ g }}" {% if cikgu.gred_jawatan_hakiki==g %}selected{% endif %}>{{
+                                        g }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="background-color: #f9f9f9; vertical-align: middle;">Gred Jawatan Semasa <span
+                                    class="text-danger">*</span></th>
+                            <td>
+                                <select class="form-control" name="gred_jawatan_semasa" required>
+                                    <option value="">-- Pilih Gred Semasa --</option>
+                                    {% for g in gred_list %}
+                                    <option value="{{ g }}" {% if cikgu.gred_jawatan_semasa==g %}selected{% endif %}>{{
+                                        g }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="background-color: #f9f9f9; vertical-align: middle;">Kaum <span
+                                    class="text-danger">*</span></th>
+                            <td>
+                                <select class="form-control" name="kaum" required>
+                                    <option value="">-- Pilih Kaum --</option>
+                                    {% for k in kaum_list %}
+                                    <option value="{{ k }}" {% if cikgu.kaum==k %}selected{% endif %}>{{ k }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="background-color: #f9f9f9; vertical-align: middle;">Agama <span
+                                    class="text-danger">*</span></th>
+                            <td>
+                                <select class="form-control" name="agama" required>
+                                    <option value="">-- Pilih Agama --</option>
+                                    {% for ag in agama_list %}
+                                    <option value="{{ ag }}" {% if cikgu.agama==ag %}selected{% endif %}>{{ ag }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="background-color: #f9f9f9; vertical-align: middle;">Jantina <span
+                                    class="text-danger">*</span></th>
+                            <td>
+                                <select class="form-control" name="jantina" required>
+                                    <option value="">-- Pilih Jantina --</option>
+                                    {% for jan in jantina_list %}
+                                    <option value="{{ jan }}" {% if cikgu.jantina==jan %}selected{% endif %}>{{ jan }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="background-color: #f9f9f9; vertical-align: middle;">Subjek Utama Diajar <span
+                                    class="text-danger">*</span></th>
+                            <td>
+                                <select class="form-control" name="subjek_diajar" required>
+                                    <option value="">-- Pilih Subjek --</option>
+                                    {% for sub in subjek_list %}
+                                    <option value="{{ sub }}" {% if cikgu.subjek_diajar==sub %}selected{% endif %}>{{
+                                        sub }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="background-color: #f9f9f9; vertical-align: middle;">No. Telefon (Phone No) <span
+                                    class="text-danger">*</span></th>
+                            <td><input type="text" class="form-control" name="phoneNo" value="{{ cikgu.phoneNo or '' }}"
+                                    required></td>
+                        </tr>
+                        <tr>
+                            <th style="background-color: #f9f9f9; vertical-align: middle;">Emel <span
+                                    class="text-danger">*</span></th>
+                            <td><input type="email" class="form-control" name="email" value="{{ cikgu.email or '' }}"
+                                    required></td>
+                        </tr>
+                        <tr>
+                            <th style="background-color: #f9f9f9; vertical-align: middle;">Alamat Rumah <span
+                                    class="text-danger">*</span></th>
+                            <td><textarea class="form-control" name="alamat_rumah" rows="3"
+                                    required>{{ cikgu.alamat_rumah or '' }}</textarea></td>
+                        </tr>
+
+                        <!-- New Status Tracking Fields -->
+                        <tr>
+                            <th style="background-color: #f9f9f9; vertical-align: middle;">Status Guru <span
+                                    class="text-danger">*</span></th>
+                            <td>
+                                <select class="form-control" name="status" required>
+                                    {% for st in status_list %}
+                                    <option value="{{ st }}" {% if cikgu.status==st %}selected{% endif %}>{{ st | upper
+                                        }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="background-color: #f9f9f9; vertical-align: middle;">Sebab Status (Jika tidak
+                                aktif)</th>
+                            <td>
+                                <select class="form-control" name="sebabStatus">
+                                    <option value="">-- Tiada / Pilih Sebab --</option>
+                                    {% for seb in sebab_status_list %}
+                                    <option value="{{ seb }}" {% if cikgu.sebabStatus==seb %}selected{% endif %}>{{ seb
+                                        | title }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="background-color: #f9f9f9; vertical-align: middle;">Tarikh Status</th>
+                            <td>
+                                <input type="date" class="form-control" name="tarikhStatus"
+                                    value="{{ cikgu.tarikhStatus or '' }}">
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="panel-footer text-right" style="padding: 15px;">
+                <a href="{{ url_for('admin_list_cikgu') }}" class="btn btn-default" style="margin-right: 5px;">Batal</a>
+                <button type="submit" class="btn btn-primary">
+                    <span class="glyphicon glyphicon-floppy-disk"></span> Simpan Perubahan
+                </button>
+            </div>
         </div>
-        <div class="panel-body">
-            <table class="table table-bordered table-striped" style="background-color: #fff; margin-bottom: 0;">
-                <tbody>
-                    <tr>
-                        <th style="width: 30%; background-color: #f9f9f9;">ID Cikgu</th>
-                        <td>{{ cikgu.id_cikgu }}</td>
-                    </tr>
-                    <tr>
-                        <th style="background-color: #f9f9f9;">Nama Penuh</th>
-                        <td><strong>{{ cikgu.nama }}</strong></td>
-                    </tr>
-                    <tr>
-                        <th style="background-color: #f9f9f9;">No. Kad Pengenalan (IC)</th>
-                        <td>{{ cikgu.IC }}</td>
-                    </tr>
-                    <tr>
-                        <th style="background-color: #f9f9f9;">Jawatan</th>
-                        <td><span class="label label-info" style="font-size: 13px;">{{ cikgu.jawatan or '-' }}</span></td>
-                    </tr>
-                    <tr>
-                        <th style="background-color: #f9f9f9;">Gred Jawatan Hakiki</th>
-                        <td>{{ cikgu.gred_jawatan_hakiki or '-' }}</td>
-                    </tr>
-                    <tr>
-                        <th style="background-color: #f9f9f9;">Gred Jawatan Semasa</th>
-                        <td>{{ cikgu.gred_jawatan_semasa or '-' }}</td>
-                    </tr>
-                    <tr>
-                        <th style="background-color: #f9f9f9;">Kaum</th>
-                        <td><span class="label label-warning" style="color: #000;">{{ cikgu.kaum or '-' }}</span></td>
-                    </tr>
-                    <tr>
-                        <th style="background-color: #f9f9f9;">Agama</th>
-                        <td>{{ cikgu.agama or '-' }}</td>
-                    </tr>
-                    <tr>
-                        <th style="background-color: #f9f9f9;">Jantina</th>
-                        <td>{{ cikgu.jantina or '-' }}</td>
-                    </tr>
-                    <tr>
-                        <th style="background-color: #f9f9f9;">Subjek Utama Diajar</th>
-                        <td><span class="label label-default" style="font-size: 12px;">{{ cikgu.subjek_diajar or '-' }}</span></td>
-                    </tr>
-                    <tr>
-                        <th style="background-color: #f9f9f9;">No. Telefon (Phone No)</th>
-                        <td>{{ cikgu.phoneNo or '-' }}</td>
-                    </tr>
-                    <tr>
-                        <th style="background-color: #f9f9f9;">Emel</th>
-                        <td>
-                            {% if cikgu.email %}
-                                <a href="mailto:{{ cikgu.email }}">{{ cikgu.email }}</a>
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th style="background-color: #f9f9f9;">Alamat Rumah</th>
-                        <td><div style="white-space: pre-line;">{{ cikgu.alamat_rumah or '-' }}</div></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <div class="panel-footer text-right">
-            <a href="{{ url_for('admin_list_cikgu') }}" class="btn btn-primary">Kembali</a>
-        </div>
-    </div>
+    </form>
 </div>
 {% endblock %}
