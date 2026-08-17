@@ -154,5 +154,5 @@ CREATE TABLE offered_uni (
     bil_kemasukan INT DEFAULT NULL,
     uni_name VARCHAR(100) NOT NULL,
     uni_code VARCHAR(10) UNIQUE DEFAULT NULL,
-    offer_amt DECIMAL(10, 2) DEFAULT 0.00
+    offered_course VARCHAR(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -1350,7 +1350,7 @@ def add_offered_uni():
 
         if not student:
             flash("Maklumat pelajar tidak dijumpai dengan No. KP ini.", "danger")
-            return redirect(url_for('gateway'))
+            return redirect(url_for('index'))
 
         # This is the actual integer primary key from the 'pelajar' table
         bil_kemasukan = student['bil_kemasukan']
@@ -1434,7 +1434,7 @@ def add_offered_uni():
 
     if request.method == 'POST':
         selected_code = request.form.get('uni_code')
-        offer_amt = request.form.get('offer_amt')
+        offered_course = request.form.get('offered_course')
         
         selected_uni = next((u for u in universities_list if u['code'] == selected_code), None)
         uni_name = selected_uni['name'] if selected_uni else "Lain-lain"
@@ -1458,10 +1458,10 @@ def add_offered_uni():
                 return redirect(url_for('add_offered_uni'))
 
             query = """
-                INSERT INTO offered_uni (bil_kemasukan, uni_name, uni_code, offer_amt)
+                INSERT INTO offered_uni (bil_kemasukan, uni_name, uni_code, offered_course)
                 VALUES (%s, %s, %s, %s)
             """
-            cursor.execute(query, (real_bil_kemasukan, uni_name, selected_code, offer_amt))
+            cursor.execute(query, (real_bil_kemasukan, uni_name, selected_code, offered_course))
             conn.commit()
             flash("Maklumat tawaran universiti berjaya disimpan!", "success")
             return redirect(url_for('index'))
@@ -3992,9 +3992,9 @@ def list_offered_uni():
         params = []
         
         if search:
-            where_clause += " AND (p.nama_pelajar LIKE %s OR p.no_kp_pelajar LIKE %s OR ou.bil_kemasukan LIKE %s)"
+            where_clause += " AND (p.nama_pelajar LIKE %s OR p.no_kp_pelajar LIKE %s OR ou.bil_kemasukan LIKE %s OR ou.offered_course LIKE %s)"
             search_param = f"%{search}%"
-            params.extend([search_param, search_param, search_param])
+            params.extend([search_param, search_param, search_param, search_param])
         
         if pakej_filter:
             where_clause += " AND p.id_pakej = %s"
@@ -4018,7 +4018,7 @@ def list_offered_uni():
 
         # 7. Fetch Paginated Data
         query = f"""
-            SELECT ou.*, ou.bil_kemasukan, p.nama_pelajar, p.no_kp_pelajar, pk.kod_pakej 
+            SELECT ou.*, p.nama_pelajar, p.no_kp_pelajar, pk.kod_pakej 
             FROM offered_uni ou
             LEFT JOIN pelajar p ON ou.bil_kemasukan = p.bil_kemasukan
             LEFT JOIN pakej pk ON p.id_pakej = pk.id_pakej
@@ -4039,6 +4039,9 @@ def list_offered_uni():
     finally:
         cursor.close()
         conn.close()
+
+    for i in records:
+        print(i['offered_course'])
     
     # 8. Render Template with necessary parameters
     return render_template(

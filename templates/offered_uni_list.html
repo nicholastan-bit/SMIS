@@ -103,7 +103,7 @@
                     <th>No. KP</th>
                     <th style="text-align: center; width: 12%;">Kod Uni</th>
                     <th>Nama Universiti (Tawaran)</th>
-                    <th style="text-align: right; width: 18%;">Jumlah Tawaran (RM)</th>
+                    <th style="text-align: center; width: 18%;">Kursus (Course)</th>
                 </tr>
             </thead>
             <tbody>
@@ -112,11 +112,11 @@
                     <td style="text-align: center; vertical-align: middle;">{{ row.bil_kemasukan or 'NULL' }}</td>
                     <td style="vertical-align: middle;"><strong>{{ row.nama_pelajar or 'NULL' }}</strong></td>
                     <td style="vertical-align: middle;">{{ row.no_kp_pelajar or '-' }}</td>
-                    <td style="text-align: center; vertical-align: middle;"><span class="label label-info">{{
-                            row.uni_code }}</span></td>
+                    <td style="text-align: center; vertical-align: middle;">{{
+                    row.uni_code }}</td>
                     <td style="vertical-align: middle;">{{ row.uni_name }}</td>
-                    <td style="text-align: right; vertical-align: middle; color: #28a745; font-weight: bold;">
-                        RM {{ "{:,.2f}".format(row.offer_amt or 0) }}
+                    <td style="vertical-align: middle;">
+                        {{ row.offered_course }}               
                     </td>
                 </tr>
                 {% else %}
