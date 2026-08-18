@@ -84,6 +84,30 @@ PERKARA_OPTIONS = [
         "Datang Lambat", "Kaunseling Individu", "Kaunseling Kelompok", "Perjumpaan PRS", "Kelas Ganti"
     ]
 
+#CIKGU ---------------
+# Define options lists to pass to the template
+JAWATAN_LIST = [
+    "PENOLONG KANAN", 
+    "GURU KOKURIKULUM TINGKATAN ENAM", 
+    "GURU AKADEMIK TNGKATAN ENAM", 
+    "GURU AMALI TINGKATAN ENAM", 
+    "GURU AKADEMIK", 
+    "KETUA JABATAN", 
+    "PEMBANTU OPERASI", 
+    "PEMBANTU MAKMAL", 
+    "PEMBANTU TADBIR",
+    "KETUA PEMBANTU TADBIR"    
+    ]
+
+GRED_LIST = ['DG9', 'DG10', 'DG12', 'DG13', 'DG14', 'C1', 'C2', 'N1', 'N2', 'N11']
+KAUM_LIST = ['MELAYU', 'CINA', 'INDIA', 'SABAH/SARAWAK']
+AGAMA_LIST = ['MUSLIM', 'NON-MUSLIM']    
+SUBJEK_LIST = [
+    'PENGAJIAN AM', 'BAHASA MELAYU', 'BAHASA TAMIL', 'SYARIAH', 
+    'SEJARAH', 'GEOGRAFI', 'EKONOMI', 'PENGAJIAN PERNIAGAAN', 
+    'PERAKAUNAN', 'MANAGEMENT MATHEMATICS', 'MATHEMATICS', 'ICT', 'PHYSICS'    
+    ]
+
 def get_limits():
     # If the file doesn't exist, create it with your default dictionary
     if not os.path.exists(LIMITS_FILE):
@@ -3510,29 +3534,7 @@ def add_cikgu():
         flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
         return redirect(url_for('gateway'))
 
-    # Define options lists to pass to the template
-    jawatan_list = [
-        "PENOLONG KANAN", 
-        "GURU KOKURIKULUM TINGKATAN ENAM", 
-        "GURU AKADEMIK TNGKATAN ENAM", 
-        "GURU AMALI TINGKATAN ENAM", 
-        "GURU AKADEMIK", 
-        "KETUA JABATAN", 
-        "PEMBANTU OPERASI", 
-        "PEMBANTU MAKMAL", 
-        "PEMBANTU TADBIR",
-        "KETUA PEMBANTU TADBIR"
-    ]
-    
-    gred_list = ['DG9', 'DG10', 'DG12', 'DG13', 'DG14', 'C1', 'C2', 'N1', 'N2', 'N11']
-    kaum_list = ['MELAYU', 'CINA', 'INDIA', 'SABAH/SARAWAK']
-    agama_list = ['MUSLIM', 'NON-MUSLIM']
-    
-    subjek_list = [
-        'PENGAJIAN AM', 'BAHASA MELAYU', 'BAHASA TAMIL', 'SYARIAH', 
-        'SEJARAH', 'GEOGRAFI', 'EKONOMI', 'PENGAJIAN PERNIAGAAN', 
-        'PERAKAUNAN', 'MANAGEMENT MATHEMATICS', 'MATHEMATICS', 'ICT', 'PHYSICS'
-    ]
+
 
     if request.method == 'POST':
         # Retrieve data from form
@@ -3573,11 +3575,11 @@ def add_cikgu():
     # Render the HTML form page and pass the list variables
     return render_template(
         'add_cikgu.html',
-        jawatan_list=jawatan_list,
-        gred_list=gred_list,
-        kaum_list=kaum_list,
-        agama_list=agama_list,
-        subjek_list=subjek_list
+        jawatan_list=JAWATAN_LIST,
+        gred_list=GRED_LIST,
+        kaum_list=KAUM_LIST,
+        agama_list=AGAMA_LIST,
+        subjek_list=SUBJEK_LIST
     )
 
 @app.route('/admin/cikgu-list')
@@ -3683,31 +3685,6 @@ def admin_cikgu_profile(id_cikgu):
         flash("Akses Ditolak: Hak pentadbir sistem diperlukan.", "danger")
         return redirect(url_for('gateway'))
 
-    # Define dropdown lists from system schema definitions[cite: 2]
-    jawatan_list = [
-        "PENOLONG KANAN", 
-        "GURU KOKURIKULUM TINGKATAN ENAM", 
-        "GURU AKADEMIK TNGKATAN ENAM", 
-        "GURU AMALI TINGKATAN ENAM", 
-        "GURU AKADEMIK", 
-        "KETUA JABATAN", 
-        "PEMBANTU OPERASI", 
-        "PEMBANTU MAKMAL", 
-        "PEMBANTU TADBIR", 
-        "KETUA PEMBANTU TADBIR"
-    ]
-    
-    gred_list = ['DG9', 'DG10', 'DG12', 'DG14', 'C1', 'C2', 'N1', 'N2', 'N11']
-    kaum_list = ['MELAYU', 'CINA', 'INDIA', 'SABAH/SARAWAK']
-    agama_list = ['MUSLIM', 'NON-MUSLIM']
-    jantina_list = ['LELAKI', 'PEREMPUAN']
-    
-    subjek_list = [
-        'PENGAJIAN AM', 'BAHASA MELAYU', 'BAHASA TAMIL', 'SYARIAH', 
-        'SEJARAH', 'GEOGRAFI', 'EKONOMI', 'PENGAJIAN PERNIAGAAN', 
-        'PERAKAUNAN', 'MANAGEMENT MATHEMATICS', 'MATHEMATICS', 'ICT', 'PHYSICS'
-    ]
-
     # New dropdown option lists for teacher status tracking
     status_list = ['aktif', 'tidak aktif']
     sebab_status_list = ['pindah sekolah', 'bersara', 'meninggal dunia']
@@ -3773,12 +3750,11 @@ def admin_cikgu_profile(id_cikgu):
     return render_template(
         'admin_cikgu_profile.html', 
         cikgu=cikgu,
-        jawatan_list=jawatan_list,
-        gred_list=gred_list,
-        kaum_list=kaum_list,
-        agama_list=agama_list,
-        jantina_list=jantina_list,
-        subjek_list=subjek_list,
+        jawatan_list=JAWATAN_LIST,
+        gred_list=GRED_LIST,
+        kaum_list=KAUM_LIST,
+        agama_list=AGAMA_LIST,
+        subjek_list=SUBJEK_LIST,
         status_list=status_list,
         sebab_status_list=sebab_status_list
     )
