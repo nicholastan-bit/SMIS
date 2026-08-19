@@ -105,11 +105,9 @@
                                     class="text-danger">*</span></th>
                             <td>
                                 <select class="form-control" name="jantina" required>
-                                    <option value="">-- Pilih Jantina --</option>
-                                    {% for jan in jantina_list %}
-                                    <option value="{{ jan }}" {% if cikgu.jantina==jan %}selected{% endif %}>{{ jan }}
-                                    </option>
-                                    {% endfor %}
+                                    <option value="NULL" {% if cikgu.jantina==none or cikgu.jantina=="NULL" %}selected{% endif %}>-- Pilih --</option>
+                                    <option value="LELAKI" {% if cikgu.jantina=="LELAKI" %}selected{% endif %}>Lelaki</option>
+                                    <option value="PEREMPUAN" {% if cikgu.jantina=="PEREMPUAN" %}selected{% endif %}>Perempuan</option>
                                 </select>
                             </td>
                         </tr>

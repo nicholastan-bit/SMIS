@@ -105,7 +105,7 @@ AGAMA_LIST = ['MUSLIM', 'NON-MUSLIM']
 SUBJEK_LIST = [
     'PENGAJIAN AM', 'BAHASA MELAYU', 'BAHASA TAMIL', 'SYARIAH', 
     'SEJARAH', 'GEOGRAFI', 'EKONOMI', 'PENGAJIAN PERNIAGAAN', 
-    'PERAKAUNAN', 'MANAGEMENT MATHEMATICS', 'MATHEMATICS', 'ICT', 'PHYSICS'    
+    'PERAKAUNAN', 'MANAGEMENT MATHEMATICS', 'MATHEMATICS', 'ICT', 'PHYSICS', 'SENI VISUAL'   
     ]
 
 def get_limits():
@@ -3677,7 +3677,12 @@ def admin_list_cikgu():
                            agama_filter=agama_filter,
                            subjek_filter=subjek_filter,
                            jantina_filter=jantina_filter,
-                           status_filter=status_filter)
+                           status_filter=status_filter,
+                           jawatan_list=JAWATAN_LIST,
+                           gred_list=GRED_LIST,
+                           kaum_list=KAUM_LIST,
+                           agama_list=AGAMA_LIST,
+                           subjek_list=SUBJEK_LIST)
 
 @app.route('/admin/cikgu-profile/<int:id_cikgu>', methods=['GET', 'POST'])
 def admin_cikgu_profile(id_cikgu):
