@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ms">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Cetak Laporan Aktiviti</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap');
+
+        body {
+            background-color: #444;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', Arial, sans-serif;
+        }
+
+        /* A4 Page container */
+        .print-page {
+            width: 210mm;
+            height: 297mm;
+            margin: 10mm auto;
+            position: relative;
+            background-color: #fff;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        /* Background Template Image Layer */
+        .bg-template {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 210mm;
+            height: 297mm;
+            z-index: 1;
+            object-fit: cover;
+        }
+
+        /* Content Overlay Layer */
+        .content-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 210mm;
+            height: 297mm;
+            z-index: 2;
+        }
+
+        /* Top Header Styling */
+        .header-section {
+            position: absolute;
+            top: 25px;
+            left: 40px; /* Pushes the text block to the right, clearing the logo */
+            right: 40px; /* Keeps a clean right margin */
+            letter-spacing: -1.5px;
+            text-align: center;
+            color: #d35400;
+            font-weight: 800;
+        }
+
+        .header-section h4 {
+            font-size: 16px; /* Scaled down slightly so long club names fit and wrap gracefully */
+            margin: 2px 0;
+            font-weight: 800;
+            line-height: 1.3;
+        }
+
+        .header-section h3 {
+            font-size: 16px;
+            margin: 2px 0;
+            font-weight: 800;
+            line-height: 1.3;
+        }
+
+        /* Program Title Banner & Divider */
+        .program-title-container {
+            position: absolute;
+            top: 140px;
+            width: 100%;
+            text-align: center;
+            padding: 0 40px;
+        }
+
+        .program-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: #6e2c00;
+            text-transform: uppercase;
+            letter-spacing: -0.5px; /* Reduces letter spacing to pull letters closer together */
+            margin-bottom: 4px;
+            line-height: 1.2;
+        }
+
+        .title-divider {
+            width: 280px;
+            height: 2px;
+            background-color: #d35400;
+            margin: 0 auto;
+        }
+
+        .metadata-section {
+            position: absolute;
+            top: 225px;
+            width: 100%;
+            text-align: center; /* Ensures inline elements center properly */
+        }
+
+        .metadata-table {
+            margin: 0 auto; /* This forces a block table to center horizontally */
+            font-size: 20px;
+            font-weight: 900;
+            color: #000;
+            line-height: 1.35;
+            letter-spacing: -1.5px;
+            border-collapse: separate;
+            border-spacing: 0 1px;
+            text-align: center; /* Keeps text inside readable */
+        }
+
+        .metadata-label {
+            text-align: right;
+            padding-right: 8px;
+            white-space: nowrap;
+        }
+
+        .metadata-separator {
+            text-align: right;
+            padding-right: 8px;
+        }
+
+        .metadata-value {
+            text-align: left;
+        }
+
+        /* Objektif Section Re-alignment */
+        .objektif-heading {
+            position: absolute;
+            top: 315px;
+            left: 55px;
+            font-size: 13px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+
+        .objektif-section {
+            position: absolute;
+            top: 500px;
+            left: 55px;
+            width: 580px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #000;
+        }
+
+        .objektif-section ul {
+            margin: 0;
+            padding-left: 20px;
+            line-height: 1.35;
+        }
+
+        /* Ringkasan Section Re-alignment */
+        .ringkasan-heading {
+            position: absolute;
+            top: 450px;
+            left: 55px;
+            font-size: 13px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+
+        .ringkasan-section {
+            position: absolute;
+            top: 700px;
+            left: 55px;
+            width: 580px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #000;
+        }
+
+        .ringkasan-section ul {
+            margin: 0;
+            padding-left: 20px;
+            line-height: 1.35;
+        }
+
+        /* Image Slots Aligned to Template Placeholders */
+        .image-slot-1 {
+            position: absolute;
+            bottom: 45px;
+            left: 65px;
+            width: 305px;
+            height: 225px;
+            border-radius: 20px; /* Matches the rounded corners of the placeholder frame */
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #e8f4fc; /* Matches placeholder background colour if image is missing */
+        }
+
+        .image-slot-2 {
+            position: absolute;
+            bottom: 45px;
+            left: 440px;
+            width: 305px;
+            height: 225px;
+            border-radius: 20px; /* Matches the rounded corners of the placeholder frame */
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #e8f4fc;
+        }
+
+        .image-slot-1 img,
+        .image-slot-2 img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ensures the picture fills the frame entirely without stretching weirdly */
+        }
+
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
+
+        @media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+
+            body {
+                background: none !important;
+            }
+
+            .print-page {
+                margin: 0 !important;
+                box-shadow: none !important;
+                width: 210mm !important;
+                height: 297mm !important;
+            }
+
+            /* Force header colors explicitly */
+            .header-section, .header-section h4, .header-section h3 {
+                color: #d35400 !important;
+            }
+
+            /* Force program title color explicitly */
+            .program-title {
+                color: #6e2c00 !important;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <div class="container text-center no-print" style="margin: 15px 0;">
+        <button onclick="window.print()" class="btn btn-primary btn-lg"><span class="glyphicon glyphicon-print"></span>
+            Cetak Dokumen</button>
+        <a href="{{ url_for('aktiviti_form') }}" class="btn btn-default btn-lg"><span
+                class="glyphicon glyphicon-edit"></span> Kembali & Kemaskini</a>
+    </div>
+
+    <div class="print-page">
+        <!-- Background Template Rendered as Real Image -->
+        <img src="{{ url_for('static', filename='activity_template.png') }}" class="bg-template" alt="Template">
+
+        <!-- All Content Overlay Layer -->
+        <div class="content-layer">
+            <div class="header-section">
+                <h4>LAPORAN AKTIVITI KOKURIKULUM</h4>
+                <h4>KELAB {{ data.aktiviti | upper }}</h4>
+                <h3>KOLEJ TINGKATAN ENAM SRI ISTANA</h3>
+            </div>
+
+            <!-- Dynamic Program Title -->
+            <div class="program-title-container">
+                <div class="program-title">{{ data.nama_program }}</div>
+            </div>
+
+            <!-- Metadata Table -->
+            <div class="metadata-section">
+                <table class="metadata-table">
+                    <tr>
+                        <td class="metadata-label">TARIKH</td>
+                        <td class="metadata-separator">:</td>
+                        <td class="metadata-value">{{ data.tarikh }}</td>
+                    </tr>
+                    <tr>
+                        <td class="metadata-label">MASA</td>
+                        <td class="metadata-separator">:</td>
+                        <td class="metadata-value">{{ data.masa }}</td>
+                    </tr>
+                    <tr>
+                        <td class="metadata-label">TEMPAT</td>
+                        <td class="metadata-separator">:</td>
+                        <td class="metadata-value">{{ data.tempat }}</td>
+                    </tr>
+                    <tr>
+                        <td class="metadata-label">SASARAN</td>
+                        <td class="metadata-separator">:</td>
+                        <td class="metadata-value">{{ data.sasaran }}</td>
+                    </tr>
+                    <tr>
+                        <td class="metadata-label">GURU TERLIBAT</td>
+                        <td class="metadata-separator">:</td>
+                        <td class="metadata-value">{{ data.guru_terlibat }}</td>
+                    </tr>
+                    <tr>
+                        <td class="metadata-label">ANJURAN</td>
+                        <td class="metadata-separator">:</td>
+                        <td class="metadata-value">{{ data.anjuran }}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Objektif Section (Heading sits over template's orange pill, text sits below) -->
+            <div class="objektif-section">
+                <ul>
+                    {% for obj in data.objektif %}
+                    <li><b>{{ obj }}</b></li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Ringkasan Section -->
+            <div class="ringkasan-section">
+                <ul>
+                    {% for ring in data.ringkasan %}
+                    <li><b>{{ ring }}</b></li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Uploaded Images Contained in Frames -->
+            <div class="image-slot-1">
+                {% if data.img1 %}
+                <img src="{{ data.img1 }}" alt="Gambar Aktiviti 1">
+                {% else %}
+                <span class="text-muted" style="font-size: 10px;"></span>
+                {% endif %}
+            </div>
+
+            <div class="image-slot-2">
+                {% if data.img2 %}
+                <img src="{{ data.img2 }}" alt="Gambar Aktiviti 2">
+                {% else %}
+                <span class="text-muted" style="font-size: 10px;"></span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

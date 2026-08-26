@@ -100,6 +100,27 @@
                 </div>
             </div>
             {% endif %}
+            
+            {% if session.get('role') in ['admin', 'adminkoko', 'admincikgu', 'adminpelajar'] %}
+            <!-- Tambah Maklumat Cikgu (Admin & AdminCikgu) -->
+            <div class="col-md-6">
+                <div class="panel panel-warning" style="min-height: 190px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="panel-heading">
+                        <h3 class="panel-title" style="font-weight: bold;">
+                            <span class="glyphicon glyphicon-education"></span> Report Aktiviti
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                        <p class="text-muted" style="font-size: 13px;"> Generate report aktiviti
+                        </p>
+                        <a href="{{ url_for('aktiviti_form') }}" class="btn btn-warning btn-block"
+                            style="margin-top: 15px; padding: 10px; font-weight: bold; color: #fff;">
+                            <span class="glyphicon glyphicon-plus-sign"></span> Masuk
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
         {% endif %}
 

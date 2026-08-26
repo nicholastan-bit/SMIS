@@ -54,6 +54,40 @@ PACKAGE_LIMITS = {
 }
 DEFAULT_LIMIT = 40
 
+AKTIVITAS_DATA = {
+    'KK': [
+        'PERSATUAN BAHASA DAN KESUSASTERAAN',
+        'KELAB ALAM SEKITAR TINGKATAN ENAM',
+        'KELAB FOTOGRAFI',
+        'KELAB INOVASI/REKACIPTA',
+        'KELAB PENGGUNA',
+        'KELAB KESENIAN DAN KEBUDAYAAN',
+        'KELAB KOPERASI SEKOLAH',
+        'KELAB RUKUN NEGARA',
+        'PERSATUAN SAINS TEKNOLOGI, KEJURUTERAAN DAN MATEMATIK',
+        'PERSATUAN SEJARAH DAN PATRIOTISME TINGKATAN ENAM',
+        'PERSATUAN SENI VISUAL'
+    ],
+    'UB': [
+        'PANDU PUTERI MALAYSIA',
+        'PASUKAN KOR KADET POLIS',
+        'PERGERAKAN PUTERI ISLAM MALAYSIA',
+        'PERSEKUTUAN PENGAKAP MALAYSIA',
+        'PISPA',
+        'BULAN SABIT MERAH MALAYSIA'
+    ],
+    'SK': [
+        'BADMINTON',
+        'BOLA KERANJANG',
+        'BOLA JARING',
+        'BOLA TAMPAR',
+        'CATUR',
+        'FUTSAL',
+        'PETANQUE',
+        'PING PONG'
+    ]
+}
+
 SENARAI_RUMAH_SUKAN = ['MERAH', 'BIRU', 'KUNING', 'HIJAU', 'UNGU']
 
 SENARAI_TUGAS_KHAS = [
@@ -150,22 +184,24 @@ def check_activity_limit(unit_id, unit_name, unit_type):
     
     return current_count < limit
 
-# Tambah laluan folder baru untuk dokumen tambahan di bawah konfigurasi sedia ada
+# --- Your Existing Configurations ---
 UPLOAD_FOLDER_SPM = os.path.join(app.root_path, 'static', 'uploads', 'spm_slips')
 UPLOAD_FOLDER_DOCS = os.path.join(app.root_path, 'static', 'uploads', 'student_docs')
+UPLOAD_FOLDER_AKTIVITI = os.path.join(app.root_path, 'static', 'uploads', 'aktiviti_images')
 
-# Add this line to your existing configuration block
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER_SPM  # <--- ADD THIS LINE
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER_SPM  
 app.config['UPLOAD_FOLDER_SPM'] = UPLOAD_FOLDER_SPM
 app.config['UPLOAD_FOLDER_DOCS'] = UPLOAD_FOLDER_DOCS
+app.config['UPLOAD_FOLDER_AKTIVITI'] = UPLOAD_FOLDER_AKTIVITI
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
 
-# Pastikan kedua-dua folder wujud di dalam direktori
+# Ensure all folders exist
 os.makedirs(UPLOAD_FOLDER_SPM, exist_ok=True)   
 os.makedirs(UPLOAD_FOLDER_DOCS, exist_ok=True)
+os.makedirs(UPLOAD_FOLDER_AKTIVITI, exist_ok=True)
 
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'pdf', 'png', 'jpg', 'jpeg'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'pdf', 'png', 'jpg', 'jpeg', 'jfif'}
 
 def is_form_enabled(form_id):
     conn = get_db_connection() # Use your defined helper
@@ -4037,6 +4073,86 @@ def list_offered_uni():
         all_packages=all_packages,
         all_universities=all_universities
     )
+
+@app.route('/aktiviti/form', methods=['GET', 'POST'])
+def aktiviti_form():
+    if request.method == 'POST':
+        # Check if the user clicked the Reset button
+        if 'reset_form' in request.form:
+            session.pop('form_data', None)
+            return redirect(url_for('aktiviti_form'))
+
+        # Convert 24-hour time to AM/PM format function
+        def format_am_pm(time_str):
+            if not time_str:
+                return ''
+            try:
+                dt = datetime.strptime(time_str, '%H:%M')
+                return dt.strftime('%I:%M %p').lstrip('0')  # e.g., "2:30 PM"
+            except ValueError:
+                return time_str
+
+        raw_mula = request.form.get('masa_mula')
+        raw_tamat = request.form.get('masa_tamat')
+        
+        masa_mula = format_am_pm(raw_mula)
+        masa_tamat = format_am_pm(raw_tamat)
+        masa_gabung = f"{masa_mula} - {masa_tamat}" if masa_mula and masa_tamat else (masa_mula or '-')
+
+        image_paths = []
+        for i, img_key in enumerate(['image1', 'image2'], start=1):
+            remove_flag = request.form.get(f'remove_img{i}')
+            
+            # If user clicked remove for this image, set it to None
+            if remove_flag == '1':
+                image_paths.append(None)
+                continue
+
+            file = request.files.get(img_key)
+            if file and file.filename and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                unique_filename = f"{os.urandom(4).hex()}_{filename}"
+                filepath = os.path.join(app.config['UPLOAD_FOLDER_AKTIVITI'], unique_filename)
+                file.save(filepath)
+                
+                relative_path = url_for('static', filename=f'uploads/aktiviti_images/{unique_filename}')
+                image_paths.append(relative_path)
+            else:
+                # Keep existing session image if a new one wasn't uploaded and it wasn't deleted
+                image_paths.append(session.get('form_data', {}).get(f'img{i}'))
+
+        session['form_data'] = {
+            'unit': request.form.get('unit'),
+            'aktiviti': request.form.get('aktiviti'),
+            'nama_program': request.form.get('nama_program'),
+            'tarikh': request.form.get('tarikh'),
+            'raw_masa_mula': raw_mula,  # Kept raw for HTML time input value binding if needed
+            'raw_masa_tamat': raw_tamat,
+            'masa_mula': masa_mula,
+            'masa_tamat': masa_tamat,
+            'masa': masa_gabung,
+            'tempat': request.form.get('tempat'),
+            'sasaran': request.form.get('sasaran'),
+            'guru_terlibat': request.form.get('guru_terlibat'),
+            'anjuran': request.form.get('anjuran'),
+            'objektif': [o for o in request.form.getlist('objektif[]') if o.strip()],
+            'ringkasan': [r for r in request.form.getlist('ringkasan[]') if r.strip()],
+            'img1': image_paths[0],
+            'img2': image_paths[1]
+        }
+        return redirect(url_for('aktiviti_print'))
+        
+    form_data = session.get('form_data', {})
+    return render_template('aktiviti_form.html', aktiviti_data=AKTIVITAS_DATA, data=form_data)
+
+@app.route('/aktiviti/print')
+def aktiviti_print():
+    form_data = session.get('form_data')
+    if not form_data:
+        flash("Sila isi borang terlebih dahulu.", "warning")
+        return redirect(url_for('aktiviti_form'))
+        
+    return render_template('aktiviti_print.html', data=form_data)
 
 if __name__ == '__main__':
     app.run(debug=True)

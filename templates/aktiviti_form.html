@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container" style="margin-top: 30px; margin-bottom: 50px;">
+    <h2>Borang Maklumat Aktiviti Kokurikulum</h2>
+    <hr>
+    <form method="POST" enctype="multipart/form-data" class="form-horizontal">
+
+        <!-- Unit Selection -->
+        <div class="form-group">
+            <label class="control-label col-sm-2">Unit:</label>
+            <div class="col-sm-10">
+                <select name="unit" id="unitSelect" class="form-control" required onchange="updateAktivitiOptions()">
+                    <option value="">-- Sila Pilih Unit --</option>
+                    <option value="KK" {% if data.get('unit')=='KK' %}selected{% endif %}>Kelab (KK)</option>
+                    <option value="UB" {% if data.get('unit')=='UB' %}selected{% endif %}>Unit Beruniform (UB)</option>
+                    <option value="SK" {% if data.get('unit')=='SK' %}selected{% endif %}>Sukan (SK)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Aktiviti Selection -->
+        <div class="form-group">
+            <label class="control-label col-sm-2">Aktiviti:</label>
+            <div class="col-sm-10">
+                <select name="aktiviti" id="aktivitiSelect" class="form-control" required>
+                    <option value="">-- Sila Pilih Unit Terlebih Dahulu --</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Nama Program -->
+        <div class="form-group">
+            <label class="control-label col-sm-2" for="nama_program">Nama Program:</label>
+            <div class="col-sm-10">
+                <input type="text" id="nama_program" name="nama_program" class="form-control"
+                    value="{{ data.get('nama_program', '') }}" placeholder="Contoh: Bengkel Fotografi Digital" required>
+            </div>
+        </div>
+
+        <!-- Date -->
+        <div class="form-group">
+            <label class="control-label col-sm-2">Tarikh:</label>
+            <div class="col-sm-10">
+                <input type="date" name="tarikh" class="form-control" value="{{ data.get('tarikh', '') }}" required>
+            </div>
+        </div>
+
+        <!-- Time Range (Saves/Displays in AM/PM format) -->
+        <div class="form-group">
+            <label class="control-label col-sm-2">Masa:</label>
+            <div class="col-sm-5">
+                <div class="input-group">
+                    <span class="input-group-addon">Dari</span>
+                    <input type="time" name="masa_mula" class="form-control" value="{{ data.get('raw_masa_mula', '') }}"
+                        required>
+                </div>
+            </div>
+            <div class="col-sm-5">
+                <div class="input-group">
+                    <span class="input-group-addon">Hingga</span>
+                    <input type="time" name="masa_tamat" class="form-control"
+                        value="{{ data.get('raw_masa_tamat', '') }}" required>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tempat -->
+        <div class="form-group">
+            <label class="control-label col-sm-2">Tempat:</label>
+            <div class="col-sm-10">
+                <input type="text" name="tempat" class="form-control" value="{{ data.get('tempat', '') }}"
+                    placeholder="Cth: Dewan Besar" required>
+            </div>
+        </div>
+
+        <!-- Sasaran -->
+        <div class="form-group">
+            <label class="control-label col-sm-2">Sasaran:</label>
+            <div class="col-sm-10">
+                <input type="text" name="sasaran" class="form-control" value="{{ data.get('sasaran', '') }}"
+                    placeholder="Cth: Semua Pelajar Tingkatan 6" required>
+            </div>
+        </div>
+
+        <!-- Guru Terlibat -->
+        <div class="form-group">
+            <label class="control-label col-sm-2">Guru Terlibat:</label>
+            <div class="col-sm-10">
+                <input type="text" name="guru_terlibat" class="form-control" value="{{ data.get('guru_terlibat', '') }}"
+                    placeholder="Cth: Cikgu Ali" required>
+            </div>
+        </div>
+
+        <!-- Anjuran -->
+        <div class="form-group">
+            <label class="control-label col-sm-2">Anjuran:</label>
+            <div class="col-sm-10">
+                <input type="text" name="anjuran" class="form-control" value="{{ data.get('anjuran', '') }}"
+                    placeholder="Cth: Unit Kokurikulum" required>
+            </div>
+        </div>
+
+        <!-- Objektif Dynamic Fields -->
+        <div class="form-group">
+            <label class="control-label col-sm-2">Objektif:</label>
+            <div class="col-sm-10" id="objektif-container">
+                {% if data.get('objektif') %}
+                {% for obj in data['objektif'] %}
+                <div class="input-group" style="margin-bottom: 10px;">
+                    <input type="text" name="objektif[]" class="form-control" value="{{ obj }}" required>
+                    <span class="input-group-btn">
+                        {% if loop.first %}
+                        <button type="button" class="btn btn-success"
+                            onclick="addField('objektif-container', 'objektif[]')">+ Tambah</button>
+                        {% else %}
+                        <button type="button" class="btn btn-danger"
+                            onclick="this.parentElement.parentElement.remove()">Buang</button>
+                        {% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="input-group" style="margin-bottom: 10px;">
+                    <input type="text" name="objektif[]" class="form-control" placeholder="Masukkan poin objektif..."
+                        required>
+                    <span class="input-group-btn">
+                        <button type="button" class="btn btn-success"
+                            onclick="addField('objektif-container', 'objektif[]')">+ Tambah</button>
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Ringkasan Aktiviti Dynamic Fields -->
+        <div class="form-group">
+            <label class="control-label col-sm-2">Ringkasan Aktiviti:</label>
+            <div class="col-sm-10" id="ringkasan-container">
+                {% if data.get('ringkasan') %}
+                {% for ring in data['ringkasan'] %}
+                <div class="input-group" style="margin-bottom: 10px;">
+                    <input type="text" name="ringkasan[]" class="form-control" value="{{ ring }}" required>
+                    <span class="input-group-btn">
+                        {% if loop.first %}
+                        <button type="button" class="btn btn-success"
+                            onclick="addField('ringkasan-container', 'ringkasan[]')">+ Tambah</button>
+                        {% else %}
+                        <button type="button" class="btn btn-danger"
+                            onclick="this.parentElement.parentElement.remove()">Buang</button>
+                        {% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="input-group" style="margin-bottom: 10px;">
+                    <input type="text" name="ringkasan[]" class="form-control" placeholder="Masukkan poin ringkasan..."
+                        required>
+                    <span class="input-group-btn">
+                        <button type="button" class="btn btn-success"
+                            onclick="addField('ringkasan-container', 'ringkasan[]')">+ Tambah</button>
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <hr>
+
+        <!-- Image 1 Upload with Instant Remove -->
+        <div class="form-group">
+            <label class="control-label col-sm-2">Gambar 1:</label>
+            <div class="col-sm-10">
+                <input type="file" name="image1" id="image1Input" class="form-control" accept="image/*"
+                    onchange="previewImage(event, '1')" style="margin-bottom: 5px;">
+                <input type="hidden" name="remove_img1" id="remove_img1" value="0">
+        
+                <!-- Existing Image from Session -->
+                {% if data.get('img1') %}
+                <div id="existing-img1" style="margin-top: 5px;">
+                    <small class="text-success">Gambar sedia ada disimpan.</small>
+                    <button type="button" class="btn btn-xs btn-danger" style="margin-left: 10px;"
+                        onclick="removeExistingImage('1')">Buang Gambar 1</button>
+                </div>
+                {% endif %}
+        
+                <!-- Dynamic Preview & Immediate Remove Button -->
+                <div id="preview-container-1" style="display: none; margin-top: 10px;">
+                    <img id="output-img1" src="" alt="Pratonton"
+                        style="max-height: 100px; border-radius: 4px; display: block; margin-bottom: 5px;">
+                    <button type="button" class="btn btn-xs btn-warning" onclick="clearSelectedFile('1')">Batal Pilihan
+                        Fail</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Image 2 Upload with Instant Remove -->
+        <div class="form-group">
+            <label class="control-label col-sm-2">Gambar 2:</label>
+            <div class="col-sm-10">
+                <input type="file" name="image2" id="image2Input" class="form-control" accept="image/*"
+                    onchange="previewImage(event, '2')" style="margin-bottom: 5px;">
+                <input type="hidden" name="remove_img2" id="remove_img2" value="0">
+        
+                <!-- Existing Image from Session -->
+                {% if data.get('img2') %}
+                <div id="existing-img2" style="margin-top: 5px;">
+                    <small class="text-success">Gambar sedia ada disimpan.</small>
+                    <button type="button" class="btn btn-xs btn-danger" style="margin-left: 10px;"
+                        onclick="removeExistingImage('2')">Buang Gambar 2</button>
+                </div>
+                {% endif %}
+        
+                <!-- Dynamic Preview & Immediate Remove Button -->
+                <div id="preview-container-2" style="display: none; margin-top: 10px;">
+                    <img id="output-img2" src="" alt="Pratonton"
+                        style="max-height: 100px; border-radius: 4px; display: block; margin-bottom: 5px;">
+                    <button type="button" class="btn btn-xs btn-warning" onclick="clearSelectedFile('2')">Batal Pilihan
+                        Fail</button>
+                </div>
+            </div>
+        </div>
+
+        <hr>
+
+        <!-- Submit & Reset Action Buttons -->
+        <div class="form-group" style="margin-top: 30px;">
+            <div class="col-sm-offset-2 col-sm-10">
+                <button type="submit" class="btn btn-primary btn-lg">Teruskan ke Paparan Cetak</button>
+                <button type="submit" name="reset_form" value="true" class="btn btn-danger btn-lg"
+                    style="margin-left: 10px;"
+                    onclick="return confirm('Adakah anda pasti mahu mengosongkan semua maklumat?');">Reset
+                    Semua</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    const aktivitiMap = {
+        'KK': {{aktiviti_data['KK'] | tojson }},
+    'UB': {{aktiviti_data['UB'] | tojson}},
+    'SK': {{aktiviti_data['SK'] | tojson}}
+    };
+
+    function updateAktivitiOptions(selectedVal = "") {
+        const unitVal = document.getElementById('unitSelect').value;
+        const aktivitiSelect = document.getElementById('aktivitiSelect');
+
+        aktivitiSelect.innerHTML = '<option value="">-- Sila Pilih Aktiviti --</option>';
+
+        if (unitVal && aktivitiMap[unitVal]) {
+            aktivitiMap[unitVal].forEach(function (item) {
+                let opt = document.createElement('option');
+                opt.value = item;
+                opt.innerHTML = item;
+                if (item === selectedVal) {
+                    opt.selected = true;
+                }
+                aktivitiSelect.appendChild(opt);
+            });
+        }
+    }
+
+    // Show a preview when a user selects a file from their device
+    function previewImage(event, imgNumber) {
+        const reader = new FileReader();
+        const output = document.getElementById('output-img' + imgNumber);
+        const container = document.getElementById('preview-container' + imgNumber);
+
+        reader.onload = function () {
+            output.src = reader.result;
+            container.style.display = 'block';
+        }
+        if (event.target.files[0]) {
+            reader.readAsDataURL(event.target.files[0]);
+            // Clear any active deletion flag since a new file is chosen
+            document.getElementById('remove_img' + imgNumber).value = '0';
+        }
+    }
+
+    // Clear the newly selected file if the user changes their mind before submitting
+    function clearSelectedFile(imgNumber) {
+        const input = document.getElementById('image' + imgNumber + 'Input');
+        const container = document.getElementById('preview-container' + imgNumber);
+
+        input.value = ""; // Clears the file input field
+        container.style.display = 'none'; // Hides the local preview
+    }
+
+    // Flag the server to delete an already saved image from the session
+    function removeExistingImage(imgNumber) {
+        document.getElementById('remove_img' + imgNumber).value = '1';
+        const existingDiv = document.getElementById('existing-img' + imgNumber);
+        if (existingDiv) {
+            existingDiv.style.display = 'none';
+        }
+    }
+
+    window.onload = function () {
+        const savedUnit = "{{ data.get('unit', '') }}";
+        const savedAktiviti = "{{ data.get('aktiviti', '') }}";
+        if (savedUnit) {
+            document.getElementById('unitSelect').value = savedUnit;
+            updateAktivitiOptions(savedAktiviti);
+        }
+    };
+
+    function addField(containerId, fieldName) {
+        const container = document.getElementById(containerId);
+        const div = document.createElement('div');
+        div.className = 'input-group';
+        div.style.marginBottom = '10px';
+        div.innerHTML = `
+            <input type="text" name="${fieldName}" class="form-control" placeholder="Masukkan poin..." required>
+            <span class="input-group-btn">
+                <button type="button" class="btn btn-danger" onclick="this.parentElement.parentElement.remove()">Buang</button>
+            </span>
+        `;
+        container.appendChild(div);
+    }
+</script>
+{% endblock %}
